@@ -14,15 +14,22 @@ const addOnlyLatinArtist = (
 ): PartialSongInfo[] => {
   const additonal: PartialSongInfo[] = []
   songInfos.forEach((songInfo) => {
-    if (!songInfo.artist) {
-      return
+    if (songInfo.artist) {
+      if (songInfo.artist.match(regex)) {
+        additonal.push({
+          ...songInfo,
+          artist: songInfo.artist.replace(regex, '').trim(),
+        })
+      }
     }
 
-    if (songInfo.artist.match(regex)) {
-      additonal.push({
-        ...songInfo,
-        artist: songInfo.artist.replace(regex, '').trim(),
-      })
+    if (songInfo.track) {
+      if (songInfo.track.match(regex)) {
+        additonal.push({
+          ...songInfo,
+          track: songInfo.track.replace(regex, '').trim(),
+        })
+      }
     }
   })
 
