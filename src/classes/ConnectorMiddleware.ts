@@ -5,7 +5,7 @@ import _ from 'lodash'
 import * as MetadataFilter from 'metadata-filter'
 
 import type { Connector, PartialSongInfo, SongInfo, State } from 'interfaces'
-import { actions, debounce } from 'internals'
+import { actions } from 'internals'
 
 const metadataFilter = MetadataFilter.createFilter(
   MetadataFilter.createFilterSetForFields(
@@ -96,7 +96,7 @@ class ConnectorMiddleware {
   async setupNewTrackWatch(target: Element) {
     this.connectorTrackId = await this.connector.getCurrentTrackId()
     const observer = new MutationObserver(
-      debounce(this.checkIfNewTrack.bind(this)),
+      _.debounce(this.checkIfNewTrack.bind(this), 500, { maxWait: 1500 }),
     )
     const observerConfig = {
       childList: true,
