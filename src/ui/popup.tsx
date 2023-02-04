@@ -72,7 +72,7 @@ const Content = () => {
         <button
           onClick={() => {
             browser.runtime.sendMessage({
-              type: actions.DISABLE_SCROBBLE_CURRENT,
+              type: actions.TOGGLE_DISABLE_SCROBBLE_CURRENT,
             })
           }}
         >

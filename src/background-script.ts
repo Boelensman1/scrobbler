@@ -188,8 +188,12 @@ async function handleMessage(action: IncomingRequest) {
       return
     }
 
-    case actions.DISABLE_SCROBBLE_CURRENT: {
-      state.scrobbleState = scrobbleStates.MANUALLY_DISABLED
+    case actions.TOGGLE_DISABLE_SCROBBLE_CURRENT: {
+      if (state.scrobbleState != scrobbleStates.MANUALLY_DISABLED) {
+        state.scrobbleState = scrobbleStates.MANUALLY_DISABLED
+      } else {
+        state.scrobbleState = getScrobbleState(state)
+      }
       return
     }
 
