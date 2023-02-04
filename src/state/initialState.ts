@@ -7,6 +7,7 @@ const initialState: State = {
   playTime: 0,
   scrobbleState: scrobbleStates.TRACK_NOT_RECOGNISED,
   sendNowPlaying: false,
+  scrobbleAt: 4 * 60,
   debugString: '',
 }
 

@@ -199,7 +199,8 @@ class ConnectorMiddleware {
       })
     }
 
-    const { currentTime } = await this.connector.getTimeInfo()
+    const { currentTime, duration, playbackRate } =
+      await this.connector.getTimeInfo()
 
     if (type === 'seeking') {
       this.playTimeAtLastStateChange = currentTime
@@ -209,9 +210,16 @@ class ConnectorMiddleware {
     this.playTime += currentTime - this.playTimeAtLastStateChange
     this.playTimeAtLastStateChange = currentTime
 
+    // detect replays
+    if (duration && this.playTime > duration) {
+      const alreadyPlayed = this.playTime - duration
+      await this.newTrack()
+      this.playTime += alreadyPlayed
+    }
+
     browser.runtime.sendMessage({
       type: actions.SET_PLAY_TIME,
-      data: { playTime: this.playTime },
+      data: { playTime: this.playTime, duration, playbackRate },
     })
 
     this.lastStateChange = now

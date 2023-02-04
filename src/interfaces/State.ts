@@ -8,6 +8,7 @@ interface State {
   sendNowPlaying: boolean
   startedPlaying?: Date
   debugString: string
+  scrobbleAt: number
 }
 
 export default State

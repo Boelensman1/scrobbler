@@ -195,6 +195,10 @@ async function handleMessage(action: IncomingRequest) {
 
     case actions.SET_PLAY_TIME: {
       state.playTime = action.data.playTime
+      const duration = action.data.duration
+
+      // From last.fm docs, scrobbling should occur when: the track has been played for at least half its duration, or for 4 minutes (whichever occurs earlier.)
+      state.scrobbleAt = Math.min(60 * 4, duration ? duration / 2 : 9999)
 
       if (
         state.playState === 'PLAYING' &&
@@ -211,14 +215,7 @@ async function handleMessage(action: IncomingRequest) {
           }
         }
 
-        // From last.fm docs, scrobbling should occur when: the track has been played for at least half its duration, or for 4 minutes (whichever occurs earlier.)
-        if (
-          state.playTime >
-          Math.min(
-            60 * 4,
-            state.track.duration ? state.track.duration / 2 : 9999,
-          )
-        ) {
+        if (state.playTime > state.scrobbleAt) {
           state.scrobbleState = scrobbleStates.SCROBBLED
           if (scrobbler) {
             scrobbler.scrobble(state.track!, state.startedPlaying!)

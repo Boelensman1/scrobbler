@@ -57,18 +57,13 @@ const Content = () => {
     return () => clearInterval(interval)
   }, [])
 
-  const scrobbleAt = Math.min(
-    60 * 4,
-    state.track?.duration ? state.track.duration / 2 : 9999,
-  )
-
   return (
     <div>
       <Track track={state.track} />
       <div>
         {state.scrobbleState} (
         {state.track ? state.track.scrobblerMatchQuality : -1}),{' '}
-        {Math.round(state.playTime * 10) / 10}s/{Math.round(scrobbleAt)}s
+        {Math.round(state.playTime * 10) / 10}s/{Math.round(state.scrobbleAt)}s
       </div>
       <div>
         <button onClick={() => browser.runtime.openOptionsPage()}>

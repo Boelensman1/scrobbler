@@ -132,10 +132,7 @@ class YoutubeConnector implements Connector {
     )
     let { currentTime, duration, playbackRate } = videoElement
 
-    currentTime /= playbackRate
-    duration /= playbackRate
-
-    return { currentTime, duration }
+    return { currentTime, duration, playbackRate }
   }
 
   async areChaptersAvailable() {

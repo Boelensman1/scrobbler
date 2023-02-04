@@ -31,7 +31,6 @@ export interface GetTrackResult {
   mbid?: string
   name: string
   url: string
-  duration: string
   // @ts-ignore
   streamable: { #text: string; fulltrack: string }
   listeners: string
@@ -163,7 +162,6 @@ class LastFm {
     }
 
     const track = result.track as GetTrackResult
-    const duration = Number(track.duration) / 1000
 
     let albumArtUrl
     if (track.album?.image && track.album?.image.length > 0) {
@@ -183,7 +181,6 @@ class LastFm {
       name: track.name,
       artist: track.artist.name,
       album: track.album?.title,
-      duration: duration || undefined, // if duration is 0, don't set
       // we use # of listeners as the match quality
       scrobblerMatchQuality: Number(track.listeners),
       albumArtUrl,
