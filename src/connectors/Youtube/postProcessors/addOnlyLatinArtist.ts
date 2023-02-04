@@ -4,9 +4,10 @@ import type { PartialSongInfo } from 'interfaces'
   VIVIZ(비비지) -> VIVIZ
   PRIMROSE 프림로즈 -> PRIMROSE
   cignature(시그니처) -> cignature
+  드림캐쳐(DREAMCATCHER) -> DREAMCATCHER
 */
 // regex replaces matches not latin characters at the start or end of a string
-const regex = /^[^\w ]+|[^\w ]+$/
+const regex = /^[^\w ]+|[^\w ]+$/g
 
 const addOnlyLatinArtist = (
   songInfos: PartialSongInfo[],
