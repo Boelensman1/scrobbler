@@ -127,16 +127,15 @@ class YoutubeConnector implements Connector {
   }
 
   async getTimeInfo(): Promise<TimeInfo> {
-    const videoElement = await waitForElement('.html5-main-video')
-    // if (videoElement /* && !areChaptersAvailable() */) {
-    // @ts-ignore
+    const videoElement = await waitForElement<HTMLVideoElement>(
+      '.html5-main-video',
+    )
     let { currentTime, duration, playbackRate } = videoElement
 
     currentTime /= playbackRate
     duration /= playbackRate
 
     return { currentTime, duration }
-    // }
   }
 
   async areChaptersAvailable() {
