@@ -151,6 +151,7 @@ class ConnectorMiddleware {
   async newTrack() {
     this.track = undefined
     this.playTime = 0
+    this.playTimeAtLastStateChange = 0
 
     await browser.runtime.sendMessage({
       type: actions.SET_LOADING_NEW_TRACK,
