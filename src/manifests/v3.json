@@ -1,0 +1,11 @@
+{
+  "manifest_version": 3,
+  "name": "Sample Web Extension",
+  "version": "0.0.1",
+  "content_scripts": [
+    {
+      "matches": ["*://github.com/parcel-bundler/*"],
+      "js": ["content-script.ts"]
+    }
+  ]
+}

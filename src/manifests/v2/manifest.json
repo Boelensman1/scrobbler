@@ -1,0 +1,27 @@
+{
+  "name": "Sample Web Extension",
+  "version": "0.0.1",
+  "manifest_version": 2,
+  "permissions": ["<all_urls>", "tabs", "storage", "identity"],
+  "browser_action": {
+    "default_popup": "../../ui/popup.html"
+  },
+  "options_ui": {
+    "page": "../../ui/index.html",
+    "open_in_tab": true
+  },
+  "background": {
+    "scripts": ["../../background-script.ts"]
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["../../content-script.ts"]
+    }
+  ],
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "addon@example.com"
+    }
+  }
+}

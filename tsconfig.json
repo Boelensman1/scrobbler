@@ -1,0 +1,18 @@
+{
+  "extends": "@tsconfig/node18/tsconfig.json",
+  "exclude": ["node_modules"],
+  "include": ["src/**/*"],
+  "compilerOptions": {
+    "jsx": "react",
+    "lib": ["esnext", "dom"],
+    "target": "ES2015",
+    "outDir": "lib",
+    "declaration": false,
+    "experimentalDecorators": true,
+    "baseUrl": "./src"
+  },
+  "paths": {
+    "internals": ["src/internals"],
+    "interfaces": ["src/interfaces"]
+  }
+}
