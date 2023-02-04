@@ -239,8 +239,12 @@ function handleMessageContainer(
 }
 
 browser.tabs.onUpdated.addListener(async (id, changeInfo, windowprops) => {
-  // only fire on completed changes to url
-  if (windowprops.status !== 'complete' || !changeInfo['url']) {
+  console.log(id, windowprops.status, changeInfo['url'])
+  if (
+    // change comes through on loading with chrome, complete with firefox
+    (windowprops.status !== 'loading' && windowprops.status !== 'complete') ||
+    !changeInfo['url']
+  ) {
     return
   }
   const { url } = windowprops
