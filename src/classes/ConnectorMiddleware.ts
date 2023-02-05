@@ -170,7 +170,7 @@ class ConnectorMiddleware {
     })
   }
 
-  async onStateChanged(type: 'time' | 'play' | 'pause' | 'seeking') {
+  async onStateChanged(type: 'time' | 'play' | 'pause' | 'seeking' | 'seeked') {
     const now = new Date()
     if (!this.lastStateChange) {
       this.lastStateChange = now
@@ -199,12 +199,15 @@ class ConnectorMiddleware {
       playbackRate,
     } = await this.connector.getTimeInfo()
 
-    if (type === 'seeking') {
+    if (type === 'seeking' || type === 'seeked') {
       this.playTimeAtLastStateChange = currentTime
       return
     }
 
-    this.playTime += currentTime - this.playTimeAtLastStateChange
+    this.playTime += Math.max(
+      0,
+      Math.min(2, currentTime - this.playTimeAtLastStateChange),
+    )
     this.playTimeAtLastStateChange = currentTime
 
     // detect replays

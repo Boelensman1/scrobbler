@@ -59,6 +59,13 @@ class YoutubeConnector implements Connector {
       ),
     )
     video.addEventListener(
+      'seeked',
+      this.connectorMiddleware.onStateChanged.bind(
+        this.connectorMiddleware,
+        'seeked',
+      ),
+    )
+    video.addEventListener(
       'seeking',
       this.connectorMiddleware.onStateChanged.bind(
         this.connectorMiddleware,
