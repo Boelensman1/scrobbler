@@ -14,6 +14,8 @@ export interface Connector {
 
   getTimeInfo(): Promise<TimeInfo>
   getCurrentTrackId(): Promise<any>
+
+  getPopularity?(): Promise<number>
 }
 
 interface ConnectorStatic {

@@ -12,6 +12,30 @@ function staticImplements<T>() {
   }
 }
 
+const numberAbbreviations = {
+  K: 1000,
+  M: 1000 * 1000,
+  B: 1000 * 1000 * 1000,
+}
+
+const toFullNumber = (input: string): number => {
+  if (!Number.isNaN(Number(input))) {
+    return Number(input)
+  }
+  const abbreviation = input.charAt(
+    input.length - 1,
+  ) as keyof typeof numberAbbreviations
+
+  if (!numberAbbreviations[abbreviation]) {
+    throw new Error(`Abbreviation ${abbreviation} not found`)
+  }
+
+  return (
+    Number(input.substring(0, input.length - 1)) *
+    numberAbbreviations[abbreviation]
+  )
+}
+
 @staticImplements<ConnectorStatic>()
 class YoutubeConnector implements Connector {
   player!: Element
@@ -133,6 +157,19 @@ class YoutubeConnector implements Connector {
     let { currentTime, duration, playbackRate } = videoElement
 
     return { currentTime, duration, playbackRate }
+  }
+
+  async getPopularity() {
+    try {
+      const element = await waitForElement<any>(
+        '#info-container yt-formatted-string span',
+      )
+      let [views] = element.textContent.split(' ')
+      views = toFullNumber(views)
+      return Math.sqrt(Number(views))
+    } catch (e) {
+      return 1
+    }
   }
 
   async areChaptersAvailable() {

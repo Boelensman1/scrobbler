@@ -62,8 +62,10 @@ const Content = () => {
       <Track track={state.track} />
       <div>
         {state.scrobbleState} (
-        {state.track ? state.track.scrobblerMatchQuality : -1}),{' '}
-        {Math.round(state.playTime * 10) / 10}s/{Math.round(state.scrobbleAt)}s
+        {state.track ? state.track.scrobblerMatchQuality : -1}/
+        {Math.floor(state.minimumScrobblerQuality)}),{' '}
+        {Math.round(state.playTime * 10) / 10}
+        s/{Math.round(state.scrobbleAt)}s
       </div>
       <div>
         <button onClick={() => browser.runtime.openOptionsPage()}>

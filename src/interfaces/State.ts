@@ -5,6 +5,7 @@ interface State {
   playTime: number
   playState?: 'PLAYING' | 'PAUSED'
   scrobbleState: keyof typeof scrobbleStates
+  minimumScrobblerQuality: number
   sendNowPlaying: boolean
   startedPlaying?: Date
   debugString: string

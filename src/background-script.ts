@@ -63,9 +63,7 @@ const getScrobbleState = (state: State): keyof typeof scrobbleStates => {
     return scrobbleStates.TRACK_TOO_SHORT
   }
 
-  if (
-    state.track.scrobblerMatchQuality < config.get('minimumScrobblerQuality')
-  ) {
+  if (state.track.scrobblerMatchQuality < state.minimumScrobblerQuality) {
     return scrobbleStates.BELOW_MIN_SCROBBLER_QUALITY
   }
 
@@ -134,10 +132,14 @@ async function handleMessage(action: IncomingRequest) {
     }
 
     case actions.SET_TRACK_PLAYING: {
-      state.debugString = action.data.location
-
       resetState()
       state.scrobbleState = getScrobbleState(state)
+
+      state.minimumScrobblerQuality =
+        config.get('minimumScrobblerQuality') *
+        (config.get('scrobblerQualityDynamic')
+          ? action.data.popularity / 200
+          : 1)
 
       const connector = getScrobbler()
       if (!connector) {

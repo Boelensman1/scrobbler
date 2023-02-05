@@ -1,9 +1,10 @@
 import browser from 'webextension-polyfill'
 import { Config } from 'interfaces'
 
-const defaultConfig: Config = {
+export const defaultConfig: Config = {
   scrobbler: null,
   minimumScrobblerQuality: 100,
+  scrobblerQualityDynamic: true,
 }
 
 export class ConfigContainer {

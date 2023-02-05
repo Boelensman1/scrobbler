@@ -9,6 +9,7 @@ const initialState: State = {
   sendNowPlaying: false,
   scrobbleAt: 4 * 60,
   debugString: '',
+  minimumScrobblerQuality: Number.MAX_SAFE_INTEGER,
 }
 
 export default initialState

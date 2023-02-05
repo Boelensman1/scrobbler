@@ -159,9 +159,12 @@ class ConnectorMiddleware {
 
     await this.waitForReady()
 
-    const [songInfos, timeInfo] = await Promise.all([
+    const [songInfos, timeInfo, popularity] = await Promise.all([
       this.getSongInfoOptionsFromConnector(),
       this.connector.getTimeInfo(),
+      this.connector.getPopularity
+        ? this.connector.getPopularity()
+        : Promise.resolve(1),
     ])
 
     await browser.runtime.sendMessage({
@@ -170,6 +173,7 @@ class ConnectorMiddleware {
         songInfos: combineSongInfos(this.connectorTrackId, songInfos),
         timeInfo,
         location: window.location.href,
+        popularity,
       },
     })
   }
