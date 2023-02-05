@@ -8,7 +8,6 @@ export class Track {
   scrobblerLinks: ScrobblerLinks
 
   album?: string
-  duration?: number
   albumArtUrl?: string
   musicBrainzReleaseGroupId?: string
 
@@ -17,7 +16,6 @@ export class Track {
     name,
     artist,
     album,
-    duration,
     scrobblerMatchQuality,
     scrobblerLinks,
     albumArtUrl,
@@ -27,7 +25,6 @@ export class Track {
     name: string
     artist: string
     album?: string
-    duration?: number
     scrobblerMatchQuality: number
     albumArtUrl?: string
     musicBrainzReleaseGroupId?: string
@@ -37,7 +34,6 @@ export class Track {
     this.name = name
     this.artist = artist
     this.album = album
-    this.duration = duration
     this.scrobblerMatchQuality = scrobblerMatchQuality
     this.scrobblerLinks = scrobblerLinks
 
@@ -52,7 +48,6 @@ export class Track {
   getMissingFields(): string[] {
     const possibleMissingFields: (keyof Track)[] = [
       'album',
-      'duration',
       'albumArtUrl',
       'musicBrainzReleaseGroupId',
     ]

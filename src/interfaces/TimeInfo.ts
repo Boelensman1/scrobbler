@@ -1,5 +1,5 @@
 interface TimeInfo {
-  currentTime: number
+  playTime: number
   duration?: number
   playbackRate?: number
 }

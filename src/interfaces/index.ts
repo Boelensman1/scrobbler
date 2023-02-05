@@ -10,3 +10,17 @@ export {
   InformationProviderInfo,
 } from './InformationProvider'
 export { GetTrackResult } from '../scrobblers/lastFm'
+
+export {
+  default as ActionObject,
+  RequestAuthenticationActionObject,
+  GetStateActionObject,
+  GetConfigActionObject,
+  ResetConfigActionObject,
+  SaveConfigActionObject,
+  SetLoadingNewTrackActionObject,
+  SetTrackPlayingActionObject,
+  SetPlayStateActionObject,
+  SetPlayTimeActionObject,
+  ToggleDisableToggleCurrentActionObject,
+} from './ActionObject'

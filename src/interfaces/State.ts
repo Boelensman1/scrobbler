@@ -10,6 +10,7 @@ interface State {
   startedPlaying?: Date
   debugString: string
   scrobbleAt: number
+  trackDuration?: number
 }
 
 export default State

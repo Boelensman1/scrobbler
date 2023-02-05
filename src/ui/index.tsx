@@ -2,26 +2,8 @@ import React, { useState, useEffect } from 'react'
 import { createRoot } from 'react-dom/client'
 import { useFormik } from 'formik'
 
-import browser from 'webextension-polyfill'
-
 import type { Config } from '../interfaces'
 import { actions, defaultConfig } from 'internals'
-
-const requestAuth = () =>
-  browser.runtime.sendMessage({
-    type: actions.REQUEST_AUTHENTICATION,
-  })
-
-const resetConfig = () =>
-  browser.runtime.sendMessage({
-    type: actions.RESET_CONFIG,
-  })
-
-const saveConfig = (config: Partial<Config>) =>
-  browser.runtime.sendMessage({
-    type: actions.SAVE_CONFIG,
-    data: config,
-  })
 
 const Content = () => {
   const [config, setConfig] = useState<Config>(defaultConfig)
@@ -33,16 +15,14 @@ const Content = () => {
     },
     onSubmit: async (values: Partial<Config>) => {
       delete values.scrobbler
-      await saveConfig(values)
+      await actions.saveConfig(values)
     },
   })
 
   useEffect(() => {
     const updateConfig = async () => {
       setReloadConfig(false)
-      const newConfig = (await browser.runtime.sendMessage({
-        type: actions.GET_CONFIG,
-      })) as Config
+      const newConfig = await actions.getConfig()
       setConfig(newConfig)
       formik.setValues(newConfig)
     }
@@ -54,11 +34,11 @@ const Content = () => {
 
   return (
     <div>
-      <button onClick={requestAuth}>auth</button>
+      <button onClick={() => actions.requestAuthentication()}>auth</button>
       <button
         id="resetConfig"
         onClick={async () => {
-          await resetConfig()
+          await actions.resetConfig()
           setReloadConfig(true)
         }}
       >

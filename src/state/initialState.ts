@@ -10,6 +10,7 @@ const initialState: State = {
   scrobbleAt: 4 * 60,
   debugString: '',
   minimumScrobblerQuality: Number.MAX_SAFE_INTEGER,
+  trackDuration: 0,
 }
 
 export default initialState

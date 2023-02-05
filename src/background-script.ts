@@ -4,19 +4,20 @@ import {
   LastFm,
   Track,
   ConfigContainer,
-  actions,
   scrobbleStates,
   initialState,
   MusicBrainzInformationProvider,
   CoverArtArchiveInformationProvider,
+  ACTION_KEYS,
 } from 'internals'
 
-import { Config, State, SongInfo, InformationProvider } from 'interfaces'
-
-interface IncomingRequest {
-  type: keyof typeof actions
-  data: any
-}
+import type {
+  Config,
+  State,
+  SongInfo,
+  InformationProvider,
+  ActionObject,
+} from 'interfaces'
 
 const state = { ...initialState }
 
@@ -55,8 +56,8 @@ const getScrobbleState = (state: State): keyof typeof scrobbleStates => {
   }
 
   if (
-    state.track.duration &&
-    state.track.duration <=
+    state.trackDuration &&
+    state.trackDuration <=
       // according to last.fm api docs, we shouldn't scrobble tracks shorter than 30 seconds
       30
   ) {
@@ -97,41 +98,41 @@ const resetState = () => {
   state.startedPlaying = new Date()
 }
 
-async function handleMessage(action: IncomingRequest) {
+async function handleMessage(action: ActionObject) {
   switch (action.type) {
-    case actions.REQUEST_AUTHENTICATION: {
+    case ACTION_KEYS.REQUEST_AUTHENTICATION: {
       const url = await scrobblers.lastFm.getAuthUrl('https://last-fm-login')
       browser.tabs.update({ url })
       return
     }
 
-    case actions.GET_STATE: {
+    case ACTION_KEYS.GET_STATE: {
       return state
     }
 
-    case actions.GET_CONFIG: {
+    case ACTION_KEYS.GET_CONFIG: {
       return config.getFullConfig()
     }
 
-    case actions.SAVE_CONFIG: {
+    case ACTION_KEYS.SAVE_CONFIG: {
       Object.entries(action.data).map(([key, value]) => {
         config.set(key as keyof Config, value as any)
       })
       return
     }
 
-    case actions.RESET_CONFIG: {
+    case ACTION_KEYS.RESET_CONFIG: {
       config.reset()
       return
     }
 
-    case actions.SET_LOADING_NEW_TRACK: {
+    case ACTION_KEYS.SET_LOADING_NEW_TRACK: {
       resetState()
       state.scrobbleState = scrobbleStates.SEARCHING
       return
     }
 
-    case actions.SET_TRACK_PLAYING: {
+    case ACTION_KEYS.SET_TRACK_PLAYING: {
       resetState()
       state.scrobbleState = getScrobbleState(state)
 
@@ -164,16 +165,12 @@ async function handleMessage(action: IncomingRequest) {
         )
         // get the track with the highest 'match quality'
         // match quality for last.fm is defined as # of listeners
-        const [track] = tracks
-          .filter((t) => !!t)
-          .sort(
-            (track1: Track, track2: Track) =>
-              track2.scrobblerMatchQuality - track1.scrobblerMatchQuality,
-          )
+        const [track] = (tracks.filter((t) => !!t) as Track[]).sort(
+          (track1: Track, track2: Track) =>
+            track2.scrobblerMatchQuality - track1.scrobblerMatchQuality,
+        )
 
         if (track) {
-          track.duration = action.data.timeInfo?.duration
-
           await getAdditionalDataFromInfoProviders(track)
 
           state.track = track
@@ -185,12 +182,12 @@ async function handleMessage(action: IncomingRequest) {
       return
     }
 
-    case actions.SET_PLAY_STATE: {
+    case ACTION_KEYS.SET_PLAY_STATE: {
       state.playState = action.data.playState
       return
     }
 
-    case actions.TOGGLE_DISABLE_SCROBBLE_CURRENT: {
+    case ACTION_KEYS.TOGGLE_DISABLE_SCROBBLE_CURRENT: {
       if (state.scrobbleState != scrobbleStates.MANUALLY_DISABLED) {
         state.scrobbleState = scrobbleStates.MANUALLY_DISABLED
       } else {
@@ -199,9 +196,10 @@ async function handleMessage(action: IncomingRequest) {
       return
     }
 
-    case actions.SET_PLAY_TIME: {
-      state.playTime = action.data.playTime
-      const duration = action.data.duration
+    case ACTION_KEYS.SET_PLAY_TIME: {
+      const { duration, playTime } = action.data
+      state.playTime = playTime
+      state.trackDuration = duration
 
       // From last.fm docs, scrobbling should occur when: the track has been played for at least half its duration, or for 4 minutes (whichever occurs earlier.)
       state.scrobbleAt = Math.min(60 * 4, duration ? duration / 2 : 9999)
@@ -233,7 +231,7 @@ async function handleMessage(action: IncomingRequest) {
   }
 }
 function handleMessageContainer(
-  action: IncomingRequest,
+  action: ActionObject,
   _sender: any,
   sendResponse: () => any,
 ): true {

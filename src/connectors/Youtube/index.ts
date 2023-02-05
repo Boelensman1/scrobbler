@@ -156,7 +156,7 @@ class YoutubeConnector implements Connector {
     )
     let { currentTime, duration, playbackRate } = videoElement
 
-    return { currentTime, duration, playbackRate }
+    return { playTime: currentTime, duration, playbackRate }
   }
 
   async getPopularity() {

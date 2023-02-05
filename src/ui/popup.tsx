@@ -46,9 +46,7 @@ const Content = () => {
   const [state, setState] = useState<State>(initialState)
   useEffect(() => {
     const updateState = async () => {
-      const newState = await browser.runtime.sendMessage({
-        type: actions.GET_STATE,
-      })
+      const newState = await actions.getState()
       setState(newState)
     }
 
@@ -71,13 +69,7 @@ const Content = () => {
         <button onClick={() => browser.runtime.openOptionsPage()}>
           Options
         </button>
-        <button
-          onClick={() => {
-            browser.runtime.sendMessage({
-              type: actions.TOGGLE_DISABLE_SCROBBLE_CURRENT,
-            })
-          }}
-        >
+        <button onClick={() => actions.toggleDisableToggleCurrent()}>
           Don't scrobble current
         </button>
       </div>

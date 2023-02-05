@@ -1,4 +1,3 @@
-import browser from 'webextension-polyfill'
 import { Entries } from 'type-fest'
 
 import _ from 'lodash'
@@ -81,9 +80,7 @@ class ConnectorMiddleware {
   async setTrackInStateIfNeeded() {
     const [potentialNewTrackId, state]: [string, State] = await Promise.all([
       this.connector.getCurrentTrackId(),
-      browser.runtime.sendMessage({
-        type: actions.GET_STATE,
-      }),
+      actions.getState(),
     ])
 
     const stateTrackId = state.track?.connectorId
@@ -153,9 +150,7 @@ class ConnectorMiddleware {
     this.playTime = 0
     this.playTimeAtLastStateChange = 0
 
-    await browser.runtime.sendMessage({
-      type: actions.SET_LOADING_NEW_TRACK,
-    })
+    await actions.setLoadingNewTrack()
 
     await this.waitForReady()
 
@@ -167,14 +162,11 @@ class ConnectorMiddleware {
         : Promise.resolve(1),
     ])
 
-    await browser.runtime.sendMessage({
-      type: actions.SET_TRACK_PLAYING,
-      data: {
-        songInfos: combineSongInfos(this.connectorTrackId, songInfos),
-        timeInfo,
-        location: window.location.href,
-        popularity,
-      },
+    await actions.setTrackPlaying({
+      songInfos: combineSongInfos(this.connectorTrackId, songInfos),
+      timeInfo,
+      location: window.location.href,
+      popularity,
     })
   }
 
@@ -198,14 +190,14 @@ class ConnectorMiddleware {
     }
 
     if (type === 'play' || type === 'pause') {
-      browser.runtime.sendMessage({
-        type: actions.SET_PLAY_STATE,
-        data: { playState: type === 'play' ? 'PLAYING' : 'PAUSED' },
-      })
+      actions.setPlayState(type === 'play' ? 'PLAYING' : 'PAUSED')
     }
 
-    const { currentTime, duration, playbackRate } =
-      await this.connector.getTimeInfo()
+    const {
+      playTime: currentTime,
+      duration,
+      playbackRate,
+    } = await this.connector.getTimeInfo()
 
     if (type === 'seeking') {
       this.playTimeAtLastStateChange = currentTime
@@ -222,9 +214,10 @@ class ConnectorMiddleware {
       this.playTime += alreadyPlayed
     }
 
-    browser.runtime.sendMessage({
-      type: actions.SET_PLAY_TIME,
-      data: { playTime: this.playTime, duration, playbackRate },
+    actions.setPlayTime({
+      playTime: this.playTime,
+      duration,
+      playbackRate,
     })
 
     this.lastStateChange = now
