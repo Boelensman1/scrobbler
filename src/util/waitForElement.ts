@@ -1,4 +1,4 @@
-const waitForElement = async <T = Element>(
+const waitForElement = async <T extends Element = Element>(
   selector: string,
   maxDelay = 5000,
   delay = 500,
@@ -7,7 +7,7 @@ const waitForElement = async <T = Element>(
   if (totalTime > maxDelay) {
     throw new Error(`Element "${selector}" not found after ${totalTime}`)
   }
-  const el = document.querySelector(selector) as T
+  const el = document.querySelector<T>(selector)
   if (el) {
     return el
   } else {
