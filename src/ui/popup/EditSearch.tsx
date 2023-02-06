@@ -25,20 +25,22 @@ const ManualInputForm = ({
 
   return (
     <form onSubmit={formik.handleSubmit}>
-      <label htmlFor="name">Name</label>
-      <input
-        id="name"
-        onChange={formik.handleChange}
-        value={formik.values.name}
-      />
+      <div style={{ display: 'flex', flexDirection: 'column' }}>
+        <label htmlFor="name">Name</label>
+        <input
+          id="name"
+          onChange={formik.handleChange}
+          value={formik.values.name}
+        />
 
-      <label htmlFor="artist">Artist</label>
-      <input
-        id="artist"
-        onChange={formik.handleChange}
-        value={formik.values.artist}
-      />
-      <button type="submit">save</button>
+        <label htmlFor="artist">Artist</label>
+        <input
+          id="artist"
+          onChange={formik.handleChange}
+          value={formik.values.artist}
+        />
+        <button type="submit">save</button>
+      </div>
     </form>
   )
 }
@@ -46,47 +48,44 @@ const ManualInputForm = ({
 const SelectResultForm = ({
   searchResults,
   save,
+  goToManualInput,
 }: {
   searchResults: State['searchResults']
   save: (values: TrackEditValues) => void
+  goToManualInput: () => void
 }) => {
-  const formik = useFormik({
-    initialValues: {
-      selectedSearchResult: '0',
-    },
-    onSubmit: async (values: { selectedSearchResult: string }) => {
-      console.log(values)
-      // actions.saveTrackEdit(connectorId, values)
-      save(
-        _.pick(searchResults[Number(values.selectedSearchResult)], [
-          'name',
-          'artist',
-          'album',
-        ]),
-      )
-    },
-  })
+  const submit = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const selectedSearchResult = e.currentTarget.value
 
-  console.log(formik.values)
+    if (selectedSearchResult === 'select') {
+      return
+    }
+
+    if (selectedSearchResult === 'manual') {
+      goToManualInput()
+      return
+    }
+
+    save(
+      _.pick(searchResults[Number(selectedSearchResult)], [
+        'name',
+        'artist',
+        'album',
+      ]),
+    )
+  }
 
   return (
-    <form onSubmit={formik.handleSubmit}>
-      <label htmlFor="selectedSearchResult">
-        Choose different searchResult:
-      </label>
-      <select
-        id="selectedSearchResult"
-        onChange={formik.handleChange}
-        value={formik.values.selectedSearchResult}
-      >
+    <form>
+      <select id="selectedSearchResult" onChange={submit}>
+        <option value="select">Select search result</option>
         {searchResults.map((result, i) => (
           <option key={i} value={i}>
             {result.artist} - {result.name} ({result.scrobblerMatchQuality})
           </option>
         ))}
+        <option value="manual">Manual input</option>
       </select>
-
-      <button type="submit">save</button>
     </form>
   )
 }
@@ -109,12 +108,17 @@ const EditSearch = ({
   }
   return (
     <div>
-      {manualInput ? (
-        <ManualInputForm track={track} save={save} />
-      ) : (
-        <SelectResultForm searchResults={searchResults} save={save} />
-      )}
-      <button onClick={() => setManualInput(true)}>Manually edit</button>
+      <div style={{ marginBottom: 8 }}>
+        {manualInput ? (
+          <ManualInputForm track={track} save={save} />
+        ) : (
+          <SelectResultForm
+            searchResults={searchResults}
+            save={save}
+            goToManualInput={() => setManualInput(true)}
+          />
+        )}
+      </div>
       <button onClick={() => stopEditting()}>Cancel</button>
     </div>
   )

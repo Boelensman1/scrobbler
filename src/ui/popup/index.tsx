@@ -15,7 +15,12 @@ const defaultAlbumArtUrl = 'https://via.placeholder.com/150'
 const Track = ({
   activeConnectorId,
   track,
-}: Pick<State, 'activeConnectorId' | 'track'>) => {
+  startEdit,
+}: {
+  activeConnectorId: State['activeConnectorId']
+  track: State['track']
+  startEdit: () => void
+}) => {
   if (!track) {
     return null
   }
@@ -24,7 +29,7 @@ const Track = ({
       <div>
         <img
           src={track.albumArtUrl || defaultAlbumArtUrl}
-          style={{ width: 100, height: 100 }}
+          style={{ width: 100, height: 100, marginRight: 8 }}
         />
       </div>
       <div style={{ display: 'flex', flexDirection: 'column' }}>
@@ -41,6 +46,10 @@ const Track = ({
         </div>
         <div>
           <a href={track.scrobblerLinks.album}>{track.album}</a>
+        </div>
+
+        <div>
+          <button onClick={() => startEdit()}>Edit search</button>
         </div>
       </div>
     </div>
@@ -78,6 +87,9 @@ const Content = () => {
         <Track
           activeConnectorId={state.activeConnectorId}
           track={state.track}
+          startEdit={() => {
+            setEditingSearch(true)
+          }}
         />
       )}
       <div>
@@ -88,15 +100,14 @@ const Content = () => {
         s/{Math.round(state.scrobbleAt)}s
       </div>
       <div>
-        <button onClick={() => setEditingSearch(true)}>Edit search</button>
-        <button onClick={() => browser.runtime.openOptionsPage()}>
-          Options
-        </button>
         <button onClick={() => actions.toggleDisableToggleCurrent()}>
           Don't scrobble current
         </button>
         <button onClick={() => actions.forceScrobbleCurrent()}>
           Force scrobble current
+        </button>
+        <button onClick={() => browser.runtime.openOptionsPage()}>
+          Options
         </button>
       </div>
       <pre>{DEBUG && state.debugString}</pre>
