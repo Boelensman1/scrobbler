@@ -15,7 +15,6 @@ const metadataFilter = MetadataFilter.createFilter(
 metadataFilter.append({ track: MetadataFilter.youtube })
 
 const combineSongInfos = (
-  id: string,
   songInfos: (PartialSongInfo | null)[],
 ): SongInfo[] => {
   const nonNullSongInfos = songInfos.filter(
@@ -31,7 +30,6 @@ const combineSongInfos = (
 
   return tracks.flatMap((track) =>
     artists.map((artist) => ({
-      id,
       track,
       artist,
     })),
@@ -83,7 +81,7 @@ class ConnectorMiddleware {
       actions.getState(),
     ])
 
-    const stateTrackId = state.track?.connectorId
+    const stateTrackId = state.activeConnectorId
     if (stateTrackId !== potentialNewTrackId) {
       this.connectorTrackId = potentialNewTrackId
       this.newTrack()
@@ -162,8 +160,8 @@ class ConnectorMiddleware {
         : Promise.resolve(1),
     ])
 
-    await actions.setTrackPlaying({
-      songInfos: combineSongInfos(this.connectorTrackId, songInfos),
+    await actions.setTrackPlaying(this.connectorTrackId, {
+      songInfos: combineSongInfos(songInfos),
       timeInfo,
       location: window.location.href,
       popularity,

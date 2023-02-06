@@ -146,6 +146,7 @@ async function handleMessage(action: ActionObject) {
     case ACTION_KEYS.SET_TRACK_PLAYING: {
       resetState()
       state.scrobbleState = getScrobbleState(state)
+      state.activeConnectorId = action.data.connectorId
 
       state.minimumScrobblerQuality =
         config.get('minimumScrobblerQuality') *
@@ -153,14 +154,14 @@ async function handleMessage(action: ActionObject) {
           ? action.data.popularity / 200
           : 1)
 
-      const connector = getScrobbler()
-      if (!connector) {
+      const scrobbler = getScrobbler()
+      if (!scrobbler) {
         return
       }
 
       Promise.all(
         action.data.songInfos.map((songInfo: SongInfo) =>
-          connector.getTrack(songInfo),
+          scrobbler.getTrack(songInfo),
         ),
       ).then(async (tracks) => {
         state.debugString = JSON.stringify(
@@ -213,7 +214,7 @@ async function handleMessage(action: ActionObject) {
 
     case ACTION_KEYS.SET_PLAY_TIME: {
       // not the current track, don't update state
-      if (!state.track || action.data.connectorId !== state.track.connectorId) {
+      if (!state.track || action.data.connectorId !== state.activeConnectorId) {
         return
       }
 

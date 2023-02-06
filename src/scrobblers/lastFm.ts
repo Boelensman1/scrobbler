@@ -177,7 +177,6 @@ class LastFm {
     }
 
     return new Track({
-      connectorId: songInfo.id,
       name: track.name,
       artist: track.artist.name,
       album: track.album?.title,

@@ -64,20 +64,24 @@ const actions = {
     send<SetLoadingNewTrackActionObject>({
       type: ACTION_KEYS.SET_LOADING_NEW_TRACK,
     }),
-  setTrackPlaying: ({
-    songInfos,
-    timeInfo,
-    location,
-    popularity,
-  }: {
-    songInfos: SongInfo[]
-    timeInfo: TimeInfo
-    location: string
-    popularity: number
-  }) =>
+  setTrackPlaying: (
+    connectorId: string,
+    {
+      songInfos,
+      timeInfo,
+      location,
+      popularity,
+    }: {
+      songInfos: SongInfo[]
+      timeInfo: TimeInfo
+      location: string
+      popularity: number
+    },
+  ) =>
     send<SetTrackPlayingActionObject>({
       type: ACTION_KEYS.SET_TRACK_PLAYING,
       data: {
+        connectorId,
         songInfos,
         timeInfo,
         location,

@@ -33,6 +33,7 @@ export interface SetTrackPlayingActionObject {
     timeInfo: TimeInfo
     location: string
     popularity: number
+    connectorId: string
   }
 }
 

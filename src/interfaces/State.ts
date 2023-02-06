@@ -11,6 +11,7 @@ interface State {
   debugString: string
   scrobbleAt: number
   trackDuration?: number
+  activeConnectorId: string | null
 }
 
 export default State

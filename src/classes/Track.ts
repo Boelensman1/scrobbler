@@ -1,7 +1,6 @@
 import type { ScrobblerLinks } from 'interfaces'
 
 export class Track {
-  connectorId: string
   name: string
   artist: string
   scrobblerMatchQuality: number
@@ -12,7 +11,6 @@ export class Track {
   musicBrainzReleaseGroupId?: string
 
   constructor({
-    connectorId,
     name,
     artist,
     album,
@@ -21,7 +19,6 @@ export class Track {
     albumArtUrl,
     musicBrainzReleaseGroupId,
   }: {
-    connectorId: string
     name: string
     artist: string
     album?: string
@@ -30,7 +27,6 @@ export class Track {
     musicBrainzReleaseGroupId?: string
     scrobblerLinks: ScrobblerLinks
   }) {
-    this.connectorId = connectorId
     this.name = name
     this.artist = artist
     this.album = album

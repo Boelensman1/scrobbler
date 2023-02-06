@@ -11,6 +11,7 @@ const initialState: State = {
   debugString: '',
   minimumScrobblerQuality: Number.MAX_SAFE_INTEGER,
   trackDuration: 0,
+  activeConnectorId: null,
 }
 
 export default initialState
