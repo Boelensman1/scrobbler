@@ -189,10 +189,6 @@ class ConnectorMiddleware {
       }
     }
 
-    if (type === 'play' || type === 'pause') {
-      actions.setPlayState(type === 'play' ? 'PLAYING' : 'PAUSED')
-    }
-
     const {
       playTime: currentTime,
       duration,
@@ -217,7 +213,7 @@ class ConnectorMiddleware {
       this.playTime += alreadyPlayed
     }
 
-    actions.setPlayTime({
+    actions.setPlayTime(this.connectorTrackId, {
       playTime: this.playTime,
       duration,
       playbackRate,

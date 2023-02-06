@@ -8,13 +8,13 @@ import type {
   ResetConfigActionObject,
   SaveConfigActionObject,
   SetLoadingNewTrackActionObject,
-  SetPlayStateActionObject,
   SetPlayTimeActionObject,
   SetTrackPlayingActionObject,
   SongInfo,
   State,
   TimeInfo,
   ToggleDisableToggleCurrentActionObject,
+  ForceToggleCurrentActionObject,
 } from 'interfaces'
 
 export const ACTION_KEYS = {
@@ -32,6 +32,7 @@ export const ACTION_KEYS = {
 
   TOGGLE_DISABLE_SCROBBLE_CURRENT:
     'TOGGLE_DISABLE_SCROBBLE_CURRENT' as 'TOGGLE_DISABLE_SCROBBLE_CURRENT',
+  FORCE_SCROBBLE_CURRENT: 'FORCE_SCROBBLE_CURRENT' as 'FORCE_SCROBBLE_CURRENT',
 }
 
 const send = <T extends ActionObject, U = void>(arg: T): Promise<U> =>
@@ -83,19 +84,18 @@ const actions = {
         popularity,
       },
     }),
-  setPlayState: (playState: 'PLAYING' | 'PAUSED') =>
-    send<SetPlayStateActionObject>({
-      type: ACTION_KEYS.SET_PLAY_STATE,
-      data: { playState },
-    }),
-  setPlayTime: (timeInfo: TimeInfo) =>
+  setPlayTime: (connectorId: string, timeInfo: TimeInfo) =>
     send<SetPlayTimeActionObject>({
       type: ACTION_KEYS.SET_PLAY_TIME,
-      data: timeInfo,
+      data: { connectorId, timeInfo },
     }),
   toggleDisableToggleCurrent: () =>
     send<ToggleDisableToggleCurrentActionObject>({
       type: ACTION_KEYS.TOGGLE_DISABLE_SCROBBLE_CURRENT,
+    }),
+  forceScrobbleCurrent: () =>
+    send<ForceToggleCurrentActionObject>({
+      type: ACTION_KEYS.FORCE_SCROBBLE_CURRENT,
     }),
 }
 

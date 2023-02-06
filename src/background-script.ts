@@ -182,11 +182,6 @@ async function handleMessage(action: ActionObject) {
       return
     }
 
-    case ACTION_KEYS.SET_PLAY_STATE: {
-      state.playState = action.data.playState
-      return
-    }
-
     case ACTION_KEYS.TOGGLE_DISABLE_SCROBBLE_CURRENT: {
       if (state.scrobbleState != scrobbleStates.MANUALLY_DISABLED) {
         state.scrobbleState = scrobbleStates.MANUALLY_DISABLED
@@ -196,8 +191,19 @@ async function handleMessage(action: ActionObject) {
       return
     }
 
+    case ACTION_KEYS.FORCE_SCROBBLE_CURRENT: {
+      state.scrobbleState = scrobbleStates.FORCE_SCROBBLE
+      return
+    }
+
     case ACTION_KEYS.SET_PLAY_TIME: {
-      const { duration, playTime } = action.data
+      // not the current track, don't update state
+      if (!state.track || action.data.connectorId !== state.track.connectorId) {
+        return
+      }
+
+      const { duration, playTime } = action.data.timeInfo
+
       state.playTime = playTime
       state.trackDuration = duration
 
@@ -205,9 +211,9 @@ async function handleMessage(action: ActionObject) {
       state.scrobbleAt = Math.min(60 * 4, duration ? duration / 2 : 9999)
 
       if (
-        state.playState === 'PLAYING' &&
         state.track &&
-        state.scrobbleState === scrobbleStates.WILL_SCROBBLE
+        (state.scrobbleState === scrobbleStates.WILL_SCROBBLE ||
+          state.scrobbleState === scrobbleStates.FORCE_SCROBBLE)
       ) {
         const scrobbler = getScrobbler()
 
@@ -219,7 +225,10 @@ async function handleMessage(action: ActionObject) {
           }
         }
 
-        if (state.playTime > state.scrobbleAt) {
+        if (
+          state.playTime > state.scrobbleAt ||
+          state.scrobbleState === scrobbleStates.FORCE_SCROBBLE
+        ) {
           state.scrobbleState = scrobbleStates.SCROBBLED
           if (scrobbler) {
             scrobbler.scrobble(state.track!, state.startedPlaying!)
@@ -240,7 +249,6 @@ function handleMessageContainer(
 }
 
 browser.tabs.onUpdated.addListener(async (id, changeInfo, windowprops) => {
-  console.log(id, windowprops.status, changeInfo['url'])
   if (
     // change comes through on loading with chrome, complete with firefox
     (windowprops.status !== 'loading' && windowprops.status !== 'complete') ||

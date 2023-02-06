@@ -30,9 +30,11 @@ class YoutubeConnector implements Connector {
   }
 
   async setup() {
-    const player = document.querySelector('.html5-video-player')
-    const video = player?.querySelector('video')
+    const player = await waitForElement('.html5-video-player')
+    const video = await waitForElement('video', player)
     if (!player || !video) {
+      console.error('Failed youtube connector setup, retrying in 5 seconds')
+      setTimeout(this.setup.bind(this), 5000)
       return
     }
     this.player = player
@@ -73,7 +75,7 @@ class YoutubeConnector implements Connector {
       ),
     )
 
-    const el = document.querySelector('#content')
+    const el = await waitForElement('#content')
     if (!el) {
       throw new Error('Could not setup watch, "#content" not found')
     }

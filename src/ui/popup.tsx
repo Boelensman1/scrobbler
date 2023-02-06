@@ -72,6 +72,9 @@ const Content = () => {
         <button onClick={() => actions.toggleDisableToggleCurrent()}>
           Don't scrobble current
         </button>
+        <button onClick={() => actions.forceScrobbleCurrent()}>
+          Force scrobble current
+        </button>
       </div>
       <pre>{DEBUG && state.debugString}</pre>
     </div>

@@ -36,21 +36,20 @@ export interface SetTrackPlayingActionObject {
   }
 }
 
-export interface SetPlayStateActionObject {
-  type: typeof ACTION_KEYS.SET_PLAY_STATE
-  data: { playState: 'PLAYING' | 'PAUSED' }
-}
-
 export interface SetPlayTimeActionObject {
   type: typeof ACTION_KEYS.SET_PLAY_TIME
-  data: TimeInfo
+  data: { connectorId: string; timeInfo: TimeInfo }
 }
 
 export interface ToggleDisableToggleCurrentActionObject {
   type: typeof ACTION_KEYS.TOGGLE_DISABLE_SCROBBLE_CURRENT
 }
 
-type ActionObject =
+export interface ForceToggleCurrentActionObject {
+  type: typeof ACTION_KEYS.FORCE_SCROBBLE_CURRENT
+}
+
+export type ActionObject =
   | RequestAuthenticationActionObject
   | GetStateActionObject
   | GetConfigActionObject
@@ -58,8 +57,6 @@ type ActionObject =
   | SaveConfigActionObject
   | SetLoadingNewTrackActionObject
   | SetTrackPlayingActionObject
-  | SetPlayStateActionObject
   | SetPlayTimeActionObject
   | ToggleDisableToggleCurrentActionObject
-
-export default ActionObject
+  | ForceToggleCurrentActionObject

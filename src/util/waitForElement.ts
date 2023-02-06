@@ -1,5 +1,6 @@
 const waitForElement = async <T extends Element = Element>(
   selector: string,
+  base: Element | Document = document,
   maxDelay = 5000,
   delay = 500,
   totalTime = 0,
@@ -7,13 +8,13 @@ const waitForElement = async <T extends Element = Element>(
   if (totalTime > maxDelay) {
     throw new Error(`Element "${selector}" not found after ${totalTime}`)
   }
-  const el = document.querySelector<T>(selector)
+  const el = base.querySelector<T>(selector)
   if (el) {
     return el
   } else {
     // sleep 2s
     await new Promise((resolve) => setTimeout(resolve, delay))
-    return waitForElement(selector, maxDelay, delay, totalTime + delay)
+    return waitForElement(selector, base, maxDelay, delay, totalTime + delay)
   }
 }
 
