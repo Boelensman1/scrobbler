@@ -98,6 +98,17 @@ const resetState = () => {
   state.startedPlaying = new Date()
 }
 
+const forceableScrobbleStates: (keyof typeof scrobbleStates)[] = [
+  scrobbleStates.BELOW_MIN_SCROBBLER_QUALITY,
+  scrobbleStates.MANUALLY_DISABLED,
+  scrobbleStates.SCROBBLED,
+  scrobbleStates.TRACK_TOO_SHORT,
+  scrobbleStates.WILL_SCROBBLE,
+  scrobbleStates.FORCE_SCROBBLE,
+]
+const canForceScrobble = (scrobbleState: typeof state.scrobbleState): boolean =>
+  forceableScrobbleStates.includes(scrobbleState)
+
 async function handleMessage(action: ActionObject) {
   switch (action.type) {
     case ACTION_KEYS.REQUEST_AUTHENTICATION: {
@@ -184,7 +195,9 @@ async function handleMessage(action: ActionObject) {
 
     case ACTION_KEYS.TOGGLE_DISABLE_SCROBBLE_CURRENT: {
       if (state.scrobbleState != scrobbleStates.MANUALLY_DISABLED) {
-        state.scrobbleState = scrobbleStates.MANUALLY_DISABLED
+        if (canForceScrobble(state.scrobbleState)) {
+          state.scrobbleState = scrobbleStates.MANUALLY_DISABLED
+        }
       } else {
         state.scrobbleState = getScrobbleState(state)
       }
@@ -192,7 +205,9 @@ async function handleMessage(action: ActionObject) {
     }
 
     case ACTION_KEYS.FORCE_SCROBBLE_CURRENT: {
-      state.scrobbleState = scrobbleStates.FORCE_SCROBBLE
+      if (canForceScrobble(state.scrobbleState)) {
+        state.scrobbleState = scrobbleStates.FORCE_SCROBBLE
+      }
       return
     }
 
