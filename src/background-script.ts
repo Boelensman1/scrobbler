@@ -163,21 +163,12 @@ async function handleMessage(action: ActionObject) {
         action.data.songInfos.map((songInfo: SongInfo) =>
           scrobbler.getTrack(songInfo),
         ),
-      ).then(async (tracks) => {
-        state.debugString = JSON.stringify(
-          [
-            action.data.songInfos.map((songInfo: SongInfo) => ({
-              track: songInfo.track,
-              artist: songInfo.artist,
-            })),
-            tracks,
-          ],
-          null,
-          2,
-        )
+      ).then(async (tracks: (Track | null)[]) => {
+        state.searchResults = tracks.filter((t) => !!t) as Track[]
+
         // get the track with the highest 'match quality'
         // match quality for last.fm is defined as # of listeners
-        const [track] = (tracks.filter((t) => !!t) as Track[]).sort(
+        const [track] = state.searchResults.sort(
           (track1: Track, track2: Track) =>
             track2.scrobblerMatchQuality - track1.scrobblerMatchQuality,
         )
@@ -212,9 +203,43 @@ async function handleMessage(action: ActionObject) {
       return
     }
 
+    case ACTION_KEYS.SAVE_TRACK_EDIT: {
+      // not the current track, don't update state
+      if (action.data.connectorId !== state.activeConnectorId) {
+        return
+      }
+
+      if (state.scrobbleState !== scrobbleStates.MANUALLY_DISABLED) {
+        state.scrobbleState = scrobbleStates.SEARCHING
+      }
+      state.track = null
+
+      const scrobbler = getScrobbler()
+      if (!scrobbler) {
+        return
+      }
+
+      const track = await scrobbler.getTrack({
+        track: action.data.editValues.name.trim(),
+        artist: action.data.editValues.artist.trim(),
+      })
+
+      if (track) {
+        await getAdditionalDataFromInfoProviders(track)
+
+        state.track = track
+
+        if (state.scrobbleState !== scrobbleStates.MANUALLY_DISABLED) {
+          state.scrobbleState = getScrobbleState(state)
+        }
+      }
+
+      return
+    }
+
     case ACTION_KEYS.SET_PLAY_TIME: {
       // not the current track, don't update state
-      if (!state.track || action.data.connectorId !== state.activeConnectorId) {
+      if (action.data.connectorId !== state.activeConnectorId) {
         return
       }
 

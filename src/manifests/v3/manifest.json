@@ -14,7 +14,7 @@
     "type": "module"
   },
   "action": {
-    "default_popup": "../../ui/popup.html"
+    "default_popup": "../../ui/popup/index.html"
   },
   "options_ui": {
     "page": "../../ui/index.html",

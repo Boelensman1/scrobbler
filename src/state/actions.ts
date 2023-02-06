@@ -15,6 +15,8 @@ import type {
   TimeInfo,
   ToggleDisableToggleCurrentActionObject,
   ForceToggleCurrentActionObject,
+  TrackEditValues,
+  SaveTrackEditActionObject,
 } from 'interfaces'
 
 export const ACTION_KEYS = {
@@ -33,6 +35,8 @@ export const ACTION_KEYS = {
   TOGGLE_DISABLE_SCROBBLE_CURRENT:
     'TOGGLE_DISABLE_SCROBBLE_CURRENT' as 'TOGGLE_DISABLE_SCROBBLE_CURRENT',
   FORCE_SCROBBLE_CURRENT: 'FORCE_SCROBBLE_CURRENT' as 'FORCE_SCROBBLE_CURRENT',
+
+  SAVE_TRACK_EDIT: 'SAVE_TRACK_EDIT' as 'SAVE_TRACK_EDIT',
 }
 
 const send = <T extends ActionObject, U = void>(arg: T): Promise<U> =>
@@ -100,6 +104,11 @@ const actions = {
   forceScrobbleCurrent: () =>
     send<ForceToggleCurrentActionObject>({
       type: ACTION_KEYS.FORCE_SCROBBLE_CURRENT,
+    }),
+  saveTrackEdit: (connectorId: string, editValues: TrackEditValues) =>
+    send<SaveTrackEditActionObject>({
+      type: ACTION_KEYS.SAVE_TRACK_EDIT,
+      data: { connectorId, editValues },
     }),
 }
 

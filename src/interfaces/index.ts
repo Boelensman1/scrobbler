@@ -10,5 +10,6 @@ export {
   InformationProviderInfo,
 } from './InformationProvider'
 export { GetTrackResult } from '../scrobblers/lastFm'
+export { default as TrackEditValues } from './TrackEditValues'
 
 export * from './ActionObject'

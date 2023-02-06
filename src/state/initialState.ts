@@ -12,6 +12,7 @@ const initialState: State = {
   minimumScrobblerQuality: Number.MAX_SAFE_INTEGER,
   trackDuration: 0,
   activeConnectorId: null,
+  searchResults: [],
 }
 
 export default initialState

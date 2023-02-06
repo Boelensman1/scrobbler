@@ -3,14 +3,19 @@ import { createRoot } from 'react-dom/client'
 
 import browser from 'webextension-polyfill'
 
-import type { State } from '../interfaces'
+import type { State } from 'interfaces'
 import { actions, initialState } from 'internals'
+
+import EditSearch from './EditSearch'
 
 const DEBUG = Number(process.env.DEBUG) === 1 || false
 
 const defaultAlbumArtUrl = 'https://via.placeholder.com/150'
 
-const Track = ({ track }: Pick<State, 'track'>) => {
+const Track = ({
+  activeConnectorId,
+  track,
+}: Pick<State, 'activeConnectorId' | 'track'>) => {
   if (!track) {
     return null
   }
@@ -25,7 +30,7 @@ const Track = ({ track }: Pick<State, 'track'>) => {
       <div style={{ display: 'flex', flexDirection: 'column' }}>
         {DEBUG && (
           <div>
-            Ids: {track.connectorId} - {track.musicBrainzReleaseGroupId}
+            Ids: {activeConnectorId} - {track.musicBrainzReleaseGroupId}
           </div>
         )}
         <div>
@@ -44,6 +49,7 @@ const Track = ({ track }: Pick<State, 'track'>) => {
 
 const Content = () => {
   const [state, setState] = useState<State>(initialState)
+  const [edittingSearch, setEditingSearch] = useState<boolean>(false)
   useEffect(() => {
     const updateState = async () => {
       const newState = await actions.getState()
@@ -55,9 +61,25 @@ const Content = () => {
     return () => clearInterval(interval)
   }, [])
 
+  if (!state.activeConnectorId) {
+    return <div>Unrecognised site</div>
+  }
+
   return (
     <div>
-      <Track track={state.track} />
+      {edittingSearch ? (
+        <EditSearch
+          connectorId={state.activeConnectorId}
+          searchResults={state.searchResults}
+          track={state.track}
+          stopEditting={() => setEditingSearch(false)}
+        />
+      ) : (
+        <Track
+          activeConnectorId={state.activeConnectorId}
+          track={state.track}
+        />
+      )}
       <div>
         {state.scrobbleState} (
         {state.track ? state.track.scrobblerMatchQuality : -1}/
@@ -66,6 +88,7 @@ const Content = () => {
         s/{Math.round(state.scrobbleAt)}s
       </div>
       <div>
+        <button onClick={() => setEditingSearch(true)}>Edit search</button>
         <button onClick={() => browser.runtime.openOptionsPage()}>
           Options
         </button>

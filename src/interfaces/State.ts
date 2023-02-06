@@ -12,6 +12,7 @@ interface State {
   scrobbleAt: number
   trackDuration?: number
   activeConnectorId: string | null
+  searchResults: Track[]
 }
 
 export default State

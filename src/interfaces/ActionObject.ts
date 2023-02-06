@@ -1,5 +1,5 @@
 import type { ACTION_KEYS } from 'internals'
-import type { Config, SongInfo, TimeInfo } from 'interfaces'
+import type { Config, SongInfo, TimeInfo, TrackEditValues } from 'interfaces'
 
 export interface RequestAuthenticationActionObject {
   type: typeof ACTION_KEYS.REQUEST_AUTHENTICATION
@@ -50,6 +50,11 @@ export interface ForceToggleCurrentActionObject {
   type: typeof ACTION_KEYS.FORCE_SCROBBLE_CURRENT
 }
 
+export interface SaveTrackEditActionObject {
+  type: typeof ACTION_KEYS.SAVE_TRACK_EDIT
+  data: { connectorId: string; editValues: TrackEditValues }
+}
+
 export type ActionObject =
   | RequestAuthenticationActionObject
   | GetStateActionObject
@@ -61,3 +66,4 @@ export type ActionObject =
   | SetPlayTimeActionObject
   | ToggleDisableToggleCurrentActionObject
   | ForceToggleCurrentActionObject
+  | SaveTrackEditActionObject
