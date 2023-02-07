@@ -35,7 +35,7 @@ abstract class BaseConnector implements Connector {
   sendNowPlaying: boolean = false
 
   playTime = 0
-  track?: Track | null
+  track: Track | null = null
   scrobbleState: keyof typeof scrobbleStates =
     scrobbleStates.TRACK_NOT_RECOGNISED
   minimumScrobblerQuality: number = Number.MAX_SAFE_INTEGER
@@ -173,7 +173,7 @@ abstract class BaseConnector implements Connector {
     this.startedPlaying = new Date()
     this.playTime = 0
     this.playTimeAtLastStateChange = 0
-    this.track = undefined
+    this.track = null
   }
 
   async waitForReady(waitTime = 0): Promise<void> {
@@ -216,7 +216,7 @@ abstract class BaseConnector implements Connector {
     return songInfos as SongInfo[]
   }
 
-  async newTrack() {
+  async newTrack(): Promise<Track | null> {
     await this.waitForReady()
 
     // check if we actually changed tracks
@@ -224,7 +224,7 @@ abstract class BaseConnector implements Connector {
 
     // we did not change tracks
     if (this.connectorTrackId === potentialNewTrackId) {
-      return
+      return this.track
     }
     await bgActions.setLoadingNewTrack()
 
@@ -273,13 +273,14 @@ abstract class BaseConnector implements Connector {
     }
 
     this.scrobbleState = this.getScrobbleState()
+    return track
   }
 
   async onStateChanged(type: 'time' | 'play' | 'pause' | 'seeking' | 'seeked') {
     const now = new Date()
     if (!this.lastStateChange) {
       this.lastStateChange = now
-      await bgActions.requestBecomeActiveTab(true)
+      await bgActions.requestBecomeActiveTab(false)
       await this.newTrack()
     } else {
       if (
