@@ -1,7 +1,7 @@
 import md5 from 'md5'
 
 import type { SongInfo } from 'interfaces'
-import { Track } from 'internals'
+import { Artist, Track } from 'internals'
 
 const defaultOptions = {
   url: '/2.0',
@@ -27,6 +27,17 @@ interface Params {
   [key: string]: any
 }
 
+interface Tag {
+  name: string
+  url: string
+}
+
+interface Image {
+  // @ts-ignore
+  #text: string
+  size: string
+}
+
 export interface GetTrackResult {
   mbid?: string
   name: string
@@ -41,13 +52,42 @@ export interface GetTrackResult {
     artist: string
     title: string
     url: string
-    image: {
-      // @ts-ignore
-      #text: string
-      size: string
+    image: Image[]
+  }
+  toptags: Tag[]
+}
+
+interface GetArtistResult {
+  name: string
+  url: string
+  image: Image[]
+  streamable: string
+  ontour: string
+  stats: {
+    listeners: string
+    playcount: string
+  }
+  similar: {
+    artist: {
+      name: string
+      url: string
+      image: Image[]
     }[]
   }
-  toptags: { name: string; url: string }[]
+  tags: { tag: Tag }[]
+  bio: {
+    links: {
+      link: {
+        // @ts-ignore
+        #text: string
+        rel: string
+        href: string
+      }
+    }[]
+    published: string
+    summary: string
+    content: string
+  }
 }
 
 const generateSign = (params: Params, secret: string) => {
@@ -152,6 +192,22 @@ class LastFm {
 
   async searchTrack(input: { track: string; artist?: string }) {
     return this.doRequest('track.search', input)
+  }
+
+  async getArtist(artistName: string): Promise<Artist | null> {
+    const result = await this.doRequest('artist.getInfo', {
+      artist: artistName,
+    })
+    if (result.error) {
+      return null
+    }
+
+    const artist = result.artist as GetArtistResult
+    return new Artist({
+      name: artist.name,
+      listeners: Number(artist.stats.listeners),
+      plays: Number(artist.stats.playcount),
+    })
   }
 
   async getTrack(songInfo: SongInfo): Promise<Track | null> {
