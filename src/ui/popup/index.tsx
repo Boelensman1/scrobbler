@@ -56,7 +56,7 @@ const Track = ({
   )
 }
 
-const Content = () => {
+const InnerPopup = () => {
   const [edittingSearch, setEditingSearch] = useState<boolean>(false)
   const [globalState, setGlobalState] = useState<State>(initialState)
   const [connectorState, setConnectorState] = useState<ConnectorState>()
@@ -80,8 +80,8 @@ const Content = () => {
   }, [])
 
   const tabId = globalState.activeConnectorTabId
-  if (!connectorState || !tabId) {
-    return <div>loading...</div>
+  if (!connectorState || tabId === null) {
+    return <div>loading... Check scrobblers.</div>
   }
 
   return (
@@ -119,11 +119,17 @@ const Content = () => {
         <button onClick={() => ctActions.forceScrobbleCurrent(tabId)}>
           Force scrobble current
         </button>
-        <button onClick={() => browser.runtime.openOptionsPage()}>
-          Options
-        </button>
       </div>
       <pre>{DEBUG && globalState.debugString}</pre>
+    </div>
+  )
+}
+
+const Content = () => {
+  return (
+    <div>
+      <InnerPopup />
+      <button onClick={() => browser.runtime.openOptionsPage()}>Options</button>
     </div>
   )
 }

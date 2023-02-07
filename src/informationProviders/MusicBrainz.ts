@@ -8,7 +8,7 @@ class MusicBrainzInformationProvider implements InformationProvider {
   ]
 
   async lookupReleaseGroup(track: Track) {
-    const url = `http://musicbrainz.org/ws/2/recording?fmt=json&query=recording:"${track.name}" AND artist:"${track.artist}"`
+    const url = `https://musicbrainz.org/ws/2/recording?fmt=json&query=recording:"${track.name}" AND artist:"${track.artist}"`
     const response = await fetch(url)
     if (!response.ok) {
       return false

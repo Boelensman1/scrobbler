@@ -14,7 +14,7 @@ class CoverArtInformationProvider implements InformationProvider {
       return {}
     }
 
-    const albumArtUrl = `http://coverartarchive.org/release-group/${track.musicBrainzReleaseGroupId}/front-500`
+    const albumArtUrl = `https://coverartarchive.org/release-group/${track.musicBrainzReleaseGroupId}/front-500`
     if (await this.checkCoverArtExists(albumArtUrl)) {
       return { albumArtUrl }
     }
