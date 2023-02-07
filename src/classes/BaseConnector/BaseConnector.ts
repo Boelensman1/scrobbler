@@ -65,9 +65,8 @@ abstract class BaseConnector implements Connector {
   async setup() {
     const elementToWatch = await this.setupWatches()
     if (elementToWatch) {
-      this.connectorTrackId = await this.getCurrentTrackId()
       const observer = new MutationObserver(
-        _.debounce(this.checkIfNewTrack.bind(this), 500, { maxWait: 1500 }),
+        _.debounce(this.newTrack.bind(this), 500, { maxWait: 1500 }),
       )
       const observerConfig = {
         childList: true,
@@ -171,16 +170,11 @@ abstract class BaseConnector implements Connector {
     }
   }
 
-  async checkIfNewTrack() {
-    const potentialNewTrackId = await this.getCurrentTrackId()
-
-    // we changed tracks
-    if (this.connectorTrackId !== potentialNewTrackId) {
-      this.connectorTrackId = potentialNewTrackId
-      if (await this.isPlaying()) {
-        await bgActions.requestBecomeActiveTab(false)
-      }
-    }
+  resetTrack() {
+    this.startedPlaying = new Date()
+    this.playTime = 0
+    this.playTimeAtLastStateChange = 0
+    this.track = undefined
   }
 
   async waitForReady(waitTime = 0): Promise<void> {
@@ -224,19 +218,19 @@ abstract class BaseConnector implements Connector {
   }
 
   async newTrack() {
-    this.startedPlaying = new Date()
-    this.track = undefined
+    await this.waitForReady()
 
-    if (await this.isPlaying()) {
-      // completely new track, so replace even if something is already playing
-      return this.setTrackInState(true)
+    // check if we actually changed tracks
+    const potentialNewTrackId = await this.getCurrentTrackId()
+
+    // we did not change tracks
+    if (this.connectorTrackId === potentialNewTrackId) {
+      return
     }
-  }
-
-  async setTrackInState(force: boolean) {
     await bgActions.setLoadingNewTrack()
 
-    await this.waitForReady()
+    this.resetTrack()
+    this.connectorTrackId = potentialNewTrackId
 
     const [partialSongInfos, timeInfo, popularity] = await Promise.all([
       this.getSongInfoOptionsFromConnector(),
@@ -244,9 +238,6 @@ abstract class BaseConnector implements Connector {
       this.getPopularity ? this.getPopularity() : Promise.resolve(1),
     ])
 
-    // reset playtime
-    this.playTime = 0
-    this.playTimeAtLastStateChange = 0
     this.trackDuration = timeInfo.duration
 
     // From last.fm docs, scrobbling should occur when: the track has been played for at least half its duration, or for 4 minutes (whichever occurs earlier.)
@@ -260,34 +251,31 @@ abstract class BaseConnector implements Connector {
       (this.config.get('scrobblerQualityDynamic') ? popularity / 200 : 1)
 
     const songInfos = combineSongInfos(partialSongInfos)
-    await Promise.all(
+    const tracks: (Track | null)[] = await Promise.all(
       songInfos.map((songInfo: SongInfo) => this.scrobbler.getTrack(songInfo)),
-    ).then(async (tracks: (Track | null)[]) => {
-      this.searchResults = tracks.filter((t) => !!t) as Track[]
+    )
+    this.searchResults = tracks.filter((t) => !!t) as Track[]
 
-      // get the track with the highest 'match quality'
-      // match quality for last.fm is defined as # of listeners
-      const [track] = this.searchResults.sort(
-        (track1: Track, track2: Track) =>
-          track2.scrobblerMatchQuality - track1.scrobblerMatchQuality,
-      )
+    // get the track with the highest 'match quality'
+    // match quality for last.fm is defined as # of listeners
+    const [track] = this.searchResults.sort(
+      (track1: Track, track2: Track) =>
+        track2.scrobblerMatchQuality - track1.scrobblerMatchQuality,
+    )
 
-      await bgActions.requestBecomeActiveTab(force)
+    if (track) {
+      await getAdditionalDataFromInfoProviders(track)
+      this.track = track
+    }
 
-      if (track) {
-        await getAdditionalDataFromInfoProviders(track)
-
-        this.track = track
-
-        this.scrobbleState = this.getScrobbleState()
-      }
-    })
+    this.scrobbleState = this.getScrobbleState()
   }
 
   async onStateChanged(type: 'time' | 'play' | 'pause' | 'seeking' | 'seeked') {
     const now = new Date()
     if (!this.lastStateChange) {
       this.lastStateChange = now
+      await bgActions.requestBecomeActiveTab(true)
       await this.newTrack()
     } else {
       if (
