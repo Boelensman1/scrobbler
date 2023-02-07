@@ -13,7 +13,7 @@ const main = async () => {
   }
   const activeConnector = new MatchingConnector()
 
-  await activeConnector.setup()
+  await activeConnector.connectorMiddleware.setup()
 }
 
 main()

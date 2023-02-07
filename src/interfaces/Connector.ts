@@ -1,3 +1,4 @@
+import type { ConnectorMiddleware } from 'classes'
 import PartialSongInfo from './PartialSongInfo'
 import TimeInfo from './TimeInfo'
 
@@ -5,10 +6,12 @@ type Getter = (connector: Connector) => Promise<PartialSongInfo[]>
 type PostProcessor = (songInfos: PartialSongInfo[]) => PartialSongInfo[]
 
 export interface Connector {
+  connectorMiddleware: ConnectorMiddleware
+
   getters: Getter[]
   postProcessors: PostProcessor[]
 
-  setup(): Promise<void>
+  setup(): Promise<HTMLElement | null>
   isPlaying(): Promise<boolean>
   isReady(): Promise<boolean>
 

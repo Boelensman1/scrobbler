@@ -1,14 +1,15 @@
 import browser from 'webextension-polyfill'
-
 import {
   LastFm,
   Track,
   ConfigContainer,
   scrobbleStates,
-  initialState,
   MusicBrainzInformationProvider,
   CoverArtArchiveInformationProvider,
-  ACTION_KEYS,
+  BG_ACTION_KEYS,
+  ctActions,
+  sendActionToConnector,
+  StateManager,
 } from 'internals'
 
 import type {
@@ -16,10 +17,8 @@ import type {
   State,
   SongInfo,
   InformationProvider,
-  ActionObject,
+  BgActionObject,
 } from 'interfaces'
-
-const state = { ...initialState }
 
 const scrobblers: { [key: string]: LastFm } = {
   lastFm: new LastFm(),
@@ -31,6 +30,7 @@ const informationProviders: InformationProvider[] = [
 ]
 
 const config = new ConfigContainer()
+const stateManager = new StateManager()
 
 const getScrobbler = (): LastFm | null => {
   const selectedScrobbler = config.get('scrobbler')
@@ -91,13 +91,6 @@ const getAdditionalDataFromInfoProviders = async (track: Track) => {
   }
 }
 
-const resetState = () => {
-  Object.assign(state, initialState)
-
-  // reset startedPlaying
-  state.startedPlaying = new Date()
-}
-
 const forceableScrobbleStates: (keyof typeof scrobbleStates)[] = [
   scrobbleStates.BELOW_MIN_SCROBBLER_QUALITY,
   scrobbleStates.MANUALLY_DISABLED,
@@ -106,45 +99,77 @@ const forceableScrobbleStates: (keyof typeof scrobbleStates)[] = [
   scrobbleStates.WILL_SCROBBLE,
   scrobbleStates.FORCE_SCROBBLE,
 ]
-const canForceScrobble = (scrobbleState: typeof state.scrobbleState): boolean =>
+const canForceScrobble = (scrobbleState: State['scrobbleState']): boolean =>
   forceableScrobbleStates.includes(scrobbleState)
 
-async function handleMessage(action: ActionObject) {
+// setFullyLoaded is called after init (in main)
+let setFullyLoaded: (val: true) => void
+const fullyLoaded = new Promise((resolve) => (setFullyLoaded = resolve))
+
+async function handleMessage(action: BgActionObject) {
+  await fullyLoaded
+  const state = await stateManager.getState()
+
   switch (action.type) {
-    case ACTION_KEYS.REQUEST_AUTHENTICATION: {
+    case BG_ACTION_KEYS.REQUEST_AUTHENTICATION: {
       const url = await scrobblers.lastFm.getAuthUrl('https://last-fm-login')
       browser.tabs.update({ url })
       return
     }
 
-    case ACTION_KEYS.GET_STATE: {
-      return state
+    case BG_ACTION_KEYS.GET_STATE: {
+      return { ...state }
     }
 
-    case ACTION_KEYS.GET_CONFIG: {
+    case BG_ACTION_KEYS.GET_CONFIG: {
       return config.getFullConfig()
     }
 
-    case ACTION_KEYS.SAVE_CONFIG: {
+    case BG_ACTION_KEYS.SAVE_CONFIG: {
       Object.entries(action.data).map(([key, value]) => {
         config.set(key as keyof Config, value as any)
       })
       return
     }
 
-    case ACTION_KEYS.RESET_CONFIG: {
+    case BG_ACTION_KEYS.RESET_CONFIG: {
       config.reset()
       return
     }
 
-    case ACTION_KEYS.SET_LOADING_NEW_TRACK: {
-      resetState()
+    /*
+    case BG_ACTION_KEYS.SET_LOADING_NEW_TRACK: {
+      if (state.activeConnectorId) {
+        const isStillPlaying = await sendActionToConnector(
+          state.activeConnectorId,
+          ctActions.getStillPlaying,
+        )
+        console.log('playing', isStillPlaying)
+        if (isStillPlaying) {
+          return
+        }
+      }
+      stateManager.resetState()
       state.scrobbleState = scrobbleStates.SEARCHING
       return
     }
+    */
 
-    case ACTION_KEYS.SET_TRACK_PLAYING: {
-      resetState()
+    case BG_ACTION_KEYS.SET_TRACK_PLAYING: {
+      if (
+        state.activeConnectorId &&
+        state.activeConnectorId !== action.data.connectorId
+      ) {
+        const isStillPlaying = await sendActionToConnector(
+          state.activeConnectorId,
+          ctActions.getStillPlaying,
+        )
+        if (isStillPlaying) {
+          return
+        }
+      }
+
+      stateManager.resetState()
       state.scrobbleState = getScrobbleState(state)
       state.activeConnectorId = action.data.connectorId
 
@@ -159,7 +184,7 @@ async function handleMessage(action: ActionObject) {
         return
       }
 
-      Promise.all(
+      await Promise.all(
         action.data.songInfos.map((songInfo: SongInfo) =>
           scrobbler.getTrack(songInfo),
         ),
@@ -185,7 +210,7 @@ async function handleMessage(action: ActionObject) {
       return
     }
 
-    case ACTION_KEYS.TOGGLE_DISABLE_SCROBBLE_CURRENT: {
+    case BG_ACTION_KEYS.TOGGLE_DISABLE_SCROBBLE_CURRENT: {
       if (state.scrobbleState != scrobbleStates.MANUALLY_DISABLED) {
         if (canForceScrobble(state.scrobbleState)) {
           state.scrobbleState = scrobbleStates.MANUALLY_DISABLED
@@ -196,14 +221,14 @@ async function handleMessage(action: ActionObject) {
       return
     }
 
-    case ACTION_KEYS.FORCE_SCROBBLE_CURRENT: {
+    case BG_ACTION_KEYS.FORCE_SCROBBLE_CURRENT: {
       if (canForceScrobble(state.scrobbleState)) {
         state.scrobbleState = scrobbleStates.FORCE_SCROBBLE
       }
       return
     }
 
-    case ACTION_KEYS.SAVE_TRACK_EDIT: {
+    case BG_ACTION_KEYS.SAVE_TRACK_EDIT: {
       // not the current track, don't update state
       if (action.data.connectorId !== state.activeConnectorId) {
         return
@@ -237,7 +262,7 @@ async function handleMessage(action: ActionObject) {
       return
     }
 
-    case ACTION_KEYS.SET_PLAY_TIME: {
+    case BG_ACTION_KEYS.SET_PLAY_TIME: {
       // not the current track, don't update state
       if (action.data.connectorId !== state.activeConnectorId) {
         return
@@ -281,7 +306,7 @@ async function handleMessage(action: ActionObject) {
   }
 }
 function handleMessageContainer(
-  action: ActionObject,
+  action: BgActionObject,
   _sender: any,
   sendResponse: () => any,
 ): true {
@@ -330,7 +355,9 @@ const main = async () => {
       }
     }
   }
-
-  browser.runtime.onMessage.addListener(handleMessageContainer)
+  setFullyLoaded(true)
 }
 main()
+
+// according to mozilla docs, this listener must be top level
+browser.runtime.onMessage.addListener(handleMessageContainer)

@@ -1,4 +1,4 @@
-const waitForElement = async <T extends Element = Element>(
+const waitForElement = async <T extends HTMLElement = HTMLElement>(
   selector: string,
   base: Element | Document = document,
   maxDelay = 5000,

@@ -4,7 +4,7 @@ import _ from 'lodash'
 import { useFormik } from 'formik'
 
 import type { State, TrackEditValues } from 'interfaces'
-import { actions } from 'internals'
+import { bgActions } from 'internals'
 
 const ManualInputForm = ({
   track,
@@ -103,7 +103,7 @@ const EditSearch = ({
 }) => {
   const [manualInput, setManualInput] = useState(false)
   const save = (trackEditValues: TrackEditValues) => {
-    actions.saveTrackEdit(connectorId, trackEditValues)
+    bgActions.saveTrackEdit(connectorId, trackEditValues)
     stopEditting()
   }
   return (

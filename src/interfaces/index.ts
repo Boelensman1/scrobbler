@@ -12,4 +12,5 @@ export {
 export { GetTrackResult } from '../scrobblers/lastFm'
 export { default as TrackEditValues } from './TrackEditValues'
 
-export * from './ActionObject'
+export * from './BgActionObject'
+export * from './CtActionObject'

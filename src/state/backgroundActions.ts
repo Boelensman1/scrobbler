@@ -1,6 +1,6 @@
 import browser from 'webextension-polyfill'
 import type {
-  ActionObject,
+  BgActionObject,
   Config,
   GetConfigActionObject,
   GetStateActionObject,
@@ -19,7 +19,7 @@ import type {
   SaveTrackEditActionObject,
 } from 'interfaces'
 
-export const ACTION_KEYS = {
+export const BG_ACTION_KEYS = {
   REQUEST_AUTHENTICATION: 'REQUEST_AUTHENTICATION' as 'REQUEST_AUTHENTICATION',
 
   GET_STATE: 'GET_STATE' as 'GET_STATE',
@@ -39,34 +39,34 @@ export const ACTION_KEYS = {
   SAVE_TRACK_EDIT: 'SAVE_TRACK_EDIT' as 'SAVE_TRACK_EDIT',
 }
 
-const send = <T extends ActionObject, U = void>(arg: T): Promise<U> =>
+const send = <T extends BgActionObject, U = void>(arg: T): Promise<U> =>
   browser.runtime.sendMessage(arg)
 
 const actions = {
   requestAuthentication: () =>
     send<RequestAuthenticationActionObject>({
-      type: ACTION_KEYS.REQUEST_AUTHENTICATION,
+      type: BG_ACTION_KEYS.REQUEST_AUTHENTICATION,
     }),
   getState: (): Promise<State> =>
     send<GetStateActionObject, State>({
-      type: ACTION_KEYS.GET_STATE,
+      type: BG_ACTION_KEYS.GET_STATE,
     }),
   getConfig: (): Promise<Config> =>
     send<GetConfigActionObject, Config>({
-      type: ACTION_KEYS.GET_CONFIG,
+      type: BG_ACTION_KEYS.GET_CONFIG,
     }),
   resetConfig: () =>
     send<ResetConfigActionObject>({
-      type: ACTION_KEYS.RESET_CONFIG,
+      type: BG_ACTION_KEYS.RESET_CONFIG,
     }),
   saveConfig: (config: Partial<Config>) =>
     send<SaveConfigActionObject>({
-      type: ACTION_KEYS.SAVE_CONFIG,
+      type: BG_ACTION_KEYS.SAVE_CONFIG,
       data: config,
     }),
   setLoadingNewTrack: () =>
     send<SetLoadingNewTrackActionObject>({
-      type: ACTION_KEYS.SET_LOADING_NEW_TRACK,
+      type: BG_ACTION_KEYS.SET_LOADING_NEW_TRACK,
     }),
   setTrackPlaying: (
     connectorId: string,
@@ -75,39 +75,42 @@ const actions = {
       timeInfo,
       location,
       popularity,
+      onlyIfNoneIsPlaying,
     }: {
       songInfos: SongInfo[]
       timeInfo: TimeInfo
       location: string
       popularity: number
+      onlyIfNoneIsPlaying: boolean
     },
   ) =>
     send<SetTrackPlayingActionObject>({
-      type: ACTION_KEYS.SET_TRACK_PLAYING,
+      type: BG_ACTION_KEYS.SET_TRACK_PLAYING,
       data: {
         connectorId,
         songInfos,
         timeInfo,
         location,
         popularity,
+        onlyIfNoneIsPlaying,
       },
     }),
   setPlayTime: (connectorId: string, timeInfo: TimeInfo) =>
     send<SetPlayTimeActionObject>({
-      type: ACTION_KEYS.SET_PLAY_TIME,
+      type: BG_ACTION_KEYS.SET_PLAY_TIME,
       data: { connectorId, timeInfo },
     }),
   toggleDisableToggleCurrent: () =>
     send<ToggleDisableToggleCurrentActionObject>({
-      type: ACTION_KEYS.TOGGLE_DISABLE_SCROBBLE_CURRENT,
+      type: BG_ACTION_KEYS.TOGGLE_DISABLE_SCROBBLE_CURRENT,
     }),
   forceScrobbleCurrent: () =>
     send<ForceToggleCurrentActionObject>({
-      type: ACTION_KEYS.FORCE_SCROBBLE_CURRENT,
+      type: BG_ACTION_KEYS.FORCE_SCROBBLE_CURRENT,
     }),
   saveTrackEdit: (connectorId: string, editValues: TrackEditValues) =>
     send<SaveTrackEditActionObject>({
-      type: ACTION_KEYS.SAVE_TRACK_EDIT,
+      type: BG_ACTION_KEYS.SAVE_TRACK_EDIT,
       data: { connectorId, editValues },
     }),
 }

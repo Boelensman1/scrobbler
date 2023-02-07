@@ -1,10 +1,17 @@
+import browser from 'webextension-polyfill'
 import { Entries } from 'type-fest'
 
 import _ from 'lodash'
 import * as MetadataFilter from 'metadata-filter'
 
-import type { Connector, PartialSongInfo, SongInfo, State } from 'interfaces'
-import { actions } from 'internals'
+import type {
+  CtActionObject,
+  Connector,
+  PartialSongInfo,
+  SongInfo,
+  State,
+} from 'interfaces'
+import { bgActions, CT_ACTION_KEYS } from 'internals'
 
 const metadataFilter = MetadataFilter.createFilter(
   MetadataFilter.createFilterSetForFields(
@@ -57,10 +64,43 @@ class ConnectorMiddleware {
   track?: any
 
   playTime = 0
-  scrobbled = false
 
   constructor(connector: Connector) {
     this.connector = connector
+  }
+
+  async setup() {
+    const elementToWatch = await this.connector.setup()
+    if (elementToWatch) {
+      this.connectorTrackId = await this.connector.getCurrentTrackId()
+      const observer = new MutationObserver(
+        _.debounce(this.checkIfNewTrack.bind(this), 500, { maxWait: 1500 }),
+      )
+      const observerConfig = {
+        childList: true,
+        subtree: true,
+        attributes: true,
+        characterData: true,
+      }
+
+      observer.observe(elementToWatch, observerConfig)
+    }
+
+    browser.runtime.onMessage.addListener(this.handleMessage.bind(this))
+  }
+
+  async handleMessage(action: CtActionObject) {
+    console.log('!!!', action.connectorId, this.connectorTrackId)
+    if (action.connectorId !== this.connectorTrackId) {
+      return null
+    }
+    switch (action.type) {
+      case CT_ACTION_KEYS.GET_STILL_PLAYING: {
+        const isPlaying = await this.connector.isPlaying()
+        console.log('!!! isplaying', isPlaying)
+        return isPlaying
+      }
+    }
   }
 
   async checkIfNewTrack() {
@@ -78,29 +118,14 @@ class ConnectorMiddleware {
   async setTrackInStateIfNeeded() {
     const [potentialNewTrackId, state]: [string, State] = await Promise.all([
       this.connector.getCurrentTrackId(),
-      actions.getState(),
+      bgActions.getState(),
     ])
 
     const stateTrackId = state.activeConnectorId
     if (stateTrackId !== potentialNewTrackId) {
       this.connectorTrackId = potentialNewTrackId
-      this.newTrack()
+      this.setTrackInState(true)
     }
-  }
-
-  async setupNewTrackWatch(target: Element) {
-    this.connectorTrackId = await this.connector.getCurrentTrackId()
-    const observer = new MutationObserver(
-      _.debounce(this.checkIfNewTrack.bind(this), 500, { maxWait: 1500 }),
-    )
-    const observerConfig = {
-      childList: true,
-      subtree: true,
-      attributes: true,
-      characterData: true,
-    }
-
-    observer.observe(target, observerConfig)
   }
 
   async waitForReady(waitTime = 0): Promise<void> {
@@ -145,10 +170,15 @@ class ConnectorMiddleware {
 
   async newTrack() {
     this.track = undefined
-    this.playTime = 0
-    this.playTimeAtLastStateChange = 0
 
-    await actions.setLoadingNewTrack()
+    if (await this.connector.isPlaying()) {
+      // completely new track, so replace even if something is already playing
+      return this.setTrackInState(false)
+    }
+  }
+
+  async setTrackInState(onlyIfNoneIsPlaying: boolean) {
+    await bgActions.setLoadingNewTrack()
 
     await this.waitForReady()
 
@@ -160,11 +190,16 @@ class ConnectorMiddleware {
         : Promise.resolve(1),
     ])
 
-    await actions.setTrackPlaying(this.connectorTrackId, {
+    // reset playtime
+    this.playTime = 0
+    this.playTimeAtLastStateChange = 0
+
+    await bgActions.setTrackPlaying(this.connectorTrackId, {
       songInfos: combineSongInfos(songInfos),
       timeInfo,
       location: window.location.href,
       popularity,
+      onlyIfNoneIsPlaying,
     })
   }
 
@@ -211,7 +246,7 @@ class ConnectorMiddleware {
       this.playTime += alreadyPlayed
     }
 
-    actions.setPlayTime(this.connectorTrackId, {
+    bgActions.setPlayTime(this.connectorTrackId, {
       playTime: this.playTime,
       duration,
       playbackRate,

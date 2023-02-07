@@ -4,7 +4,7 @@ import { createRoot } from 'react-dom/client'
 import browser from 'webextension-polyfill'
 
 import type { State } from 'interfaces'
-import { actions, initialState } from 'internals'
+import { bgActions, initialState } from 'internals'
 
 import EditSearch from './EditSearch'
 
@@ -61,7 +61,7 @@ const Content = () => {
   const [edittingSearch, setEditingSearch] = useState<boolean>(false)
   useEffect(() => {
     const updateState = async () => {
-      const newState = await actions.getState()
+      const newState = await bgActions.getState()
       setState(newState)
     }
 
@@ -100,10 +100,10 @@ const Content = () => {
         s/{Math.round(state.scrobbleAt)}s
       </div>
       <div>
-        <button onClick={() => actions.toggleDisableToggleCurrent()}>
+        <button onClick={() => bgActions.toggleDisableToggleCurrent()}>
           Don't scrobble current
         </button>
-        <button onClick={() => actions.forceScrobbleCurrent()}>
+        <button onClick={() => bgActions.forceScrobbleCurrent()}>
           Force scrobble current
         </button>
         <button onClick={() => browser.runtime.openOptionsPage()}>

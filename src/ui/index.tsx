@@ -3,7 +3,7 @@ import { createRoot } from 'react-dom/client'
 import { useFormik } from 'formik'
 
 import type { Config } from '../interfaces'
-import { actions, defaultConfig } from 'internals'
+import { bgActions, defaultConfig } from 'internals'
 
 const Content = () => {
   const [config, setConfig] = useState<Config>(defaultConfig)
@@ -15,14 +15,14 @@ const Content = () => {
     },
     onSubmit: async (values: Partial<Config>) => {
       delete values.scrobbler
-      await actions.saveConfig(values)
+      await bgActions.saveConfig(values)
     },
   })
 
   useEffect(() => {
     const updateConfig = async () => {
       setReloadConfig(false)
-      const newConfig = await actions.getConfig()
+      const newConfig = await bgActions.getConfig()
       setConfig(newConfig)
       formik.setValues(newConfig)
     }
@@ -34,11 +34,11 @@ const Content = () => {
 
   return (
     <div>
-      <button onClick={() => actions.requestAuthentication()}>auth</button>
+      <button onClick={() => bgActions.requestAuthentication()}>auth</button>
       <button
         id="resetConfig"
         onClick={async () => {
-          await actions.resetConfig()
+          await bgActions.resetConfig()
           setReloadConfig(true)
         }}
       >
