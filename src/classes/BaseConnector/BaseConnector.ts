@@ -205,13 +205,12 @@ abstract class BaseConnector implements Connector {
       .flat()
       .filter((s) => !!s) // remove nulls
 
-    songInfos = this.postProcessors.reduce<PartialSongInfo[]>(
-      (acc: PartialSongInfo[], postProcessor) => {
+    songInfos = this.postProcessors
+      .reduce<PartialSongInfo[]>((acc: PartialSongInfo[], postProcessor) => {
         acc = postProcessor(acc)
         return acc
-      },
-      songInfos as SongInfo[],
-    )
+      }, songInfos as SongInfo[])
+      .map(applyMetadataFilter)
 
     return songInfos as SongInfo[]
   }
