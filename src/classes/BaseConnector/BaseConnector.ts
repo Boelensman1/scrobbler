@@ -302,14 +302,21 @@ abstract class BaseConnector implements Connector {
       return
     }
 
-    this.playTime += currentTime - this.playTimeAtLastStateChange
+    // Math.min here, just in case things go wrong and we start jumping in time
+    // which could result in scrobbles in very quick succession via the
+    // replay detection
+    this.playTime += Math.min(5, currentTime - this.playTimeAtLastStateChange)
     this.playTimeAtLastStateChange = currentTime
 
     // detect replays
     if (duration && this.playTime > duration) {
-      const alreadyPlayed = this.playTime - duration
-      await this.newTrack()
-      this.playTime += alreadyPlayed
+      // partial reset
+      this.playTime = 0
+      this.playTimeAtLastStateChange = 0
+      if (this.scrobbleState !== scrobbleStates.MANUALLY_DISABLED) {
+        this.scrobbleState = scrobbleStates.TRACK_NOT_RECOGNISED
+      }
+      this.scrobbleState = this.getScrobbleState()
     }
 
     this.lastStateChange = now
