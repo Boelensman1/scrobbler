@@ -14,7 +14,6 @@ const getTrackInfoFromTitle = async (
     return []
   }
 
-  const additionalSongInfos = []
   const baseSongInfo = processYtVideoTitle(title)
   if (baseSongInfo && !baseSongInfo.artist) {
     baseSongInfo.artist = getTextFromSelector(channelNameSelector)
@@ -28,20 +27,7 @@ const getTrackInfoFromTitle = async (
     baseSongInfo.artist = baseSongInfo.artist.trim()
   }
 
-  if (baseSongInfo.track) {
-    baseSongInfo.track = baseSongInfo.track.trim()
-
-    // within brackets is usually extra info, for example version info, lets try removing it, this does cause some information to be lost, eg if this is the japanese version of a song
-    const regex = /\([^)]*\)/g
-    if (baseSongInfo.track.match(regex)) {
-      additionalSongInfos.push({
-        ...baseSongInfo,
-        track: baseSongInfo.track.replace(regex, '').trim(),
-      })
-    }
-  }
-
-  return [baseSongInfo, ...additionalSongInfos]
+  return [baseSongInfo]
 }
 
 export default getTrackInfoFromTitle
