@@ -41,7 +41,7 @@ abstract class BaseConnector implements Connector {
   minimumScrobblerQuality: number = Number.MAX_SAFE_INTEGER
   scrobbleAt = 4 * 60
   trackDuration?: number = Number.MAX_SAFE_INTEGER
-  searchResults: Track[] = []
+  searchQueryList: SongInfo[] = []
 
   abstract getters: Getter[]
   abstract postProcessors: PostProcessor[]
@@ -122,7 +122,7 @@ abstract class BaseConnector implements Connector {
           minimumScrobblerQuality: this.minimumScrobblerQuality,
           scrobbleAt: this.scrobbleAt,
           trackDuration: this.trackDuration,
-          searchResults: this.searchResults,
+          searchQueryList: this.searchQueryList,
         }
       }
 
@@ -151,7 +151,7 @@ abstract class BaseConnector implements Connector {
         this.track = null
 
         const track = await this.scrobbler.getTrack({
-          track: action.data.editValues.name.trim(),
+          track: action.data.editValues.track.trim(),
           artist: action.data.editValues.artist.trim(),
         })
 
@@ -253,11 +253,16 @@ abstract class BaseConnector implements Connector {
     const tracks: (Track | null)[] = await Promise.all(
       songInfos.map((songInfo: SongInfo) => this.scrobbler.getTrack(songInfo)),
     )
-    this.searchResults = tracks.filter((t) => !!t) as Track[]
+    const searchResults = tracks.filter((t) => !!t) as Track[]
+
+    // save searchQuery so we can edit it
+    this.searchQueryList = tracks.map((track, i) =>
+      track ? track.toSongInfo() : songInfos[i],
+    )
 
     // get the track with the highest 'match quality'
     // match quality for last.fm is defined as # of listeners
-    const [track] = this.searchResults.sort(
+    const [track] = searchResults.sort(
       (track1: Track, track2: Track) =>
         track2.scrobblerMatchQuality - track1.scrobblerMatchQuality,
     )

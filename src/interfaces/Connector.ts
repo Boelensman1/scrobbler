@@ -1,3 +1,4 @@
+import type { SongInfo } from 'interfaces'
 import type { LastFm, ConfigContainer } from 'internals'
 import type PartialSongInfo from './PartialSongInfo'
 import type TimeInfo from './TimeInfo'
@@ -20,6 +21,8 @@ export interface Connector {
   getCurrentTrackId(): Promise<any>
 
   getPopularity(): Promise<number>
+
+  searchQueryList: SongInfo[]
 }
 
 interface ConnectorStatic {

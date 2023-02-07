@@ -96,7 +96,7 @@ const InnerPopup = () => {
       {edittingSearch ? (
         <EditSearch
           activeConnectorTabId={tabId}
-          searchResults={connectorState.searchResults}
+          searchQueryList={connectorState.searchQueryList}
           track={connectorState.track}
           stopEditting={() => setEditingSearch(false)}
         />

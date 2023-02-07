@@ -1,4 +1,4 @@
-import type { ScrobblerLinks } from 'interfaces'
+import type { ScrobblerLinks, SongInfo } from 'interfaces'
 
 export class Track {
   name: string
@@ -54,6 +54,15 @@ export class Track {
     return {
       track: this.name,
       artist: this.artist,
+    }
+  }
+
+  toSongInfo(): SongInfo {
+    return {
+      track: this.name,
+      artist: this.artist,
+      album: this.album,
+      matchQuality: this.scrobblerMatchQuality,
     }
   }
 }

@@ -8,7 +8,7 @@ type ConnectorState = Pick<
   | 'minimumScrobblerQuality'
   | 'scrobbleAt'
   | 'trackDuration'
-  | 'searchResults'
+  | 'searchQueryList'
 >
 
 export default ConnectorState

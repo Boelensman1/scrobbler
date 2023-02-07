@@ -3,19 +3,21 @@ import React, { useState } from 'react'
 import _ from 'lodash'
 import { useFormik } from 'formik'
 
-import type { ConnectorState, TrackEditValues } from 'interfaces'
-import { ctActions } from 'internals'
+import type { ConnectorState, SongInfo, TrackEditValues } from 'interfaces'
+import { ctActions, Track } from 'internals'
 
 const ManualInputForm = ({
+  searchQueryList,
   track,
   save,
 }: {
-  track: ConnectorState['track']
+  searchQueryList: ConnectorState['searchQueryList']
+  track: SongInfo
   save: (values: TrackEditValues) => void
 }) => {
   const formik = useFormik({
     initialValues: {
-      name: track?.name || '',
+      track: track?.track || '',
       artist: track?.artist || '',
     },
     onSubmit: async (values: TrackEditValues) => {
@@ -23,36 +25,62 @@ const ManualInputForm = ({
     },
   })
 
-  return (
-    <form onSubmit={formik.handleSubmit}>
-      <div style={{ display: 'flex', flexDirection: 'column' }}>
-        <label htmlFor="name">Name</label>
-        <input
-          id="name"
-          onChange={formik.handleChange}
-          value={formik.values.name}
-          autoComplete="off"
-        />
+  const copyFrom = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const selectedSearchResult = e.currentTarget.value
+    if (selectedSearchResult === 'select') {
+      return
+    }
 
-        <label htmlFor="artist">Artist</label>
-        <input
-          id="artist"
-          onChange={formik.handleChange}
-          value={formik.values.artist}
-          autoComplete="off"
-        />
-        <button type="submit">save</button>
-      </div>
-    </form>
+    formik.setValues(
+      _.pick(searchQueryList[Number(selectedSearchResult)], [
+        'track',
+        'artist',
+      ]),
+    )
+  }
+
+  return (
+    <div>
+      <form>
+        <select id="copyFrom" onChange={copyFrom}>
+          <option value="select">Copy from:</option>
+          {searchQueryList.map((result, i) => (
+            <option key={i} value={i}>
+              {result.artist} - {result.track} ({result.matchQuality})
+            </option>
+          ))}
+        </select>
+      </form>
+      <form onSubmit={formik.handleSubmit}>
+        <div style={{ display: 'flex', flexDirection: 'column' }}>
+          <label htmlFor="track">Name</label>
+          <input
+            id="track"
+            onChange={formik.handleChange}
+            value={formik.values.track}
+            autoComplete="off"
+          />
+
+          <label htmlFor="artist">Artist</label>
+          <input
+            id="artist"
+            onChange={formik.handleChange}
+            value={formik.values.artist}
+            autoComplete="off"
+          />
+          <button type="submit">save</button>
+        </div>
+      </form>
+    </div>
   )
 }
 
 const SelectResultForm = ({
-  searchResults,
+  searchQueryList,
   save,
   goToManualInput,
 }: {
-  searchResults: ConnectorState['searchResults']
+  searchQueryList: ConnectorState['searchQueryList']
   save: (values: TrackEditValues) => void
   goToManualInput: () => void
 }) => {
@@ -69,8 +97,8 @@ const SelectResultForm = ({
     }
 
     save(
-      _.pick(searchResults[Number(selectedSearchResult)], [
-        'name',
+      _.pick(searchQueryList[Number(selectedSearchResult)], [
+        'track',
         'artist',
         'album',
       ]),
@@ -81,11 +109,14 @@ const SelectResultForm = ({
     <form>
       <select id="selectedSearchResult" onChange={submit}>
         <option value="select">Select search result</option>
-        {searchResults.map((result, i) => (
-          <option key={i} value={i}>
-            {result.artist} - {result.name} ({result.scrobblerMatchQuality})
-          </option>
-        ))}
+        {searchQueryList
+          .filter((r) => r.matchQuality)
+          .map((result, i) => (
+            <option key={i} value={i}>
+              {result.artist} - {result.track} (
+              {result.matchQuality || 'no-match'})
+            </option>
+          ))}
         <option value="manual">Manual input</option>
       </select>
     </form>
@@ -95,12 +126,12 @@ const SelectResultForm = ({
 const EditSearch = ({
   activeConnectorTabId,
   track,
-  searchResults,
+  searchQueryList,
   stopEditting,
 }: {
   activeConnectorTabId: number
   track: ConnectorState['track']
-  searchResults: ConnectorState['searchResults']
+  searchQueryList: ConnectorState['searchQueryList']
   stopEditting: () => void
 }) => {
   const [manualInput, setManualInput] = useState(false)
@@ -108,14 +139,19 @@ const EditSearch = ({
     ctActions.saveTrackEdit(activeConnectorTabId, trackEditValues)
     stopEditting()
   }
+
   return (
     <div>
       <div style={{ marginBottom: 8 }}>
         {manualInput ? (
-          <ManualInputForm track={track || searchResults[0]} save={save} />
+          <ManualInputForm
+            searchQueryList={searchQueryList}
+            track={track ? new Track(track).toSongInfo() : searchQueryList[0]}
+            save={save}
+          />
         ) : (
           <SelectResultForm
-            searchResults={searchResults}
+            searchQueryList={searchQueryList}
             save={save}
             goToManualInput={() => setManualInput(true)}
           />

@@ -6,8 +6,8 @@ import type {
   GetStillPlayingActionObject,
   ToggleDisableToggleCurrentActionObject,
   ForceToggleCurrentActionObject,
-  TrackEditValues,
   SaveTrackEditActionObject,
+  SongInfo,
 } from 'interfaces'
 
 export const CT_ACTION_KEYS = {
@@ -54,7 +54,7 @@ const actions = {
     send<ForceToggleCurrentActionObject>(tabId, {
       type: CT_ACTION_KEYS.FORCE_SCROBBLE_CURRENT,
     }),
-  saveTrackEdit: (tabId: number, editValues: TrackEditValues) =>
+  saveTrackEdit: (tabId: number, editValues: SongInfo) =>
     send<SaveTrackEditActionObject>(tabId, {
       type: CT_ACTION_KEYS.SAVE_TRACK_EDIT,
       data: { editValues },

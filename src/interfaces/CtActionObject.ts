@@ -1,4 +1,4 @@
-import type { TrackEditValues } from 'interfaces'
+import type { SongInfo } from 'interfaces'
 import type { CT_ACTION_KEYS } from 'internals'
 
 export interface GetStillPlayingActionObject {
@@ -19,7 +19,7 @@ export interface ForceToggleCurrentActionObject {
 
 export interface SaveTrackEditActionObject {
   type: typeof CT_ACTION_KEYS.SAVE_TRACK_EDIT
-  data: { editValues: TrackEditValues }
+  data: { editValues: SongInfo }
 }
 
 export type CtActionObject =
