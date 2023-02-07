@@ -1,18 +1,34 @@
 import browser from 'webextension-polyfill'
-import type { CtActionObject, GetStillPlayingActionObject } from 'interfaces'
+import type {
+  ConnectorState,
+  CtActionObject,
+  GetConnectorStateActionObject,
+  GetStillPlayingActionObject,
+  ToggleDisableToggleCurrentActionObject,
+  ForceToggleCurrentActionObject,
+  TrackEditValues,
+  SaveTrackEditActionObject,
+} from 'interfaces'
 
 export const CT_ACTION_KEYS = {
   GET_STILL_PLAYING: 'GET_STILL_PLAYING' as 'GET_STILL_PLAYING',
+  GET_CONNECTOR_STATE: 'GET_CONNECTOR_STATE' as 'GET_CONNECTOR_STATE',
+
+  TOGGLE_DISABLE_SCROBBLE_CURRENT:
+    'TOGGLE_DISABLE_SCROBBLE_CURRENT' as 'TOGGLE_DISABLE_SCROBBLE_CURRENT',
+  FORCE_SCROBBLE_CURRENT: 'FORCE_SCROBBLE_CURRENT' as 'FORCE_SCROBBLE_CURRENT',
+
+  SAVE_TRACK_EDIT: 'SAVE_TRACK_EDIT' as 'SAVE_TRACK_EDIT',
 }
 
 const send = async <T extends CtActionObject, U = null>(
-  tab: browser.Tabs.Tab,
+  tabId: number,
   arg: T,
 ): Promise<U | null> => {
-  if (tab.id) {
+  if (tabId) {
     try {
       // seperate, otherwise we can't catch the exception
-      const result = await browser.tabs.sendMessage(tab.id, arg)
+      const result = await browser.tabs.sendMessage(tabId, arg)
       return result
     } catch (e) {
       /* noop, tab is probably not listening */
@@ -22,10 +38,26 @@ const send = async <T extends CtActionObject, U = null>(
 }
 
 const actions = {
-  getStillPlaying: (tab: browser.Tabs.Tab, connectorId: string, _data?: any) =>
-    send<GetStillPlayingActionObject, boolean>(tab, {
+  getStillPlaying: (tabId: number, _data?: any) =>
+    send<GetStillPlayingActionObject, boolean>(tabId, {
       type: CT_ACTION_KEYS.GET_STILL_PLAYING,
-      connectorId,
+    }),
+  getConnectorState: (tabId: number, _data?: any) =>
+    send<GetConnectorStateActionObject, ConnectorState>(tabId, {
+      type: CT_ACTION_KEYS.GET_CONNECTOR_STATE,
+    }),
+  toggleDisableToggleCurrent: (tabId: number) =>
+    send<ToggleDisableToggleCurrentActionObject>(tabId, {
+      type: CT_ACTION_KEYS.TOGGLE_DISABLE_SCROBBLE_CURRENT,
+    }),
+  forceScrobbleCurrent: (tabId: number) =>
+    send<ForceToggleCurrentActionObject>(tabId, {
+      type: CT_ACTION_KEYS.FORCE_SCROBBLE_CURRENT,
+    }),
+  saveTrackEdit: (tabId: number, editValues: TrackEditValues) =>
+    send<SaveTrackEditActionObject>(tabId, {
+      type: CT_ACTION_KEYS.SAVE_TRACK_EDIT,
+      data: { editValues },
     }),
 }
 

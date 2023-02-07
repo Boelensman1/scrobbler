@@ -8,15 +8,9 @@ import type {
   ResetConfigActionObject,
   SaveConfigActionObject,
   SetLoadingNewTrackActionObject,
-  SetPlayTimeActionObject,
-  SetTrackPlayingActionObject,
-  SongInfo,
   State,
-  TimeInfo,
-  ToggleDisableToggleCurrentActionObject,
-  ForceToggleCurrentActionObject,
-  TrackEditValues,
-  SaveTrackEditActionObject,
+  RequestBecomeActiveTabActionObject,
+  GetIsActiveTabActionObject,
 } from 'interfaces'
 
 export const BG_ACTION_KEYS = {
@@ -28,15 +22,9 @@ export const BG_ACTION_KEYS = {
   SAVE_CONFIG: 'SAVE_CONFIG' as 'SAVE_CONFIG',
 
   SET_LOADING_NEW_TRACK: 'SET_LOADING_NEW_TRACK' as 'SET_LOADING_NEW_TRACK',
-  SET_TRACK_PLAYING: 'SET_TRACK_PLAYING' as 'SET_TRACK_PLAYING',
-  SET_PLAY_STATE: 'SET_PLAY_STATE' as 'SET_PLAY_STATE',
-  SET_PLAY_TIME: 'SET_PLAY_TIME' as 'SET_PLAY_TIME',
-
-  TOGGLE_DISABLE_SCROBBLE_CURRENT:
-    'TOGGLE_DISABLE_SCROBBLE_CURRENT' as 'TOGGLE_DISABLE_SCROBBLE_CURRENT',
-  FORCE_SCROBBLE_CURRENT: 'FORCE_SCROBBLE_CURRENT' as 'FORCE_SCROBBLE_CURRENT',
-
-  SAVE_TRACK_EDIT: 'SAVE_TRACK_EDIT' as 'SAVE_TRACK_EDIT',
+  REQUEST_BECOME_ACTIVE_TAB:
+    'REQUEST_BECOME_ACTIVE_TAB' as 'REQUEST_BECOME_ACTIVE_TAB',
+  GET_IS_ACTIVE_TAB: 'GET_IS_ACTIVE_TAB' as 'GET_IS_ACTIVE_TAB',
 }
 
 const send = <T extends BgActionObject, U = void>(arg: T): Promise<U> =>
@@ -68,50 +56,14 @@ const actions = {
     send<SetLoadingNewTrackActionObject>({
       type: BG_ACTION_KEYS.SET_LOADING_NEW_TRACK,
     }),
-  setTrackPlaying: (
-    connectorId: string,
-    {
-      songInfos,
-      timeInfo,
-      location,
-      popularity,
-      onlyIfNoneIsPlaying,
-    }: {
-      songInfos: SongInfo[]
-      timeInfo: TimeInfo
-      location: string
-      popularity: number
-      onlyIfNoneIsPlaying: boolean
-    },
-  ) =>
-    send<SetTrackPlayingActionObject>({
-      type: BG_ACTION_KEYS.SET_TRACK_PLAYING,
-      data: {
-        connectorId,
-        songInfos,
-        timeInfo,
-        location,
-        popularity,
-        onlyIfNoneIsPlaying,
-      },
+  requestBecomeActiveTab: (force: boolean) =>
+    send<RequestBecomeActiveTabActionObject>({
+      type: BG_ACTION_KEYS.REQUEST_BECOME_ACTIVE_TAB,
+      data: { force },
     }),
-  setPlayTime: (connectorId: string, timeInfo: TimeInfo) =>
-    send<SetPlayTimeActionObject>({
-      type: BG_ACTION_KEYS.SET_PLAY_TIME,
-      data: { connectorId, timeInfo },
-    }),
-  toggleDisableToggleCurrent: () =>
-    send<ToggleDisableToggleCurrentActionObject>({
-      type: BG_ACTION_KEYS.TOGGLE_DISABLE_SCROBBLE_CURRENT,
-    }),
-  forceScrobbleCurrent: () =>
-    send<ForceToggleCurrentActionObject>({
-      type: BG_ACTION_KEYS.FORCE_SCROBBLE_CURRENT,
-    }),
-  saveTrackEdit: (connectorId: string, editValues: TrackEditValues) =>
-    send<SaveTrackEditActionObject>({
-      type: BG_ACTION_KEYS.SAVE_TRACK_EDIT,
-      data: { connectorId, editValues },
+  getIsActiveTab: (): Promise<boolean> =>
+    send<GetIsActiveTabActionObject, boolean>({
+      type: BG_ACTION_KEYS.GET_IS_ACTIVE_TAB,
     }),
 }
 

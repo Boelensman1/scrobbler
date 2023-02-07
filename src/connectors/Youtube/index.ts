@@ -1,5 +1,7 @@
 import type { Connector, ConnectorStatic, TimeInfo } from 'interfaces'
-import { ConnectorMiddleware, getElement, waitForElement } from 'internals'
+import { getElement, waitForElement } from 'internals'
+
+import BaseConnector from '../../classes/BaseConnector'
 
 import getters from './getters'
 import postProcessors from './postProcessors'
@@ -13,17 +15,11 @@ function staticImplements<T>() {
 }
 
 @staticImplements<ConnectorStatic>()
-class YoutubeConnector implements Connector {
+class YoutubeConnector extends BaseConnector implements Connector {
   player!: Element
-  connectorMiddleware: ConnectorMiddleware
 
   getters = getters
-
   postProcessors = postProcessors
-
-  constructor() {
-    this.connectorMiddleware = new ConnectorMiddleware(this)
-  }
 
   static hostMatch(host: string) {
     return host.includes('youtube')
@@ -125,7 +121,7 @@ class YoutubeConnector implements Connector {
     return !!document.querySelector('.ad-showing')
   }
 
-  async isPlaying() {
+  async isPlaying(): Promise<boolean> {
     const player = document.querySelector('.html5-video-player')
     if (!player) {
       return false

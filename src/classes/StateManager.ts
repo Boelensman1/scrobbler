@@ -1,5 +1,5 @@
 import browser from 'webextension-polyfill'
-import { initialState, Track } from 'internals'
+import { initialState } from 'internals'
 import type { State } from 'interfaces'
 
 const handler = {
@@ -13,9 +13,6 @@ const handler = {
 type StaleState = State
 
 const hydrateState = (state: StaleState): State => {
-  if (state.track) {
-    state.track = new Track(state.track)
-  }
   return state
 }
 
@@ -28,9 +25,6 @@ class StateManager {
     }
     Object.assign(this.state, initialState)
     this.state = new Proxy(initialState, handler)
-
-    // reset startedPlaying
-    this.state.startedPlaying = new Date()
 
     return this.state
   }

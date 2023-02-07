@@ -3,8 +3,8 @@ import { createRoot } from 'react-dom/client'
 
 import browser from 'webextension-polyfill'
 
-import type { State } from 'interfaces'
-import { bgActions, initialState } from 'internals'
+import type { ConnectorState, State } from 'interfaces'
+import { ctActions, bgActions, initialState } from 'internals'
 
 import EditSearch from './EditSearch'
 
@@ -13,12 +13,12 @@ const DEBUG = Number(process.env.DEBUG) === 1 || false
 const defaultAlbumArtUrl = 'https://via.placeholder.com/150'
 
 const Track = ({
-  activeConnectorId,
+  activeConnectorTabId,
   track,
   startEdit,
 }: {
-  activeConnectorId: State['activeConnectorId']
-  track: State['track']
+  activeConnectorTabId: State['activeConnectorTabId']
+  track: ConnectorState['track']
   startEdit: () => void
 }) => {
   if (!track) {
@@ -35,7 +35,7 @@ const Track = ({
       <div style={{ display: 'flex', flexDirection: 'column' }}>
         {DEBUG && (
           <div>
-            Ids: {activeConnectorId} - {track.musicBrainzReleaseGroupId}
+            Ids: {activeConnectorTabId} - {track.musicBrainzReleaseGroupId}
           </div>
         )}
         <div>
@@ -57,60 +57,73 @@ const Track = ({
 }
 
 const Content = () => {
-  const [state, setState] = useState<State>(initialState)
   const [edittingSearch, setEditingSearch] = useState<boolean>(false)
+  const [globalState, setGlobalState] = useState<State>(initialState)
+  const [connectorState, setConnectorState] = useState<ConnectorState>()
   useEffect(() => {
     const updateState = async () => {
       const newState = await bgActions.getState()
-      setState(newState)
+      if (newState.activeConnectorTabId) {
+        const newConnectorState = await ctActions.getConnectorState(
+          newState.activeConnectorTabId,
+        )
+        if (newConnectorState) {
+          setConnectorState(newConnectorState)
+        }
+      }
+      setGlobalState(newState)
     }
 
     updateState()
-    const interval = setInterval(updateState, 100)
+    const interval = setInterval(updateState, 500)
     return () => clearInterval(interval)
   }, [])
 
-  if (!state.activeConnectorId) {
-    return <div>Unrecognised site</div>
+  const tabId = globalState.activeConnectorTabId
+  if (!connectorState || !tabId) {
+    return <div>loading...</div>
   }
 
   return (
     <div>
+      {!connectorState.track && (
+        <div>active tab: {globalState.activeConnectorTabId}</div>
+      )}
       {edittingSearch ? (
         <EditSearch
-          connectorId={state.activeConnectorId}
-          searchResults={state.searchResults}
-          track={state.track}
+          activeConnectorTabId={tabId}
+          searchResults={connectorState.searchResults}
+          track={connectorState.track}
           stopEditting={() => setEditingSearch(false)}
         />
       ) : (
         <Track
-          activeConnectorId={state.activeConnectorId}
-          track={state.track}
+          activeConnectorTabId={globalState.activeConnectorTabId}
+          track={connectorState.track}
           startEdit={() => {
             setEditingSearch(true)
           }}
         />
       )}
       <div>
-        {state.scrobbleState} (
-        {state.track ? state.track.scrobblerMatchQuality : -1}/
-        {Math.floor(state.minimumScrobblerQuality)}),{' '}
-        {Math.round(state.playTime * 10) / 10}
-        s/{Math.round(state.scrobbleAt)}s
+        {connectorState.scrobbleState} (
+        {connectorState.track ? connectorState.track.scrobblerMatchQuality : -1}
+        /{Math.floor(connectorState.minimumScrobblerQuality)}),{' '}
+        {Math.round(connectorState.playTime * 10) / 10}
+        s/{Math.round(connectorState.scrobbleAt)}s
       </div>
       <div>
-        <button onClick={() => bgActions.toggleDisableToggleCurrent()}>
+        <button onClick={() => ctActions.toggleDisableToggleCurrent(tabId)}>
           Don't scrobble current
         </button>
-        <button onClick={() => bgActions.forceScrobbleCurrent()}>
+        <button onClick={() => ctActions.forceScrobbleCurrent(tabId)}>
           Force scrobble current
         </button>
         <button onClick={() => browser.runtime.openOptionsPage()}>
           Options
         </button>
       </div>
-      <pre>{DEBUG && state.debugString}</pre>
+      <pre>{DEBUG && globalState.debugString}</pre>
     </div>
   )
 }

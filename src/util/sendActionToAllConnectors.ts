@@ -2,15 +2,17 @@ import browser from 'webextension-polyfill'
 import { ctActions } from 'internals'
 import { ValueOf } from 'type-fest'
 
-const sendActionToConnector = async <T extends ValueOf<typeof ctActions>>(
-  connectorId: string,
+const sendActionToAllConnectors = async <T extends ValueOf<typeof ctActions>>(
   action: T,
   data?: Parameters<T>[2],
 ) => {
   const tabs = await browser.tabs.query({})
 
   for (let tab of tabs) {
-    const result = await action.apply(null, [tab, connectorId, data])
+    if (!tab.id) {
+      continue
+    }
+    const result = await action.apply(null, [tab.id, data])
     if (result) {
       return result
     }
@@ -18,4 +20,4 @@ const sendActionToConnector = async <T extends ValueOf<typeof ctActions>>(
   return null
 }
 
-export default sendActionToConnector
+export default sendActionToAllConnectors

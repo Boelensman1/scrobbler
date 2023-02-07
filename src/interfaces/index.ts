@@ -1,4 +1,9 @@
-export { default as ConnectorStatic, Connector } from './Connector'
+export {
+  default as ConnectorStatic,
+  Connector,
+  Getter,
+  PostProcessor,
+} from './Connector'
 export { default as PartialSongInfo } from './PartialSongInfo'
 export { default as SongInfo } from './SongInfo'
 export { default as State } from './State'
@@ -11,6 +16,7 @@ export {
 } from './InformationProvider'
 export { GetTrackResult } from '../scrobblers/lastFm'
 export { default as TrackEditValues } from './TrackEditValues'
+export { default as ConnectorState } from './ConnectorState'
 
 export * from './BgActionObject'
 export * from './CtActionObject'

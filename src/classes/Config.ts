@@ -1,5 +1,5 @@
 import browser from 'webextension-polyfill'
-import { Config } from 'interfaces'
+import type { Config } from 'interfaces'
 
 export const defaultConfig: Config = {
   scrobbler: null,

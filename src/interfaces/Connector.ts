@@ -1,12 +1,14 @@
-import type { ConnectorMiddleware } from 'classes'
+import type { ConnectorMiddleware, LastFm, ConfigContainer } from 'internals'
 import PartialSongInfo from './PartialSongInfo'
 import TimeInfo from './TimeInfo'
 
-type Getter = (connector: Connector) => Promise<PartialSongInfo[]>
-type PostProcessor = (songInfos: PartialSongInfo[]) => PartialSongInfo[]
+export type Getter = (connector: Connector) => Promise<PartialSongInfo[]>
+export type PostProcessor = (songInfos: PartialSongInfo[]) => PartialSongInfo[]
 
 export interface Connector {
   connectorMiddleware: ConnectorMiddleware
+  scrobbler: LastFm
+  config: ConfigContainer
 
   getters: Getter[]
   postProcessors: PostProcessor[]
@@ -24,7 +26,7 @@ export interface Connector {
 interface ConnectorStatic {
   hostMatch(host: string): boolean
 
-  new (): Connector
+  new (scrobbler: LastFm, config: ConfigContainer): Connector
 }
 
 export default ConnectorStatic

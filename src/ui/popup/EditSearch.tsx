@@ -3,14 +3,14 @@ import React, { useState } from 'react'
 import _ from 'lodash'
 import { useFormik } from 'formik'
 
-import type { State, TrackEditValues } from 'interfaces'
-import { bgActions } from 'internals'
+import type { ConnectorState, TrackEditValues } from 'interfaces'
+import { ctActions } from 'internals'
 
 const ManualInputForm = ({
   track,
   save,
 }: {
-  track: State['track']
+  track: ConnectorState['track']
   save: (values: TrackEditValues) => void
 }) => {
   const formik = useFormik({
@@ -50,7 +50,7 @@ const SelectResultForm = ({
   save,
   goToManualInput,
 }: {
-  searchResults: State['searchResults']
+  searchResults: ConnectorState['searchResults']
   save: (values: TrackEditValues) => void
   goToManualInput: () => void
 }) => {
@@ -91,19 +91,19 @@ const SelectResultForm = ({
 }
 
 const EditSearch = ({
-  connectorId,
+  activeConnectorTabId,
   track,
   searchResults,
   stopEditting,
 }: {
-  connectorId: string
-  track: State['track']
-  searchResults: State['searchResults']
+  activeConnectorTabId: number
+  track: ConnectorState['track']
+  searchResults: ConnectorState['searchResults']
   stopEditting: () => void
 }) => {
   const [manualInput, setManualInput] = useState(false)
   const save = (trackEditValues: TrackEditValues) => {
-    bgActions.saveTrackEdit(connectorId, trackEditValues)
+    ctActions.saveTrackEdit(activeConnectorTabId, trackEditValues)
     stopEditting()
   }
   return (
