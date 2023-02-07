@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "",
   "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "dependencies": {
     "formik": "^2.2.9",
     "lodash": "^4.17.21",
