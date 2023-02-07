@@ -22,7 +22,11 @@ const Track = ({
   startEdit: () => void
 }) => {
   if (!track) {
-    return null
+    return (
+      <div>
+        <button onClick={() => startEdit()}>Edit search</button>
+      </div>
+    )
   }
   return (
     <div style={{ display: 'flex' }}>

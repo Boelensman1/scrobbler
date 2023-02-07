@@ -159,10 +159,9 @@ abstract class BaseConnector implements Connector {
           await getAdditionalDataFromInfoProviders(track)
 
           this.track = track
-
-          if (this.scrobbleState !== scrobbleStates.MANUALLY_DISABLED) {
-            this.scrobbleState = this.getScrobbleState()
-          }
+        }
+        if (this.scrobbleState !== scrobbleStates.MANUALLY_DISABLED) {
+          this.scrobbleState = this.getScrobbleState()
         }
 
         return
@@ -178,8 +177,8 @@ abstract class BaseConnector implements Connector {
   }
 
   async waitForReady(waitTime = 0): Promise<void> {
-    if (waitTime > 20 * 1000) {
-      throw new Error('Not ready after 20 seconds, giving up.')
+    if (waitTime > 120 * 1000) {
+      throw new Error('Not ready after 120 seconds, giving up.')
     }
 
     const ready = await this.isReady()

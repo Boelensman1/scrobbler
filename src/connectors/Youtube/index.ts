@@ -36,6 +36,7 @@ class YoutubeConnector extends BaseConnector {
     if (!el) {
       throw new Error('Could not setup watch, "#content" not found')
     }
+    // return element to further watch, BaseConnector will setup the watch on this
     return el
   }
 

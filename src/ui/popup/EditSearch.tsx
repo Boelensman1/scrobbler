@@ -31,6 +31,7 @@ const ManualInputForm = ({
           id="name"
           onChange={formik.handleChange}
           value={formik.values.name}
+          autoComplete="off"
         />
 
         <label htmlFor="artist">Artist</label>
@@ -38,6 +39,7 @@ const ManualInputForm = ({
           id="artist"
           onChange={formik.handleChange}
           value={formik.values.artist}
+          autoComplete="off"
         />
         <button type="submit">save</button>
       </div>
@@ -110,7 +112,7 @@ const EditSearch = ({
     <div>
       <div style={{ marginBottom: 8 }}>
         {manualInput ? (
-          <ManualInputForm track={track} save={save} />
+          <ManualInputForm track={track || searchResults[0]} save={save} />
         ) : (
           <SelectResultForm
             searchResults={searchResults}
