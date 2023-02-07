@@ -1,107 +1,32 @@
 import browser from 'webextension-polyfill'
-import { Entries } from 'type-fest'
-
 import _ from 'lodash'
-import * as MetadataFilter from 'metadata-filter'
 
 import type {
-  CtActionObject,
   Connector,
+  Getter,
+  PostProcessor,
+  TimeInfo,
+  CtActionObject,
   PartialSongInfo,
   SongInfo,
-  InformationProvider,
 } from 'interfaces'
 import {
+  ConfigContainer,
+  LastFm,
   bgActions,
-  CoverArtArchiveInformationProvider,
   CT_ACTION_KEYS,
-  MusicBrainzInformationProvider,
   scrobbleStates,
   Track,
 } from 'internals'
 
-const metadataFilter = MetadataFilter.createFilter(
-  MetadataFilter.createFilterSetForFields(
-    ['artist', 'track', 'album', 'albumArtist'],
-    [(text) => text.trim(), MetadataFilter.replaceNbsp],
-  ),
-)
-metadataFilter.append({ track: MetadataFilter.youtube })
+import combineSongInfos from './utils/combineSongInfos'
+import canForceScrobble from './utils/canForceScrobble'
+import getAdditionalDataFromInfoProviders from './utils/getAdditionalDataFromInfoProviders'
+import applyMetadataFilter from './utils/applyMetadataFilter'
 
-const combineSongInfos = (
-  songInfos: (PartialSongInfo | null)[],
-): SongInfo[] => {
-  const nonNullSongInfos = songInfos.filter(
-    (songInfo) => !!songInfo,
-  ) as PartialSongInfo[]
-
-  const tracks = _.uniq(
-    nonNullSongInfos.map(({ track }) => track).filter((t) => !!t),
-  ) as string[]
-  const artists = _.uniq(
-    nonNullSongInfos.map(({ artist }) => artist).filter((a) => !!a),
-  ) as string[]
-
-  return tracks.flatMap((track) =>
-    artists.map((artist) => ({
-      track,
-      artist,
-    })),
-  )
-}
-
-const applyMetadataFilter = (songInfo: PartialSongInfo): PartialSongInfo => {
-  ;(Object.entries(songInfo) as Entries<typeof songInfo>).map(
-    ([key, value]) => {
-      if (!value) {
-        return
-      }
-      songInfo[key] = metadataFilter.filterField(key, value) || value
-    },
-  )
-  return songInfo
-}
-
-const informationProviders: InformationProvider[] = [
-  new MusicBrainzInformationProvider(),
-  new CoverArtArchiveInformationProvider(),
-]
-
-const getAdditionalDataFromInfoProviders = async (track: Track) => {
-  const missingFields = track.getMissingFields()
-  for (let informationProvider of informationProviders) {
-    // check if some of the missing fields can be provided by this information provider
-    const fieldsToProvide = informationProvider.fields.filter((f) =>
-      missingFields.includes(f),
-    )
-    if (fieldsToProvide.length > 0) {
-      const newData = await informationProvider.getAdditionalInfo(track)
-      fieldsToProvide.forEach((field) => {
-        // additional check on !track[field] is needed so we don't overwrite
-        // info set by a previous provider
-        if (newData[field] && !track[field]) {
-          track[field] = newData[field]
-        }
-      })
-    }
-  }
-}
-
-const forceableScrobbleStates: (keyof typeof scrobbleStates)[] = [
-  scrobbleStates.BELOW_MIN_SCROBBLER_QUALITY,
-  scrobbleStates.MANUALLY_DISABLED,
-  scrobbleStates.SCROBBLED,
-  scrobbleStates.TRACK_TOO_SHORT,
-  scrobbleStates.WILL_SCROBBLE,
-  scrobbleStates.FORCE_SCROBBLE,
-]
-
-const canForceScrobble = (
-  scrobbleState: keyof typeof scrobbleStates,
-): boolean => forceableScrobbleStates.includes(scrobbleState)
-
-class ConnectorMiddleware {
-  connector: Connector
+abstract class BaseConnector implements Connector {
+  scrobbler: LastFm
+  config: ConfigContainer
 
   lastStateChange?: Date
   playTimeAtLastStateChange = 0
@@ -118,14 +43,29 @@ class ConnectorMiddleware {
   trackDuration?: number = Number.MAX_SAFE_INTEGER
   searchResults: Track[] = []
 
-  constructor(connector: Connector) {
-    this.connector = connector
+  abstract getters: Getter[]
+  abstract postProcessors: PostProcessor[]
+
+  constructor(scrobbler: LastFm, config: ConfigContainer) {
+    this.scrobbler = scrobbler
+    this.config = config
+  }
+
+  abstract setupWatches(): Promise<HTMLElement>
+  abstract isPlaying(): Promise<boolean>
+  abstract isReady(): Promise<boolean>
+  abstract getTimeInfo(): Promise<TimeInfo>
+  abstract getCurrentTrackId(): Promise<string>
+  abstract getCurrentTrackId(): Promise<string>
+
+  async getPopularity() {
+    return 1
   }
 
   async setup() {
-    const elementToWatch = await this.connector.setup()
+    const elementToWatch = await this.setupWatches()
     if (elementToWatch) {
-      this.connectorTrackId = await this.connector.getCurrentTrackId()
+      this.connectorTrackId = await this.getCurrentTrackId()
       const observer = new MutationObserver(
         _.debounce(this.checkIfNewTrack.bind(this), 500, { maxWait: 1500 }),
       )
@@ -171,8 +111,7 @@ class ConnectorMiddleware {
   async handleMessage(action: CtActionObject) {
     switch (action.type) {
       case CT_ACTION_KEYS.GET_STILL_PLAYING: {
-        const isPlaying = await this.connector.isPlaying()
-        console.log('!!! isplaying', isPlaying)
+        const isPlaying = await this.isPlaying()
         return isPlaying
       }
 
@@ -212,7 +151,7 @@ class ConnectorMiddleware {
         }
         this.track = null
 
-        const track = await this.connector.scrobbler.getTrack({
+        const track = await this.scrobbler.getTrack({
           track: action.data.editValues.name.trim(),
           artist: action.data.editValues.artist.trim(),
         })
@@ -233,12 +172,12 @@ class ConnectorMiddleware {
   }
 
   async checkIfNewTrack() {
-    const potentialNewTrackId = await this.connector.getCurrentTrackId()
+    const potentialNewTrackId = await this.getCurrentTrackId()
 
     // we changed tracks
     if (this.connectorTrackId !== potentialNewTrackId) {
       this.connectorTrackId = potentialNewTrackId
-      if (await this.connector.isPlaying()) {
+      if (await this.isPlaying()) {
         await bgActions.requestBecomeActiveTab(false)
       }
     }
@@ -249,7 +188,7 @@ class ConnectorMiddleware {
       throw new Error('Not ready after 20 seconds, giving up.')
     }
 
-    const ready = await this.connector.isReady()
+    const ready = await this.isReady()
 
     if (ready) {
       // we're ready!
@@ -264,8 +203,8 @@ class ConnectorMiddleware {
   async getSongInfoOptionsFromConnector(): Promise<SongInfo[]> {
     let songInfos = (
       await Promise.all(
-        this.connector.getters.map(async (getter) => {
-          const songInfos = await getter(this.connector)
+        this.getters.map(async (getter) => {
+          const songInfos = await getter(this)
           return songInfos.map((songInfo) => applyMetadataFilter(songInfo))
         }),
       )
@@ -273,7 +212,7 @@ class ConnectorMiddleware {
       .flat()
       .filter((s) => !!s) // remove nulls
 
-    songInfos = this.connector.postProcessors.reduce<PartialSongInfo[]>(
+    songInfos = this.postProcessors.reduce<PartialSongInfo[]>(
       (acc: PartialSongInfo[], postProcessor) => {
         acc = postProcessor(acc)
         return acc
@@ -288,9 +227,9 @@ class ConnectorMiddleware {
     this.startedPlaying = new Date()
     this.track = undefined
 
-    if (await this.connector.isPlaying()) {
+    if (await this.isPlaying()) {
       // completely new track, so replace even if something is already playing
-      return this.setTrackInState(false)
+      return this.setTrackInState(true)
     }
   }
 
@@ -301,10 +240,8 @@ class ConnectorMiddleware {
 
     const [partialSongInfos, timeInfo, popularity] = await Promise.all([
       this.getSongInfoOptionsFromConnector(),
-      this.connector.getTimeInfo(),
-      this.connector.getPopularity
-        ? this.connector.getPopularity()
-        : Promise.resolve(1),
+      this.getTimeInfo(),
+      this.getPopularity ? this.getPopularity() : Promise.resolve(1),
     ])
 
     // reset playtime
@@ -319,16 +256,12 @@ class ConnectorMiddleware {
     )
 
     this.minimumScrobblerQuality =
-      this.connector.config.get('minimumScrobblerQuality') *
-      (this.connector.config.get('scrobblerQualityDynamic')
-        ? popularity / 200
-        : 1)
+      this.config.get('minimumScrobblerQuality') *
+      (this.config.get('scrobblerQualityDynamic') ? popularity / 200 : 1)
 
     const songInfos = combineSongInfos(partialSongInfos)
     await Promise.all(
-      songInfos.map((songInfo: SongInfo) =>
-        this.connector.scrobbler.getTrack(songInfo),
-      ),
+      songInfos.map((songInfo: SongInfo) => this.scrobbler.getTrack(songInfo)),
     ).then(async (tracks: (Track | null)[]) => {
       this.searchResults = tracks.filter((t) => !!t) as Track[]
 
@@ -370,8 +303,7 @@ class ConnectorMiddleware {
       }
     }
 
-    const { playTime: currentTime, duration } =
-      await this.connector.getTimeInfo()
+    const { playTime: currentTime, duration } = await this.getTimeInfo()
 
     if (type === 'seeking' || type === 'seeked') {
       this.playTimeAtLastStateChange = currentTime
@@ -403,7 +335,7 @@ class ConnectorMiddleware {
       if (this.sendNowPlaying === false) {
         this.sendNowPlaying = true
 
-        this.connector.scrobbler.setNowPlaying(this.track!)
+        this.scrobbler.setNowPlaying(this.track!)
       }
 
       if (
@@ -411,12 +343,12 @@ class ConnectorMiddleware {
         this.scrobbleState === scrobbleStates.FORCE_SCROBBLE
       ) {
         this.scrobbleState = scrobbleStates.SCROBBLED
-        if (this.connector.scrobbler) {
-          this.connector.scrobbler.scrobble(this.track, this.startedPlaying)
+        if (this.scrobbler) {
+          this.scrobbler.scrobble(this.track, this.startedPlaying)
         }
       }
     }
   }
 }
 
-export default ConnectorMiddleware
+export default BaseConnector

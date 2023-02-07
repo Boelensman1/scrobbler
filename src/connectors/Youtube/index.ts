@@ -1,21 +1,14 @@
-import type { Connector, ConnectorStatic, TimeInfo } from 'interfaces'
+import type { TimeInfo } from 'interfaces'
 import { getElement, waitForElement } from 'internals'
 
-import BaseConnector from '../../classes/BaseConnector'
+import BaseConnector from '../../classes/BaseConnector/BaseConnector'
 
 import getters from './getters'
 import postProcessors from './postProcessors'
 import getTextFromSelector from './util/getTextFromSelector'
 import getYtVideoIdFromUrl from './util/getYtVideoIdFromUrl'
 
-function staticImplements<T>() {
-  return <U extends T>(constructor: U) => {
-    constructor
-  }
-}
-
-@staticImplements<ConnectorStatic>()
-class YoutubeConnector extends BaseConnector implements Connector {
+class YoutubeConnector extends BaseConnector {
   player!: Element
 
   getters = getters
@@ -25,7 +18,7 @@ class YoutubeConnector extends BaseConnector implements Connector {
     return host.includes('youtube')
   }
 
-  async setup(): Promise<HTMLElement> {
+  async setupWatches(): Promise<HTMLElement> {
     const player = await waitForElement('.html5-video-player')
     const video = await waitForElement('video', player)
     if (!player || !video) {
@@ -33,41 +26,11 @@ class YoutubeConnector extends BaseConnector implements Connector {
     }
     this.player = player
 
-    video.addEventListener(
-      'timeupdate',
-      this.connectorMiddleware.onStateChanged.bind(
-        this.connectorMiddleware,
-        'time',
-      ),
-    )
-    video.addEventListener(
-      'play',
-      this.connectorMiddleware.onStateChanged.bind(
-        this.connectorMiddleware,
-        'play',
-      ),
-    )
-    video.addEventListener(
-      'pause',
-      this.connectorMiddleware.onStateChanged.bind(
-        this.connectorMiddleware,
-        'pause',
-      ),
-    )
-    video.addEventListener(
-      'seeked',
-      this.connectorMiddleware.onStateChanged.bind(
-        this.connectorMiddleware,
-        'seeked',
-      ),
-    )
-    video.addEventListener(
-      'seeking',
-      this.connectorMiddleware.onStateChanged.bind(
-        this.connectorMiddleware,
-        'seeking',
-      ),
-    )
+    video.addEventListener('timeupdate', this.onStateChanged.bind(this, 'time'))
+    video.addEventListener('play', this.onStateChanged.bind(this, 'play'))
+    video.addEventListener('pause', this.onStateChanged.bind(this, 'pause'))
+    video.addEventListener('seeked', this.onStateChanged.bind(this, 'seeked'))
+    video.addEventListener('seeking', this.onStateChanged.bind(this, 'seeking'))
 
     const el = await waitForElement('#content')
     if (!el) {
@@ -138,7 +101,7 @@ class YoutubeConnector extends BaseConnector implements Connector {
     return { playTime: currentTime, duration, playbackRate }
   }
 
-  async getPopularity() {
+  override async getPopularity() {
     try {
       const element = await waitForElement('.view-count')
       const views = element

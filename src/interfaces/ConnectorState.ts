@@ -1,7 +1,7 @@
-import type { ConnectorMiddleware } from 'internals'
+import type { BaseConnector } from 'internals'
 
 type ConnectorState = Pick<
-  InstanceType<typeof ConnectorMiddleware>,
+  InstanceType<typeof BaseConnector>,
   | 'playTime'
   | 'track'
   | 'scrobbleState'

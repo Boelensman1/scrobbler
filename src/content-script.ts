@@ -35,7 +35,7 @@ const main = async () => {
   }
 
   const activeConnector = new MatchingConnector(scrobblers[scrobbler], config)
-  await activeConnector.connectorMiddleware.setup()
+  await activeConnector.setup()
 }
 
 main()

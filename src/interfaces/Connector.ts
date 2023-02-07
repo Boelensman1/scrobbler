@@ -1,26 +1,25 @@
-import type { ConnectorMiddleware, LastFm, ConfigContainer } from 'internals'
-import PartialSongInfo from './PartialSongInfo'
-import TimeInfo from './TimeInfo'
+import type { LastFm, ConfigContainer } from 'internals'
+import type PartialSongInfo from './PartialSongInfo'
+import type TimeInfo from './TimeInfo'
 
 export type Getter = (connector: Connector) => Promise<PartialSongInfo[]>
 export type PostProcessor = (songInfos: PartialSongInfo[]) => PartialSongInfo[]
 
 export interface Connector {
-  connectorMiddleware: ConnectorMiddleware
   scrobbler: LastFm
   config: ConfigContainer
 
   getters: Getter[]
   postProcessors: PostProcessor[]
 
-  setup(): Promise<HTMLElement | null>
+  setup(): Promise<void>
   isPlaying(): Promise<boolean>
   isReady(): Promise<boolean>
 
   getTimeInfo(): Promise<TimeInfo>
   getCurrentTrackId(): Promise<any>
 
-  getPopularity?(): Promise<number>
+  getPopularity(): Promise<number>
 }
 
 interface ConnectorStatic {
