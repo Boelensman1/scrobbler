@@ -1,5 +1,5 @@
 {
-  "name": "Sample Web Extension",
+  "name": "Youtube Scrobbler",
   "version": "0.0.1",
   "manifest_version": 2,
   "permissions": ["<all_urls>", "tabs", "storage"],
@@ -21,7 +21,7 @@
   ],
   "browser_specific_settings": {
     "gecko": {
-      "id": "addon@example.com"
+      "id": "scrobbler@wiggerboelens.com"
     }
   }
 }
