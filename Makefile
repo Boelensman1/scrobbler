@@ -10,19 +10,19 @@ clean-dist: clean-cache
 	rm -rf ./web-ext-artifacts dist
 
 start-firefox: build-firefox
-	$(shell DEBUG=1 parcel watch src/manifests/v2/manifest.json --host localhost & web-ext run --source-dir ./dist/ --target firefox-desktop --keep-profile-changes --firefox-profile=scrobbler-ext-dev)
+	$(shell DEBUG=1 npx parcel watch src/manifests/v2/manifest.json --host localhost & npx web-ext run --source-dir ./dist/ --target firefox-desktop --keep-profile-changes --firefox-profile=scrobbler-ext-dev)
 
 start-chrome: build-chrome
-	$(shell DEBUG=1 parcel watch src/manifests/v3/manifest.json --host localhost & web-ext run --source-dir ./dist/ --target chromium)
+	$(shell DEBUG=1 npx parcel watch src/manifests/v3/manifest.json --host localhost & npx web-ext run --source-dir ./dist/ --target chromium)
 
 build-firefox: clean-cache clean-dist node_modules $(SRC_FILES)
-	parcel build src/manifests/v2/manifest.json
+	npx parcel build src/manifests/v2/manifest.json
 
 build-chrome: clean-cache clean-dist node_modules $(SRC_FILES)
-	parcel build src/manifests/v3/manifest.json
+	npx parcel build src/manifests/v3/manifest.json
 
 package:
-	web-ext build --source-dir ./dist/
+	npx web-ext build --source-dir ./dist/
 
 package-firefox: build-firefox package
 
