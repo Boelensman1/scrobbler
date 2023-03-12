@@ -1,5 +1,8 @@
 SRC_FILES=$(shell find src/)
 
+include .env
+.EXPORT_ALL_VARIABLES:
+
 node_modules: package.json package-lock.json
 	npm ci
 
@@ -21,10 +24,15 @@ build-firefox: clean-cache clean-dist node_modules $(SRC_FILES)
 build-chrome: clean-cache clean-dist node_modules $(SRC_FILES)
 	npx parcel build src/manifests/v3/manifest.json
 
-package:
+web-ext-artifacts:
 	rm -rf ./web-ext-artifacts
 	npx web-ext build --source-dir ./dist/
 
-package-firefox: build-firefox package
+sign-firefox: build-firefox
+	npx web-ext sign --channel unlisted --api-key $(MOZILLA_API_KEY) --api-secret $(MOZILLA_API_SECRET) --source-dir ./dist/
 
-package-chrome: build-chrome package
+package-firefox: build-firefox web-ext-artifacts
+
+package-chrome: build-chrome web-ext-artifacts
+
+.PHONY: package-firefox package-chrome sign-firefox build-firefox build-chrome start-firefox start-chrome clean-dist clean-cache
