@@ -174,6 +174,7 @@ abstract class BaseConnector implements Connector {
     this.playTime = 0
     this.playTimeAtLastStateChange = 0
     this.track = null
+    this.scrobbleState = scrobbleStates.SEARCHING
   }
 
   async waitForReady(waitTime = 0): Promise<void> {
