@@ -22,6 +22,7 @@ build-chrome: clean-cache clean-dist node_modules $(SRC_FILES)
 	npx parcel build src/manifests/v3/manifest.json
 
 package:
+	rm -rf ./web-ext-artifacts
 	npx web-ext build --source-dir ./dist/
 
 package-firefox: build-firefox package
