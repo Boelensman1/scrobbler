@@ -3,6 +3,7 @@ export {
   Connector,
   Getter,
   PostProcessor,
+  ConnectorTrackId,
 } from './Connector'
 export { default as PartialSongInfo } from './PartialSongInfo'
 export { default as SongInfo } from './SongInfo'

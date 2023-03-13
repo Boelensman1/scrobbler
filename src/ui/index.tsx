@@ -71,6 +71,10 @@ const Content = () => {
   )
 }
 
-const container = document.getElementById('content')!
+const container = document.getElementById('content')
+if (!container) {
+  throw new Error('Container not found')
+}
+
 const root = createRoot(container)
 root.render(<Content />)

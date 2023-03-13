@@ -118,7 +118,7 @@ const InnerPopup = () => {
       </div>
       <div>
         <button onClick={() => ctActions.toggleDisableToggleCurrent(tabId)}>
-          Don't scrobble current
+          Don&apos;t scrobble current
         </button>
         <button onClick={() => ctActions.forceScrobbleCurrent(tabId)}>
           Force scrobble current
@@ -138,6 +138,10 @@ const Content = () => {
   )
 }
 
-const container = document.getElementById('content')!
+const container = document.getElementById('content')
+if (!container) {
+  throw new Error('Container not found')
+}
+
 const root = createRoot(container)
 root.render(<Content />)

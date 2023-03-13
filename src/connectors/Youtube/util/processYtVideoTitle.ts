@@ -38,8 +38,8 @@ const ytTitleRegExps = [
 ]
 
 const isArtistTrackEmpty = (artistTrack: {
-  artist: any
-  track: any
+  artist?: string | null
+  track?: string | null
 }): boolean => {
   return !(artistTrack && artistTrack.artist && artistTrack.track)
 }

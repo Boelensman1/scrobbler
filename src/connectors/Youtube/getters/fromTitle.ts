@@ -1,4 +1,4 @@
-import type { Connector, PartialSongInfo } from 'interfaces'
+import type { PartialSongInfo } from 'interfaces'
 
 import getTextFromSelector from '../util/getTextFromSelector'
 import processYtVideoTitle from '../util/processYtVideoTitle'
@@ -6,9 +6,9 @@ import processYtVideoTitle from '../util/processYtVideoTitle'
 const videoTitleSelector = '.html5-video-player .ytp-title-link'
 const channelNameSelector = '#top-row .ytd-channel-name a'
 
-const getTrackInfoFromTitle = async (
-  _connector: Connector,
-): Promise<PartialSongInfo[]> => {
+const getTrackInfoFromTitle = async (/* connector: Connector, */): Promise<
+  PartialSongInfo[]
+> => {
   const title = getTextFromSelector(videoTitleSelector)
   if (!title) {
     return []

@@ -1,4 +1,4 @@
-import type { Connector, PartialSongInfo } from 'interfaces'
+import type { PartialSongInfo } from 'interfaces'
 
 import getTextFromSelector from '../util/getTextFromSelector'
 
@@ -47,9 +47,10 @@ const parseYtVideoDescription = (desc: string | null) => {
   } else {
     ;[track, artist, ...featArtists] = trackInfo
 
-    const areFeatArtistPresent = featArtists.some((artist) =>
-      track!.includes(artist),
+    const areFeatArtistPresent = featArtists.some(
+      (artist) => track && track.includes(artist),
     )
+
     if (!areFeatArtistPresent) {
       const featArtistsStr = featArtists.join(ARTIST_SEPARATOR)
       track = `${track} (feat. ${featArtistsStr})`
@@ -59,9 +60,9 @@ const parseYtVideoDescription = (desc: string | null) => {
   return [{ artist, track, album }]
 }
 
-const getTrackInfoFromDescription = async (
-  _connector: Connector,
-): Promise<PartialSongInfo[]> => {
+const getTrackInfoFromDescription = async (/* connector: Connector */): Promise<
+  PartialSongInfo[]
+> => {
   const description = getTextFromSelector(videoDescriptionSelector)
   return parseYtVideoDescription(description)
 }

@@ -15,7 +15,7 @@ const getAdditionalDataFromInfoProviders = async (
 ): Promise<void> => {
   try {
     const missingFields = track.getMissingFields()
-    for (let informationProvider of informationProviders) {
+    for (const informationProvider of informationProviders) {
       // check if some of the missing fields can be provided by this information provider
       const fieldsToProvide = informationProvider.fields.filter((f) =>
         missingFields.includes(f),

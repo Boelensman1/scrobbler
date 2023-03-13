@@ -24,7 +24,7 @@ interface Options {
 }
 
 interface Params {
-  [key: string]: any
+  [key: string]: any // eslint-disable-line
 }
 
 interface Tag {
@@ -33,7 +33,7 @@ interface Tag {
 }
 
 interface Image {
-  // @ts-ignore
+  // @ts-expect-error this is just how last.fm returns it, can't help it
   #text: string
   size: string
 }
@@ -42,7 +42,7 @@ export interface GetTrackResult {
   mbid?: string
   name: string
   url: string
-  // @ts-ignore
+  // @ts-expect-error this is just how last.fm returns it, can't help it
   streamable: { #text: string; fulltrack: string }
   listeners: string
   playcount: string
@@ -78,7 +78,7 @@ interface GetArtistResult {
   bio: {
     links: {
       link: {
-        // @ts-ignore
+        // @ts-expect-error this is just how last.fm returns it, can't help it
         #text: string
         rel: string
         href: string
@@ -167,22 +167,20 @@ class LastFm {
   async doRequest(
     method: string,
     params: Params = {},
-    { sign, withSessionKey, ...options }: any = {},
+    { sign, withSessionKey, ...options }: any = {}, // eslint-disable-line
   ) {
-    const searchparams = {
+    const searchparams: Params = {
       api_key: this.apiKey,
       format: 'json',
       method,
-      sk: this.sessionKey!,
+      sk: this.sessionKey,
       ...params,
     }
 
     if (!withSessionKey) {
-      // @ts-ignore
       delete searchparams.sk
     }
     if (sign) {
-      // @ts-ignore
       searchparams.api_sig = generateSign(searchparams, this.apiSecret)
     }
 
@@ -222,8 +220,12 @@ class LastFm {
     let albumArtUrl
     if (track.album?.image && track.album?.image.length > 0) {
       // just pick a random one, we display it quite small anyway
-      // @ts-ignore
-      albumArtUrl = Object.values(track.album.image).pop()!['#text']
+      const albumArt = Object.values(track.album.image).pop()
+
+      if (albumArt) {
+        // @ts-expect-error this is just how last.fm returns it, can't help it
+        albumArtUrl = albumArt['#text']
+      }
     }
 
     const scrobblerLinks = {

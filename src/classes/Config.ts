@@ -8,9 +8,7 @@ export const defaultConfig: Config = {
 }
 
 export class ConfigContainer {
-  loaded = false
-
-  config?: Config
+  config: Config | null = null
 
   async loadConfig() {
     let { config } = await browser.storage.sync.get()
@@ -20,34 +18,33 @@ export class ConfigContainer {
       await browser.storage.sync.set({ config })
     }
     this.config = config as Config
-    this.loaded = true
   }
 
   async set<T extends keyof Config>(key: T, value: Config[T]) {
-    if (!this.loaded) {
+    if (!this.config) {
       throw new Error('Tried to set config but it has not finished loading yet')
     }
 
-    this.config![key] = value
-    await browser.storage.sync.set({ config: this.config! })
+    this.config[key] = value
+    await browser.storage.sync.set({ config: this.config })
   }
 
   get<T extends keyof Config>(key: T): Config[T] {
-    if (!this.loaded) {
+    if (!this.config) {
       throw new Error('Tried to get config but it has not finished loading yet')
     }
-    return this.config![key]
+    return this.config[key]
   }
 
   getFullConfig(): Config {
-    if (!this.loaded) {
+    if (!this.config) {
       throw new Error('Tried to get config but it has not finished loading yet')
     }
-    return this.config!
+    return this.config
   }
 
   async reset() {
-    if (!this.loaded) {
+    if (!this.config) {
       throw new Error(
         'Tried to reset config but it has not finished loading yet',
       )

@@ -97,7 +97,7 @@ class YoutubeConnector extends BaseConnector {
     const videoElement = await waitForElement<HTMLVideoElement>(
       '.html5-main-video',
     )
-    let { currentTime, duration, playbackRate } = videoElement
+    const { currentTime, duration, playbackRate } = videoElement
 
     return { playTime: currentTime, duration, playbackRate }
   }
@@ -105,8 +105,11 @@ class YoutubeConnector extends BaseConnector {
   override async getPopularity() {
     try {
       const element = await waitForElement('.view-count')
-      const views = element
-        .textContent!.trim()
+      if (!element.textContent) {
+        return 1
+      }
+      const views = element.textContent
+        .trim()
         .split(' ')[0]
         .replace(/[,.]/g, '')
 

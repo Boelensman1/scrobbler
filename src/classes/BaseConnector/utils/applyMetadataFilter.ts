@@ -21,15 +21,16 @@ metadataFilter.append({ track: MetadataFilter.youtube })
 metadataFilter.append({ track: removeMv })
 
 const applyMetadataFilter = (songInfo: PartialSongInfo): PartialSongInfo => {
-  ;(Object.entries(songInfo) as Entries<typeof songInfo>).map(
-    ([key, value]) => {
-      if (!value) {
-        return
-      }
-      songInfo[key] = metadataFilter.filterField(key, value)
-    },
-  )
-  return songInfo
+  return Object.fromEntries(
+    (Object.entries(songInfo) as Entries<typeof songInfo>).map(
+      ([key, value]) => {
+        if (!value) {
+          return [key, null]
+        }
+        return [key, metadataFilter.filterField(key, String(value))]
+      },
+    ),
+  ) as unknown as PartialSongInfo
 }
 
 export default applyMetadataFilter

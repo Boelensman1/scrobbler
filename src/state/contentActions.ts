@@ -11,14 +11,13 @@ import type {
 } from 'interfaces'
 
 export const CT_ACTION_KEYS = {
-  GET_STILL_PLAYING: 'GET_STILL_PLAYING' as 'GET_STILL_PLAYING',
-  GET_CONNECTOR_STATE: 'GET_CONNECTOR_STATE' as 'GET_CONNECTOR_STATE',
+  GET_STILL_PLAYING: 'GET_STILL_PLAYING' as const,
+  GET_CONNECTOR_STATE: 'GET_CONNECTOR_STATE' as const,
 
-  TOGGLE_DISABLE_SCROBBLE_CURRENT:
-    'TOGGLE_DISABLE_SCROBBLE_CURRENT' as 'TOGGLE_DISABLE_SCROBBLE_CURRENT',
-  FORCE_SCROBBLE_CURRENT: 'FORCE_SCROBBLE_CURRENT' as 'FORCE_SCROBBLE_CURRENT',
+  TOGGLE_DISABLE_SCROBBLE_CURRENT: 'TOGGLE_DISABLE_SCROBBLE_CURRENT' as const,
+  FORCE_SCROBBLE_CURRENT: 'FORCE_SCROBBLE_CURRENT' as const,
 
-  SAVE_TRACK_EDIT: 'SAVE_TRACK_EDIT' as 'SAVE_TRACK_EDIT',
+  SAVE_TRACK_EDIT: 'SAVE_TRACK_EDIT' as const,
 }
 
 const send = async <T extends CtActionObject, U = null>(
@@ -38,11 +37,11 @@ const send = async <T extends CtActionObject, U = null>(
 }
 
 const actions = {
-  getStillPlaying: (tabId: number, _data?: any) =>
+  getStillPlaying: (tabId: number) =>
     send<GetStillPlayingActionObject, boolean>(tabId, {
       type: CT_ACTION_KEYS.GET_STILL_PLAYING,
     }),
-  getConnectorState: (tabId: number, _data?: any) =>
+  getConnectorState: (tabId: number) =>
     send<GetConnectorStateActionObject, ConnectorState>(tabId, {
       type: CT_ACTION_KEYS.GET_CONNECTOR_STATE,
     }),

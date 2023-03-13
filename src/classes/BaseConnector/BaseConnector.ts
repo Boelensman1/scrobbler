@@ -7,8 +7,9 @@ import type {
   PostProcessor,
   TimeInfo,
   CtActionObject,
-  PartialSongInfo,
   SongInfo,
+  ConnectorTrackId,
+  PartialSongInfo,
 } from 'interfaces'
 import {
   ConfigContainer,
@@ -30,9 +31,9 @@ abstract class BaseConnector implements Connector {
 
   lastStateChange?: Date
   playTimeAtLastStateChange = 0
-  connectorTrackId: any
+  connectorTrackId: ConnectorTrackId | null = null
   startedPlaying: Date = new Date()
-  sendNowPlaying: boolean = false
+  sendNowPlaying = false
 
   playTime = 0
   track: Track | null = null
@@ -55,8 +56,7 @@ abstract class BaseConnector implements Connector {
   abstract isPlaying(): Promise<boolean>
   abstract isReady(): Promise<boolean>
   abstract getTimeInfo(): Promise<TimeInfo>
-  abstract getCurrentTrackId(): Promise<string>
-  abstract getCurrentTrackId(): Promise<string>
+  abstract getCurrentTrackId(): Promise<ConnectorTrackId | null>
 
   async getPopularity() {
     return 1
@@ -194,8 +194,8 @@ abstract class BaseConnector implements Connector {
     }
   }
 
-  async getSongInfoOptionsFromConnector(): Promise<SongInfo[]> {
-    let songInfos = (
+  async getSongInfoOptionsFromConnector(): Promise<PartialSongInfo[]> {
+    let partialSongInfos = (
       await Promise.all(
         this.getters.map(async (getter) => {
           const songInfos = await getter(this)
@@ -204,16 +204,16 @@ abstract class BaseConnector implements Connector {
       )
     )
       .flat()
-      .filter((s) => !!s) // remove nulls
+      .filter((s): s is PartialSongInfo => !!s) // remove nulls
 
-    songInfos = this.postProcessors
+    partialSongInfos = this.postProcessors
       .reduce<PartialSongInfo[]>((acc: PartialSongInfo[], postProcessor) => {
         acc = postProcessor(acc)
         return acc
-      }, songInfos as SongInfo[])
+      }, partialSongInfos)
       .map(applyMetadataFilter)
 
-    return songInfos as SongInfo[]
+    return partialSongInfos
   }
 
   async newTrack(): Promise<Track | null> {
@@ -335,7 +335,7 @@ abstract class BaseConnector implements Connector {
       if (this.sendNowPlaying === false) {
         this.sendNowPlaying = true
 
-        this.scrobbler.setNowPlaying(this.track!)
+        this.scrobbler.setNowPlaying(this.track)
       }
 
       if (

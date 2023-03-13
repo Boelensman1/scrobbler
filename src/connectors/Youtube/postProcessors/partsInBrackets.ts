@@ -1,4 +1,4 @@
-import type { PartialSongInfo } from 'interfaces'
+import type { PostProcessor, PartialSongInfo } from 'interfaces'
 import parse, { ArrayTree } from 'parenthesis'
 
 const getParts = (input: ArrayTree, output: string[] = []): string[] => {
@@ -38,10 +38,13 @@ const getPartsInBrackets = (input: string): string[] => {
   우기 (YUQI) -> YUQI
   (여자)아이들((G)I-DLE) -> ['여자', '(G)I-DLE']
 */
-const partsInBrackets = (songInfos: PartialSongInfo[]): PartialSongInfo[] => {
+const partsInBrackets: PostProcessor = (
+  songInfos: PartialSongInfo[],
+): PartialSongInfo[] => {
   const additonal: PartialSongInfo[] = []
   songInfos.forEach((songInfo) => {
     if (songInfo.artist) {
+      const songInfoArtist = songInfo.artist
       getPartsInBrackets(songInfo.artist).forEach((inBrackets) => {
         additonal.push({
           ...songInfo,
@@ -49,8 +52,8 @@ const partsInBrackets = (songInfos: PartialSongInfo[]): PartialSongInfo[] => {
         })
 
         // also add a version where the in brackets part is removed
-        const withBracketPartRemoved = songInfo
-          .artist!.replace('(' + inBrackets + ')', '')
+        const withBracketPartRemoved = songInfoArtist
+          .replace('(' + inBrackets + ')', '')
           .trim()
         if (withBracketPartRemoved.length > 3) {
           additonal.push({

@@ -41,7 +41,7 @@ async function handleMessage(
 
     case BG_ACTION_KEYS.SAVE_CONFIG: {
       Object.entries(action.data).map(([key, value]) => {
-        config.set(key as keyof Config, value as any)
+        config.set(key as keyof Config, value)
       })
       return
     }
@@ -87,7 +87,7 @@ async function handleMessage(
 function handleMessageContainer(
   action: BgActionObject,
   sender: browser.Runtime.MessageSender,
-  sendResponse: () => any,
+  sendResponse: () => any, // eslint-disable-line @typescript-eslint/no-explicit-any
 ): true {
   handleMessage(action, sender).then(sendResponse)
   return true
