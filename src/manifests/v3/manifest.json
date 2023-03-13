@@ -9,6 +9,12 @@
       "js": ["../../content-script.ts"]
     }
   ],
+  "icons": {
+    "48": "../../icons/icon.png",
+    "96": "../../icons/icon@2x.png",
+    "144": "../../icons/icon@3x.png",
+    "192": "../../icons/icon@4x.png"
+  },
   "background": {
     "service_worker": "../../background-script.ts",
     "type": "module"
