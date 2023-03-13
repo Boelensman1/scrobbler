@@ -4,11 +4,11 @@ import { createRoot } from 'react-dom/client'
 import browser from 'webextension-polyfill'
 
 import type { ConnectorState, State } from 'interfaces'
-import { ctActions, bgActions, initialState } from 'internals'
+import { ctActions, bgActions, initialState, scrobbleStates } from 'internals'
 
 import EditSearch from './EditSearch'
 
-const DEBUG = Number(process.env.DEBUG) === 1 || false
+import useConfig from '../useConfig'
 
 const defaultAlbumArtUrl = 'https://via.placeholder.com/150'
 
@@ -16,10 +16,12 @@ const Track = ({
   activeConnectorTabId,
   track,
   startEdit,
+  debug,
 }: {
   activeConnectorTabId: State['activeConnectorTabId']
   track: ConnectorState['track']
   startEdit: () => void
+  debug: boolean
 }) => {
   if (!track) {
     return (
@@ -29,15 +31,15 @@ const Track = ({
     )
   }
   return (
-    <div style={{ display: 'flex' }}>
+    <div style={{ display: 'flex', gap: 4 }}>
       <div>
         <img
           src={track.albumArtUrl || defaultAlbumArtUrl}
           style={{ width: 100, height: 100, marginRight: 8 }}
         />
       </div>
-      <div style={{ display: 'flex', flexDirection: 'column' }}>
-        {DEBUG && (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+        {debug && (
           <div>
             Ids: {activeConnectorTabId} - {track.musicBrainzReleaseGroupId}
           </div>
@@ -61,9 +63,11 @@ const Track = ({
 }
 
 const InnerPopup = () => {
+  const { config } = useConfig()
   const [edittingSearch, setEditingSearch] = useState<boolean>(false)
   const [globalState, setGlobalState] = useState<State>(initialState)
   const [connectorState, setConnectorState] = useState<ConnectorState>()
+
   useEffect(() => {
     const updateState = async () => {
       const newState = await bgActions.getState()
@@ -89,8 +93,8 @@ const InnerPopup = () => {
   }
 
   return (
-    <div>
-      {!connectorState.track && (
+    <div style={{ display: 'flex', gap: 4, flexDirection: 'column' }}>
+      {!connectorState.track && config.debug && (
         <div>active tab: {globalState.activeConnectorTabId}</div>
       )}
       {edittingSearch ? (
@@ -107,24 +111,35 @@ const InnerPopup = () => {
           startEdit={() => {
             setEditingSearch(true)
           }}
+          debug={config.debug}
         />
       )}
       <div>
-        {connectorState.scrobbleState} (
-        {connectorState.track ? connectorState.track.scrobblerMatchQuality : -1}
-        /{Math.floor(connectorState.minimumScrobblerQuality)}),{' '}
-        {Math.round(connectorState.playTime * 10) / 10}
-        s/{Math.round(connectorState.scrobbleAt)}s
+        {connectorState.scrobbleState}{' '}
+        {config.debug &&
+          connectorState.scrobbleState !==
+            scrobbleStates.TRACK_NOT_RECOGNISED &&
+          `(${
+            connectorState.track
+              ? connectorState.track.scrobblerMatchQuality
+              : -1
+          }/${Math.floor(connectorState.minimumScrobblerQuality)}), `}
+        {Math.round(connectorState.playTime * 10) / 10}s/
+        {Math.round(connectorState.scrobbleAt)}s
       </div>
       <div>
-        <button onClick={() => ctActions.toggleDisableToggleCurrent(tabId)}>
+        <button
+          onClick={() => ctActions.toggleDisableToggleCurrent(tabId)}
+          style={{ marginRight: 4 }}
+        >
           Don&apos;t scrobble current
         </button>
         <button onClick={() => ctActions.forceScrobbleCurrent(tabId)}>
           Force scrobble current
         </button>
       </div>
-      <pre>{DEBUG && globalState.debugString}</pre>
+      {config.debug && <pre>{globalState.debugString}</pre>}
+      <button onClick={() => browser.runtime.openOptionsPage()}>Options</button>
     </div>
   )
 }
@@ -133,7 +148,6 @@ const Content = () => {
   return (
     <div>
       <InnerPopup />
-      <button onClick={() => browser.runtime.openOptionsPage()}>Options</button>
     </div>
   )
 }

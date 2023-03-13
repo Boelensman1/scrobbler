@@ -4,6 +4,7 @@ interface Config {
   scrobblerQualityDynamic: boolean
 
   lastfmSessionKey?: string
+  debug: boolean
 }
 
 export default Config

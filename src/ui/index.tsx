@@ -1,13 +1,14 @@
-import React, { useState, useEffect } from 'react'
+import React, { useEffect } from 'react'
 import { createRoot } from 'react-dom/client'
 import { useFormik } from 'formik'
 
+import { bgActions } from 'internals'
+
 import type { Config } from '../interfaces'
-import { bgActions, defaultConfig } from 'internals'
+import useConfig from './useConfig'
 
 const Content = () => {
-  const [config, setConfig] = useState<Config>(defaultConfig)
-  const [reloadConfig, setReloadConfig] = useState<boolean>(true)
+  const { config, saveConfig, resetConfig } = useConfig()
 
   const formik = useFormik({
     initialValues: {
@@ -15,58 +16,77 @@ const Content = () => {
     },
     onSubmit: async (values: Partial<Config>) => {
       delete values.scrobbler
-      await bgActions.saveConfig(values)
+      saveConfig(values)
     },
   })
 
   useEffect(() => {
-    const updateConfig = async () => {
-      setReloadConfig(false)
-      const newConfig = await bgActions.getConfig()
-      setConfig(newConfig)
-      formik.setValues(newConfig)
+    if (config) {
+      formik.setValues(config)
     }
-
-    if (reloadConfig) {
-      updateConfig()
-    }
-  }, [reloadConfig])
+  }, [config])
 
   return (
-    <div>
-      <button onClick={() => bgActions.requestAuthentication()}>auth</button>
-      <button
-        id="resetConfig"
-        onClick={async () => {
-          await bgActions.resetConfig()
-          setReloadConfig(true)
-        }}
-      >
-        reset config
-      </button>
+    <div
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 12,
+        padding: 48,
+      }}
+    >
+      <div>
+        <button onClick={() => bgActions.requestAuthentication()}>
+          Authorize with Last.Fm
+        </button>
+      </div>
 
       <form onSubmit={formik.handleSubmit}>
-        <label htmlFor="minimumScrobblerQuality">
-          Minimum Scrobbler Quality{' '}
-        </label>
-        <input
-          id="minimumScrobblerQuality"
-          type="number"
-          onChange={formik.handleChange}
-          value={formik.values.minimumScrobblerQuality}
-        />
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+          <div>
+            <label htmlFor="minimumScrobblerQuality">
+              Minimum scrobbler quality{' '}
+            </label>
+            <input
+              id="minimumScrobblerQuality"
+              type="number"
+              onChange={formik.handleChange}
+              value={formik.values.minimumScrobblerQuality}
+            />
+          </div>
 
-        <label htmlFor="scrobblerQualityDynamic">
-          Dynamic scrobbler quality{' '}
-        </label>
-        <input
-          id="scrobblerQualityDynamic"
-          type="checkbox"
-          onChange={formik.handleChange}
-          checked={formik.values.scrobblerQualityDynamic}
-        />
-        <button type="submit">save</button>
+          <div>
+            <label htmlFor="scrobblerQualityDynamic">
+              Dynamic scrobbler quality{' '}
+            </label>
+            <input
+              id="scrobblerQualityDynamic"
+              type="checkbox"
+              onChange={formik.handleChange}
+              checked={formik.values.scrobblerQualityDynamic}
+            />
+          </div>
+
+          <div>
+            <label htmlFor="debug">Debug </label>
+            <input
+              id="debug"
+              type="checkbox"
+              onChange={formik.handleChange}
+              checked={formik.values.debug}
+            />
+          </div>
+
+          <div>
+            <button type="submit">Save</button>
+          </div>
+        </div>
       </form>
+      <div>
+        <button id="resetConfig" onClick={() => resetConfig()}>
+          Reset
+        </button>
+      </div>
     </div>
   )
 }

@@ -1,10 +1,13 @@
 import browser from 'webextension-polyfill'
 import type { Config } from 'interfaces'
 
+const DEBUG = Number(process.env.DEBUG) === 1 || false
+
 export const defaultConfig: Config = {
   scrobbler: null,
   minimumScrobblerQuality: 100,
   scrobblerQualityDynamic: true,
+  debug: DEBUG,
 }
 
 export class ConfigContainer {

@@ -5,6 +5,7 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
+    "@fontsource/roboto": "^4.5.8",
     "eslint-config-prettier": "^8.7.0",
     "formik": "^2.2.9",
     "lodash": "^4.17.21",
