@@ -31,10 +31,10 @@ start-firefox: build-firefox
 start-chrome: build-chrome
 	$(shell DEBUG=1 npx parcel watch src/manifests/v3/manifest.json --host localhost & npx web-ext run --source-dir ./dist/ --target chromium)
 
-build-firefox: lint clean-cache clean-dist node_modules $(SRC_FILES)
+build-firefox: node_modules lint clean-cache clean-dist $(SRC_FILES)
 	npx parcel build --no-optimize src/manifests/v2/manifest.json
 
-build-chrome: lint clean-cache clean-dist node_modules $(SRC_FILES)
+build-chrome: node_modules lint clean-cache clean-dist $(SRC_FILES)
 	npx parcel build --no-optimize src/manifests/v3/manifest.json
 
 web-ext-artifacts:
