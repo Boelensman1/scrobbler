@@ -29,7 +29,7 @@ export interface Connector {
 }
 
 interface ConnectorStatic {
-  hostMatch(host: string): boolean
+  locationMatch(location: Location): boolean
 
   new (scrobbler: LastFm, config: ConfigContainer): Connector
 }

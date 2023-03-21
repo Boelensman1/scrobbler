@@ -1,15 +1,19 @@
 import type { ConnectorStatic } from 'interfaces'
-import { ConfigContainer, YoutubeConnector } from 'internals'
+import {
+  ConfigContainer,
+  YoutubeConnector,
+  YoutubeEmbedConnector,
+} from 'internals'
 
 import scrobblers from './scrobblerList'
 
-const connectors: ConnectorStatic[] = [YoutubeConnector]
+const connectors: ConnectorStatic[] = [YoutubeConnector, YoutubeEmbedConnector]
 
 const config = new ConfigContainer()
 
 const main = async () => {
   const MatchingConnector = connectors.find((conn) =>
-    conn.hostMatch(location.host),
+    conn.locationMatch(location),
   )
 
   if (!MatchingConnector) {

@@ -14,8 +14,10 @@ class YoutubeConnector extends BaseConnector {
   getters = getters
   postProcessors = postProcessors
 
-  static hostMatch(host: string) {
-    return host.includes('youtube')
+  static youtubeWatchElement = '#content'
+
+  static locationMatch(location: Location) {
+    return location.host.includes('youtube') && !location.href.includes('embed')
   }
 
   async setupWatches(): Promise<HTMLElement> {
@@ -32,11 +34,14 @@ class YoutubeConnector extends BaseConnector {
     video.addEventListener('seeked', this.onStateChanged.bind(this, 'seeked'))
     video.addEventListener('seeking', this.onStateChanged.bind(this, 'seeking'))
 
-    const el = await waitForElement('#content')
+    const el = await waitForElement(
+      (this.constructor as typeof YoutubeConnector).youtubeWatchElement,
+    )
     if (!el) {
       throw new Error('Could not setup watch, "#content" not found')
     }
-    // return element to further watch, BaseConnector will setup the watch on this
+    // return element to further watch, BaseConnector will setup
+    // the watch on this
     return el
   }
 
@@ -58,6 +63,21 @@ class YoutubeConnector extends BaseConnector {
       if (miniPlayerElement) {
         const id = getYtVideoIdFromUrl(
           miniPlayerElement.getAttribute('href') as string,
+        )
+        if (id) {
+          return id
+        }
+      }
+    } catch (err) {
+      /* noop */
+    }
+
+    try {
+      // this is where the video link is located for embeded
+      const titleLinkElement = getElement('.ytp-title-link')
+      if (titleLinkElement) {
+        const id = getYtVideoIdFromUrl(
+          titleLinkElement.getAttribute('href') as string,
         )
         if (id) {
           return id
