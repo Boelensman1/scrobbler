@@ -1,6 +1,6 @@
 interface PartialSongInfo {
-  track: string | null
-  artist: string | null
+  track?: string | null
+  artist?: string | null
   album?: string | null
 }
 

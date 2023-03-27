@@ -34,6 +34,8 @@ const getPartsInBrackets = (input: string): string[] => {
   return getParts(parsed).filter((p) => p.length > 1)
 }
 
+const inBracketsRegex = /\s*\(.+\)/
+
 /*
   우기 (YUQI) -> YUQI
   (여자)아이들((G)I-DLE) -> ['여자', '(G)I-DLE']
@@ -64,16 +66,24 @@ const partsInBrackets: PostProcessor = (
       })
     }
 
-    /*
+    // for track, only remove the part in brackets
     if (songInfo.track) {
-      if (songInfo.track.match(regex)) {
-        additonal.push({
-          ...songInfo,
-          track: songInfo.track.replace(regex, '').trim(),
-        })
+      const trackWithoutPartInBrackets = songInfo.track.replace(
+        inBracketsRegex,
+        '',
+      )
+      if (
+        songInfo.track.length !== trackWithoutPartInBrackets.length &&
+        trackWithoutPartInBrackets.length > 2
+      ) {
+        if (songInfo.track.match(inBracketsRegex)) {
+          additonal.push({
+            ...songInfo,
+            track: trackWithoutPartInBrackets,
+          })
+        }
       }
     }
-    */
   })
 
   return [...songInfos, ...additonal]

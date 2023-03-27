@@ -1,4 +1,4 @@
-import addOnlyLatinArtist from './addOnlyLatinArtist'
+import addOnlyLatinCharacters from './addOnlyLatinCharacters'
 import partsInBrackets from './partsInBrackets'
 
-export default [addOnlyLatinArtist, partsInBrackets]
+export default [addOnlyLatinCharacters, partsInBrackets]
