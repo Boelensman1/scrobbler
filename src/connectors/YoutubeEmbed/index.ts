@@ -3,6 +3,8 @@ import { waitForElement } from 'internals'
 import YoutubeConnector from '../Youtube'
 
 class YoutubeEmbedConnector extends YoutubeConnector {
+  static connectorKey = 'youtube-embed'
+
   static youtubeWatchElement = '#player'
 
   static locationMatch(location: Location) {

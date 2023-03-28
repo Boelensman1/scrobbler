@@ -6,7 +6,7 @@ import type {
   GetStillPlayingActionObject,
   ToggleDisableToggleCurrentActionObject,
   ForceToggleCurrentActionObject,
-  SaveTrackEditActionObject,
+  SaveTrackEditCTActionObject,
   SongInfo,
 } from 'interfaces'
 
@@ -17,7 +17,7 @@ export const CT_ACTION_KEYS = {
   TOGGLE_DISABLE_SCROBBLE_CURRENT: 'TOGGLE_DISABLE_SCROBBLE_CURRENT' as const,
   FORCE_SCROBBLE_CURRENT: 'FORCE_SCROBBLE_CURRENT' as const,
 
-  SAVE_TRACK_EDIT: 'SAVE_TRACK_EDIT' as const,
+  SAVE_TRACK_EDIT: 'SAVE_TRACK_EDIT_CT' as const,
 }
 
 const send = async <T extends CtActionObject, U = null>(
@@ -54,7 +54,7 @@ const actions = {
       type: CT_ACTION_KEYS.FORCE_SCROBBLE_CURRENT,
     }),
   saveTrackEdit: (tabId: number, editValues: SongInfo) =>
-    send<SaveTrackEditActionObject>(tabId, {
+    send<SaveTrackEditCTActionObject>(tabId, {
       type: CT_ACTION_KEYS.SAVE_TRACK_EDIT,
       data: { editValues },
     }),

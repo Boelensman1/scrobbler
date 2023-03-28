@@ -3,8 +3,10 @@ import React, { useState } from 'react'
 import _ from 'lodash'
 import { useFormik } from 'formik'
 
-import type { ConnectorState, SongInfo, TrackEditValues } from 'interfaces'
+import type { ConnectorState, SongInfo } from 'interfaces'
 import { ctActions, Track } from 'internals'
+
+type TrackEditValues = SongInfo
 
 const ManualInputForm = ({
   searchQueryList,

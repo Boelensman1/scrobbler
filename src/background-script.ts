@@ -1,6 +1,7 @@
 import browser from 'webextension-polyfill'
 import {
   ConfigContainer,
+  EdittedTracksManager,
   BG_ACTION_KEYS,
   StateManager,
   ctActions,
@@ -12,6 +13,7 @@ import scrobblers from './scrobblerList'
 
 const config = new ConfigContainer()
 const stateManager = new StateManager()
+const edittedTracksManager = new EdittedTracksManager()
 
 // setFullyLoaded is called after init (in main)
 let setFullyLoaded: (val: true) => void
@@ -82,6 +84,15 @@ async function handleMessage(
 
       return
     }
+
+    case BG_ACTION_KEYS.SAVE_TRACK_EDIT: {
+      edittedTracksManager.addEdittedTrack(action.data)
+      return
+    }
+
+    case BG_ACTION_KEYS.GET_TRACK_FROM_EDITTED_TRACKS: {
+      return edittedTracksManager.getEdittedTrack(action.data)
+    }
   }
 }
 function handleMessageContainer(
@@ -122,6 +133,7 @@ browser.tabs.onUpdated.addListener(async (id, changeInfo, windowprops) => {
 
 const main = async () => {
   await config.loadConfig()
+  await edittedTracksManager.loadEdittedTracks()
 
   const connector = config.get('scrobbler')
   switch (connector) {

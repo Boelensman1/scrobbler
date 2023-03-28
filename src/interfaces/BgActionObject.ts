@@ -1,5 +1,5 @@
 import type { BG_ACTION_KEYS } from 'internals'
-import type { Config } from 'interfaces'
+import type { Config, SavedEdit, TrackSelector } from 'interfaces'
 
 export interface RequestAuthenticationActionObject {
   type: typeof BG_ACTION_KEYS.REQUEST_AUTHENTICATION
@@ -35,6 +35,16 @@ export interface GetIsActiveTabActionObject {
   type: typeof BG_ACTION_KEYS.GET_IS_ACTIVE_TAB
 }
 
+export interface SaveTrackEditBGActionObject {
+  type: typeof BG_ACTION_KEYS.SAVE_TRACK_EDIT
+  data: SavedEdit
+}
+
+export interface GetTrackFromEdittedTracksActionObject {
+  type: typeof BG_ACTION_KEYS.GET_TRACK_FROM_EDITTED_TRACKS
+  data: TrackSelector
+}
+
 export type BgActionObject =
   | RequestAuthenticationActionObject
   | GetStateActionObject
@@ -44,3 +54,5 @@ export type BgActionObject =
   | SetLoadingNewTrackActionObject
   | RequestBecomeActiveTabActionObject
   | GetIsActiveTabActionObject
+  | SaveTrackEditBGActionObject
+  | GetTrackFromEdittedTracksActionObject

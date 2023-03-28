@@ -10,6 +10,7 @@ import type {
   SongInfo,
   ConnectorTrackId,
   PartialSongInfo,
+  ConnectorStatic,
 } from 'interfaces'
 import {
   ConfigContainer,
@@ -164,6 +165,24 @@ abstract class BaseConnector implements Connector {
           this.scrobbleState = this.getScrobbleState()
         }
 
+        // save!
+        if (this.connectorTrackId) {
+          bgActions.saveTrackEdit({
+            connectorKey: (this.constructor as ConnectorStatic).connectorKey,
+            connectorTrackId: this.connectorTrackId,
+            edittedSongInfo: track
+              ? {
+                  track: track.name,
+                  artist: track.artist,
+                  album: track.album,
+                }
+              : {
+                  track: action.data.editValues.track.trim(),
+                  artist: action.data.editValues.artist.trim(),
+                },
+          })
+        }
+
         return
       }
     }
@@ -231,8 +250,20 @@ abstract class BaseConnector implements Connector {
     this.resetTrack()
     this.connectorTrackId = potentialNewTrackId
 
+    // check if we have this song saved as editted
+    let songInfoFromSavedEdits: SongInfo | false = false
+    if (this.connectorTrackId) {
+      songInfoFromSavedEdits = await bgActions.getTrackFromEdittedTracks({
+        connectorKey: (this.constructor as ConnectorStatic).connectorKey,
+        connectorTrackId: this.connectorTrackId,
+      })
+    }
+
     const [partialSongInfos, timeInfo, popularity] = await Promise.all([
-      this.getSongInfoOptionsFromConnector(),
+      // if we have this song as a saved edit, there is no need to get song info from the connector
+      songInfoFromSavedEdits
+        ? Promise.resolve([songInfoFromSavedEdits])
+        : this.getSongInfoOptionsFromConnector(),
       this.getTimeInfo(),
       this.getPopularity ? this.getPopularity() : Promise.resolve(1),
     ])

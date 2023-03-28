@@ -9,6 +9,8 @@ import getTextFromSelector from './util/getTextFromSelector'
 import getYtVideoIdFromUrl from './util/getYtVideoIdFromUrl'
 
 class YoutubeConnector extends BaseConnector {
+  static connectorKey = 'youtube'
+
   player!: Element
 
   getters = getters

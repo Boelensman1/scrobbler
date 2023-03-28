@@ -6,7 +6,7 @@ import type TimeInfo from './TimeInfo'
 export type Getter = (connector: Connector) => Promise<PartialSongInfo[]>
 export type PostProcessor = (songInfos: PartialSongInfo[]) => PartialSongInfo[]
 
-export type ConnectorTrackId = string | number | symbol
+export type ConnectorTrackId = string
 
 export interface Connector {
   scrobbler: LastFm
@@ -29,6 +29,7 @@ export interface Connector {
 }
 
 interface ConnectorStatic {
+  connectorKey: string
   locationMatch(location: Location): boolean
 
   new (scrobbler: LastFm, config: ConfigContainer): Connector

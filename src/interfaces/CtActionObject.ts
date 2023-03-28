@@ -17,7 +17,7 @@ export interface ForceToggleCurrentActionObject {
   type: typeof CT_ACTION_KEYS.FORCE_SCROBBLE_CURRENT
 }
 
-export interface SaveTrackEditActionObject {
+export interface SaveTrackEditCTActionObject {
   type: typeof CT_ACTION_KEYS.SAVE_TRACK_EDIT
   data: { editValues: SongInfo }
 }
@@ -27,4 +27,4 @@ export type CtActionObject =
   | GetConnectorStateActionObject
   | ToggleDisableToggleCurrentActionObject
   | ForceToggleCurrentActionObject
-  | SaveTrackEditActionObject
+  | SaveTrackEditCTActionObject

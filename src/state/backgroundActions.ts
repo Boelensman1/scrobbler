@@ -11,6 +11,11 @@ import type {
   State,
   RequestBecomeActiveTabActionObject,
   GetIsActiveTabActionObject,
+  SavedEdit,
+  SaveTrackEditBGActionObject,
+  TrackSelector,
+  GetTrackFromEdittedTracksActionObject,
+  SongInfo,
 } from 'interfaces'
 
 export const BG_ACTION_KEYS = {
@@ -24,6 +29,9 @@ export const BG_ACTION_KEYS = {
   SET_LOADING_NEW_TRACK: 'SET_LOADING_NEW_TRACK' as const,
   REQUEST_BECOME_ACTIVE_TAB: 'REQUEST_BECOME_ACTIVE_TAB' as const,
   GET_IS_ACTIVE_TAB: 'GET_IS_ACTIVE_TAB' as const,
+
+  SAVE_TRACK_EDIT: 'SAVE_TRACK_EDIT_BG' as const,
+  GET_TRACK_FROM_EDITTED_TRACKS: 'GET_TRACK_FROM_EDITTED_TRACKS' as const,
 }
 
 const send = <T extends BgActionObject, U = void>(arg: T): Promise<U> =>
@@ -63,6 +71,16 @@ const actions = {
   getIsActiveTab: (): Promise<boolean> =>
     send<GetIsActiveTabActionObject, boolean>({
       type: BG_ACTION_KEYS.GET_IS_ACTIVE_TAB,
+    }),
+  saveTrackEdit: (editValues: SavedEdit) =>
+    send<SaveTrackEditBGActionObject>({
+      type: BG_ACTION_KEYS.SAVE_TRACK_EDIT,
+      data: editValues,
+    }),
+  getTrackFromEdittedTracks: (selector: TrackSelector) =>
+    send<GetTrackFromEdittedTracksActionObject, SongInfo | false>({
+      type: BG_ACTION_KEYS.GET_TRACK_FROM_EDITTED_TRACKS,
+      data: selector,
     }),
 }
 
