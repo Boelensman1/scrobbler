@@ -6,6 +6,7 @@ const forceableScrobbleStates: (keyof typeof scrobbleStates)[] = [
   scrobbleStates.SCROBBLED,
   scrobbleStates.TRACK_TOO_SHORT,
   scrobbleStates.WILL_SCROBBLE,
+  scrobbleStates.BLOCKED_BY_CONNECTOR,
   scrobbleStates.FORCE_SCROBBLE,
 ]
 

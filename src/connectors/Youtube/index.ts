@@ -115,6 +115,11 @@ class YoutubeConnector extends BaseConnector {
     return player.classList.contains('playing-mode')
   }
 
+  async shouldScrobble() {
+    // block scrobbling when we can't get viewcount, for example: in shorts
+    return (await this.getPopularity()) !== -1
+  }
+
   async getTimeInfo(): Promise<TimeInfo> {
     const videoElement = await waitForElement<HTMLVideoElement>(
       '.html5-main-video',
@@ -124,11 +129,11 @@ class YoutubeConnector extends BaseConnector {
     return { playTime: currentTime, duration, playbackRate }
   }
 
-  override async getPopularity() {
+  async getPopularity() {
     try {
       const element = await waitForElement('.view-count')
       if (!element.textContent) {
-        return 1
+        return -1
       }
       const views = element.textContent
         .trim()
@@ -137,7 +142,7 @@ class YoutubeConnector extends BaseConnector {
 
       return Math.sqrt(Number(views))
     } catch (e) {
-      return 1
+      return -1
     }
   }
 

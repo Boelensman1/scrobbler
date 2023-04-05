@@ -82,7 +82,16 @@ abstract class BaseConnector implements Connector {
     browser.runtime.onMessage.addListener(this.handleMessage.bind(this))
   }
 
-  getScrobbleState = (): keyof typeof scrobbleStates => {
+  async shouldScrobble() {
+    // if needed, a connector should override this
+    return true
+  }
+
+  async getScrobbleState(): Promise<keyof typeof scrobbleStates> {
+    if (!(await this.shouldScrobble())) {
+      return scrobbleStates.BLOCKED_BY_CONNECTOR
+    }
+
     if (this.scrobbleState === scrobbleStates.SCROBBLED) {
       // we already scrobbled
       return scrobbleStates.SCROBBLED
@@ -133,7 +142,7 @@ abstract class BaseConnector implements Connector {
             this.scrobbleState = scrobbleStates.MANUALLY_DISABLED
           }
         } else {
-          this.scrobbleState = this.getScrobbleState()
+          this.scrobbleState = await this.getScrobbleState()
         }
         return
       }
@@ -162,7 +171,7 @@ abstract class BaseConnector implements Connector {
           this.track = track
         }
         if (this.scrobbleState !== scrobbleStates.MANUALLY_DISABLED) {
-          this.scrobbleState = this.getScrobbleState()
+          this.scrobbleState = await this.getScrobbleState()
         }
 
         // save!
@@ -303,7 +312,7 @@ abstract class BaseConnector implements Connector {
       this.track = track
     }
 
-    this.scrobbleState = this.getScrobbleState()
+    this.scrobbleState = await this.getScrobbleState()
     return track
   }
 
@@ -348,7 +357,7 @@ abstract class BaseConnector implements Connector {
       if (this.scrobbleState !== scrobbleStates.MANUALLY_DISABLED) {
         this.scrobbleState = scrobbleStates.TRACK_NOT_RECOGNISED
       }
-      this.scrobbleState = this.getScrobbleState()
+      this.scrobbleState = await this.getScrobbleState()
     }
 
     this.lastStateChange = now

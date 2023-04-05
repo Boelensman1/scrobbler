@@ -26,6 +26,8 @@ export interface Connector {
   getPopularity(): Promise<number>
 
   searchQueryList: SongInfo[]
+
+  shouldScrobble(): Promise<boolean>
 }
 
 interface ConnectorStatic {
