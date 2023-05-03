@@ -8,6 +8,16 @@ import { ctActions, Track } from 'internals'
 
 type TrackEditValues = SongInfo
 
+const getMatchQuality = (matchQuality: undefined | number): string => {
+  if (!matchQuality) {
+    return 'no match'
+  }
+  if (matchQuality === -2) {
+    return 'from saved edit'
+  }
+  return matchQuality.toString()
+}
+
 const ManualInputForm = ({
   searchQueryList,
   track,
@@ -48,7 +58,8 @@ const ManualInputForm = ({
           <option value="select">Copy from:</option>
           {searchQueryList.map((result, i) => (
             <option key={i} value={i}>
-              {result.artist} - {result.track} ({result.matchQuality})
+              {result.artist} - {result.track}{' '}
+              {`(${getMatchQuality(result.matchQuality)})`}
             </option>
           ))}
         </select>
@@ -111,14 +122,12 @@ const SelectResultForm = ({
     <form>
       <select id="selectedSearchResult" onChange={submit}>
         <option value="select">Select search result</option>
-        {searchQueryList
-          .filter((r) => r.matchQuality)
-          .map((result, i) => (
-            <option key={i} value={i}>
-              {result.artist} - {result.track} (
-              {result.matchQuality || 'no-match'})
-            </option>
-          ))}
+        {searchQueryList.map((result, i) => (
+          <option key={i} value={i}>
+            {result.artist} - {result.track} (
+            {getMatchQuality(result.matchQuality)})
+          </option>
+        ))}
         <option value="manual">Manual input</option>
       </select>
     </form>

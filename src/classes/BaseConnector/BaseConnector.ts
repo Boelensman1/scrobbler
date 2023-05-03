@@ -268,11 +268,11 @@ abstract class BaseConnector implements Connector {
       })
     }
 
+    // no check for songInfoFromSavedEdits as even if we have this song as a
+    // saved edit, we still want to get all info so we have the list in case
+    // more edits have to be made
     const [partialSongInfos, timeInfo, popularity] = await Promise.all([
-      // if we have this song as a saved edit, there is no need to get song info from the connector
-      songInfoFromSavedEdits
-        ? Promise.resolve([songInfoFromSavedEdits])
-        : this.getSongInfoOptionsFromConnector(),
+      this.getSongInfoOptionsFromConnector(),
       this.getTimeInfo(),
       this.getPopularity ? this.getPopularity() : Promise.resolve(1),
     ])
@@ -290,22 +290,33 @@ abstract class BaseConnector implements Connector {
       (this.config.get('scrobblerQualityDynamic') ? popularity / 200 : 1)
 
     const songInfos = combineSongInfos(partialSongInfos)
-    const tracks: (Track | null)[] = await Promise.all(
-      songInfos.map((songInfo: SongInfo) => this.scrobbler.getTrack(songInfo)),
-    )
-    const searchResults = tracks.filter((t) => !!t) as Track[]
 
-    // save searchQuery so we can edit it
-    this.searchQueryList = tracks.map((track, i) =>
-      track ? track.toSongInfo() : songInfos[i],
-    )
+    let track
+    if (songInfoFromSavedEdits) {
+      track = await this.scrobbler.getTrack(songInfoFromSavedEdits)
 
-    // get the track with the highest 'match quality'
-    // match quality for last.fm is defined as # of listeners
-    const [track] = searchResults.sort(
-      (track1: Track, track2: Track) =>
-        track2.scrobblerMatchQuality - track1.scrobblerMatchQuality,
-    )
+      // save searchQuery so we can edit it
+      songInfoFromSavedEdits.matchQuality = -2 // -2 is the magic number that will be displayed as 'editted'
+      this.searchQueryList = [songInfoFromSavedEdits, ...songInfos]
+    } else {
+      const tracks: (Track | null)[] = await Promise.all(
+        songInfos.map((songInfo: SongInfo) =>
+          this.scrobbler.getTrack(songInfo),
+        ),
+      )
+      const searchResults = tracks.filter((t) => !!t) as Track[]
+      // get the track with the highest 'match quality'
+      // match quality for last.fm is defined as # of listeners
+      track = searchResults.sort(
+        (track1: Track, track2: Track) =>
+          track2.scrobblerMatchQuality - track1.scrobblerMatchQuality,
+      )[0]
+
+      // save searchQuery so we can edit it
+      this.searchQueryList = tracks.map((track, i) =>
+        track ? track.toSongInfo() : songInfos[i],
+      )
+    }
 
     if (track) {
       await getAdditionalDataFromInfoProviders(track)
@@ -313,7 +324,7 @@ abstract class BaseConnector implements Connector {
     }
 
     this.scrobbleState = await this.getScrobbleState()
-    return track
+    return this.track
   }
 
   async onStateChanged(type: 'time' | 'play' | 'pause' | 'seeking' | 'seeked') {
