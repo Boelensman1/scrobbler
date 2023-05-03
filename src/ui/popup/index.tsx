@@ -1,14 +1,15 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import { createRoot } from 'react-dom/client'
 
 import browser from 'webextension-polyfill'
 
 import type { ConnectorState, State } from 'interfaces'
-import { ctActions, bgActions, initialState, scrobbleStates } from 'internals'
+import { ctActions, scrobbleStates } from 'internals'
 
 import EditSearch from './EditSearch'
 
 import useConfig from '../useConfig'
+import useScrobblerState from '../useScrobblerState'
 
 const defaultAlbumArtUrl = 'https://via.placeholder.com/150'
 
@@ -64,28 +65,8 @@ const Track = ({
 
 const InnerPopup = () => {
   const { config } = useConfig()
+  const { connectorState, globalState } = useScrobblerState()
   const [edittingSearch, setEditingSearch] = useState<boolean>(false)
-  const [globalState, setGlobalState] = useState<State>(initialState)
-  const [connectorState, setConnectorState] = useState<ConnectorState>()
-
-  useEffect(() => {
-    const updateState = async () => {
-      const newState = await bgActions.getState()
-      if (newState.activeConnectorTabId) {
-        const newConnectorState = await ctActions.getConnectorState(
-          newState.activeConnectorTabId,
-        )
-        if (newConnectorState) {
-          setConnectorState(newConnectorState)
-        }
-      }
-      setGlobalState(newState)
-    }
-
-    updateState()
-    const interval = setInterval(updateState, 500)
-    return () => clearInterval(interval)
-  }, [])
 
   const tabId = globalState.activeConnectorTabId
   if (!connectorState || tabId === null) {
