@@ -45,6 +45,10 @@ export interface GetTrackFromEdittedTracksActionObject {
   data: TrackSelector
 }
 
+export interface GetEdittedTracksActionObject {
+  type: typeof BG_ACTION_KEYS.GET_EDITTED_TRACKS
+}
+
 export type BgActionObject =
   | RequestAuthenticationActionObject
   | GetStateActionObject
@@ -56,3 +60,4 @@ export type BgActionObject =
   | GetIsActiveTabActionObject
   | SaveTrackEditBGActionObject
   | GetTrackFromEdittedTracksActionObject
+  | GetEdittedTracksActionObject

@@ -7,10 +7,12 @@ import { bgActions } from 'internals'
 import type { Config } from '../interfaces'
 import useConfig from './useConfig'
 import useScrobblerState from './useScrobblerState'
+import useEdittedTracks from './useEdittedTracks'
 
 const Content = () => {
   const { config, saveConfig, resetConfig } = useConfig()
   const { connectorState, globalState } = useScrobblerState()
+  const { edittedTracks } = useEdittedTracks()
 
   const formik = useFormik({
     initialValues: {
@@ -117,6 +119,10 @@ const Content = () => {
             </pre>
           </div>
           <div>
+            <strong>edittedTracks</strong>
+            <pre style={{ margin: 0 }}>
+              {JSON.stringify(edittedTracks, null, 2)}
+            </pre>
           </div>
         </div>
       )}

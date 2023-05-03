@@ -93,6 +93,16 @@ async function handleMessage(
     case BG_ACTION_KEYS.GET_TRACK_FROM_EDITTED_TRACKS: {
       return edittedTracksManager.getEdittedTrack(action.data)
     }
+
+    case BG_ACTION_KEYS.GET_EDITTED_TRACKS: {
+      // in try-catch as editted tracks might not be loaded yet
+      try {
+        return edittedTracksManager.getEdittedTracks()
+      } catch (err) {
+        console.error(err)
+        return {}
+      }
+    }
   }
 }
 function handleMessageContainer(

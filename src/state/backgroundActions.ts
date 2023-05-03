@@ -15,7 +15,9 @@ import type {
   SaveTrackEditBGActionObject,
   TrackSelector,
   GetTrackFromEdittedTracksActionObject,
+  GetEdittedTracksActionObject,
   SongInfo,
+  EdittedTracks,
 } from 'interfaces'
 
 export const BG_ACTION_KEYS = {
@@ -32,6 +34,7 @@ export const BG_ACTION_KEYS = {
 
   SAVE_TRACK_EDIT: 'SAVE_TRACK_EDIT_BG' as const,
   GET_TRACK_FROM_EDITTED_TRACKS: 'GET_TRACK_FROM_EDITTED_TRACKS' as const,
+  GET_EDITTED_TRACKS: 'GET_EDITTED_TRACKS' as const,
 }
 
 const send = <T extends BgActionObject, U = void>(arg: T): Promise<U> =>
@@ -77,10 +80,16 @@ const actions = {
       type: BG_ACTION_KEYS.SAVE_TRACK_EDIT,
       data: editValues,
     }),
-  getTrackFromEdittedTracks: (selector: TrackSelector) =>
+  getTrackFromEdittedTracks: (
+    selector: TrackSelector,
+  ): Promise<SongInfo | false> =>
     send<GetTrackFromEdittedTracksActionObject, SongInfo | false>({
       type: BG_ACTION_KEYS.GET_TRACK_FROM_EDITTED_TRACKS,
       data: selector,
+    }),
+  getEdittedTracks: (): Promise<EdittedTracks> =>
+    send<GetEdittedTracksActionObject, EdittedTracks>({
+      type: BG_ACTION_KEYS.GET_EDITTED_TRACKS,
     }),
 }
 

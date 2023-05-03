@@ -1,11 +1,10 @@
 import browser from 'webextension-polyfill'
-import type { SavedEdit, TrackSelector, SongInfo } from 'interfaces'
-
-interface EdittedTracks {
-  [connectorKey: string]: {
-    [connectorTrackId: string]: SavedEdit
-  }
-}
+import type {
+  SavedEdit,
+  TrackSelector,
+  SongInfo,
+  EdittedTracks,
+} from 'interfaces'
 
 class EdittedTracksManager {
   edittedTracks: EdittedTracks | null = null
@@ -61,6 +60,13 @@ class EdittedTracksManager {
     }
     const track = this.edittedTracks[connectorKey][connectorTrackId]
     return track ? track.edittedSongInfo : false
+  }
+
+  getEdittedTracks(): EdittedTracks {
+    if (!this.edittedTracks) {
+      throw new Error('Editted tracks are not ready yet')
+    }
+    return this.edittedTracks
   }
 }
 
