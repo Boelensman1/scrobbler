@@ -1,5 +1,5 @@
 interface ScrobblerLinks {
-  track: string
+  track?: string
   artist?: string
   album?: string
 }

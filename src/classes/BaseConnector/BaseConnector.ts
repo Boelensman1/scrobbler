@@ -150,6 +150,16 @@ abstract class BaseConnector implements Connector {
       case CT_ACTION_KEYS.FORCE_SCROBBLE_CURRENT: {
         if (canForceScrobble(this.scrobbleState)) {
           this.scrobbleState = scrobbleStates.FORCE_SCROBBLE
+        } else {
+          const [bestOption] = this.searchQueryList
+          // manually add the track to force scrobble
+          this.track = new Track({
+            name: bestOption.track,
+            artist: bestOption.artist,
+            scrobblerMatchQuality: -2,
+            scrobblerLinks: {},
+          })
+          this.scrobbleState = scrobbleStates.FORCE_SCROBBLE
         }
         return
       }

@@ -16,17 +16,27 @@ const defaultAlbumArtUrl = 'https://via.placeholder.com/150'
 const Track = ({
   activeConnectorTabId,
   track,
+  searchQueryList,
   startEdit,
   debug,
 }: {
   activeConnectorTabId: State['activeConnectorTabId']
   track: ConnectorState['track']
+  searchQueryList: ConnectorState['searchQueryList']
   startEdit: () => void
   debug: boolean
 }) => {
   if (!track) {
     return (
       <div>
+        {searchQueryList?.length > 0 && (
+          <>
+            <div>Track not found, best guess:</div>
+            <div>
+              {searchQueryList[0].artist} - {searchQueryList[0].track}
+            </div>
+          </>
+        )}
         <button onClick={() => startEdit()}>Edit search</button>
       </div>
     )
@@ -88,6 +98,7 @@ const InnerPopup = () => {
       ) : (
         <Track
           activeConnectorTabId={globalState.activeConnectorTabId}
+          searchQueryList={connectorState.searchQueryList}
           track={connectorState.track}
           startEdit={() => {
             setEditingSearch(true)
