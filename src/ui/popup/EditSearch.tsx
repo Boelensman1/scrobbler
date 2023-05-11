@@ -1,4 +1,10 @@
-import React, { useState } from 'react'
+import React, {
+  useState,
+  useRef,
+  forwardRef,
+  useImperativeHandle,
+  Ref,
+} from 'react'
 
 import _ from 'lodash'
 import { useFormik } from 'formik'
@@ -18,121 +24,142 @@ const getMatchQuality = (matchQuality: undefined | number): string => {
   return matchQuality.toString()
 }
 
-const ManualInputForm = ({
-  searchQueryList,
-  track,
-  save,
-}: {
-  searchQueryList: ConnectorState['searchQueryList']
-  track: SongInfo
-  save: (values: TrackEditValues) => void
-}) => {
-  const formik = useFormik({
-    initialValues: {
-      track: track?.track || '',
-      artist: track?.artist || '',
-    },
-    onSubmit: async (values: TrackEditValues) => {
-      save(values)
-    },
-  })
+type FormHandle = {
+  submitForm: () => void
+}
 
-  const copyFrom = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const selectedSearchResult = e.currentTarget.value
-    if (selectedSearchResult === 'select') {
-      return
+const ManualInputForm = forwardRef(
+  (
+    {
+      searchQueryList,
+      track,
+      save,
+    }: {
+      searchQueryList: ConnectorState['searchQueryList']
+      track: SongInfo
+      save: (values: TrackEditValues) => void
+    },
+    ref: Ref<FormHandle>,
+  ) => {
+    const formik = useFormik({
+      initialValues: {
+        track: track?.track || '',
+        artist: track?.artist || '',
+      },
+      onSubmit: async (values: TrackEditValues) => {
+        save(values)
+      },
+    })
+
+    useImperativeHandle(ref, () => ({
+      submitForm() {
+        formik.submitForm()
+      },
+    }))
+
+    const copyFrom = (e: React.ChangeEvent<HTMLSelectElement>) => {
+      const selectedSearchResult = e.currentTarget.value
+      if (selectedSearchResult === 'select') {
+        return
+      }
+
+      formik.setValues(
+        _.pick(searchQueryList[Number(selectedSearchResult)], [
+          'track',
+          'artist',
+        ]),
+      )
     }
 
-    formik.setValues(
-      _.pick(searchQueryList[Number(selectedSearchResult)], [
-        'track',
-        'artist',
-      ]),
-    )
-  }
+    return (
+      <div>
+        <form>
+          <select id="copyFrom" onChange={copyFrom}>
+            <option value="select">Copy from:</option>
+            {searchQueryList.map((result, i) => (
+              <option key={i} value={i}>
+                {result.artist} - {result.track}{' '}
+                {`(${getMatchQuality(result.matchQuality)})`}
+              </option>
+            ))}
+          </select>
+        </form>
+        <form onSubmit={formik.handleSubmit}>
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <label htmlFor="track">Name</label>
+            <input
+              id="track"
+              onChange={formik.handleChange}
+              value={formik.values.track}
+              autoComplete="off"
+            />
 
-  return (
-    <div>
-      <form>
-        <select id="copyFrom" onChange={copyFrom}>
-          <option value="select">Copy from:</option>
+            <label htmlFor="artist">Artist</label>
+            <input
+              id="artist"
+              onChange={formik.handleChange}
+              value={formik.values.artist}
+              autoComplete="off"
+            />
+          </div>
+        </form>
+      </div>
+    )
+  },
+)
+ManualInputForm.displayName = 'ManualInputForm'
+
+const SelectResultForm = forwardRef(
+  (
+    {
+      searchQueryList,
+      save,
+    }: {
+      searchQueryList: ConnectorState['searchQueryList']
+      save: (values: TrackEditValues) => void
+    },
+    ref: Ref<FormHandle>,
+  ) => {
+    const formRef = useRef<HTMLFormElement>(null)
+    const submit = (e: React.ChangeEvent<HTMLSelectElement>) => {
+      const selectedSearchResult = e.currentTarget.value
+
+      if (selectedSearchResult === 'select') {
+        return
+      }
+
+      save(
+        _.pick(searchQueryList[Number(selectedSearchResult)], [
+          'track',
+          'artist',
+          'album',
+        ]),
+      )
+    }
+
+    useImperativeHandle(ref, () => ({
+      submitForm() {
+        formRef.current?.submit()
+      },
+    }))
+
+    return (
+      <form ref={formRef}>
+        <select id="selectedSearchResult" onSubmit={submit}>
+          <option value="select">Select search result</option>
           {searchQueryList.map((result, i) => (
             <option key={i} value={i}>
-              {result.artist} - {result.track}{' '}
-              {`(${getMatchQuality(result.matchQuality)})`}
+              {result.artist} - {result.track} (
+              {getMatchQuality(result.matchQuality)})
             </option>
           ))}
+          <option value="manual">Manual input</option>
         </select>
       </form>
-      <form onSubmit={formik.handleSubmit}>
-        <div style={{ display: 'flex', flexDirection: 'column' }}>
-          <label htmlFor="track">Name</label>
-          <input
-            id="track"
-            onChange={formik.handleChange}
-            value={formik.values.track}
-            autoComplete="off"
-          />
-
-          <label htmlFor="artist">Artist</label>
-          <input
-            id="artist"
-            onChange={formik.handleChange}
-            value={formik.values.artist}
-            autoComplete="off"
-          />
-          <button type="submit">save</button>
-        </div>
-      </form>
-    </div>
-  )
-}
-
-const SelectResultForm = ({
-  searchQueryList,
-  save,
-  goToManualInput,
-}: {
-  searchQueryList: ConnectorState['searchQueryList']
-  save: (values: TrackEditValues) => void
-  goToManualInput: () => void
-}) => {
-  const submit = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const selectedSearchResult = e.currentTarget.value
-
-    if (selectedSearchResult === 'select') {
-      return
-    }
-
-    if (selectedSearchResult === 'manual') {
-      goToManualInput()
-      return
-    }
-
-    save(
-      _.pick(searchQueryList[Number(selectedSearchResult)], [
-        'track',
-        'artist',
-        'album',
-      ]),
     )
-  }
-
-  return (
-    <form>
-      <select id="selectedSearchResult" onChange={submit}>
-        <option value="select">Select search result</option>
-        {searchQueryList.map((result, i) => (
-          <option key={i} value={i}>
-            {result.artist} - {result.track} (
-            {getMatchQuality(result.matchQuality)})
-          </option>
-        ))}
-        <option value="manual">Manual input</option>
-      </select>
-    </form>
-  )
-}
+  },
+)
+SelectResultForm.displayName = 'SelectResultForm'
 
 const EditSearch = ({
   activeConnectorTabId,
@@ -145,30 +172,45 @@ const EditSearch = ({
   searchQueryList: ConnectorState['searchQueryList']
   stopEditting: () => void
 }) => {
-  const [manualInput, setManualInput] = useState(false)
+  const [manualInput, setManualInput] = useState(true)
   const save = (trackEditValues: TrackEditValues) => {
     ctActions.saveTrackEdit(activeConnectorTabId, trackEditValues)
     stopEditting()
   }
+  const ref = useRef<FormHandle>(null)
 
   return (
-    <div>
+    <div style={{ border: '1px black solid', padding: '4px', marginBottom: 8 }}>
       <div style={{ marginBottom: 8 }}>
         {manualInput ? (
           <ManualInputForm
             searchQueryList={searchQueryList}
             track={track ? new Track(track).toSongInfo() : searchQueryList[0]}
             save={save}
+            ref={ref}
           />
         ) : (
           <SelectResultForm
             searchQueryList={searchQueryList}
             save={save}
-            goToManualInput={() => setManualInput(true)}
+            ref={ref}
           />
         )}
       </div>
-      <button onClick={() => stopEditting()}>Cancel</button>
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+        }}
+      >
+        <button onClick={() => stopEditting()}>Cancel</button>
+        <button onClick={() => setManualInput((mi) => !mi)}>
+          Toggle manual entry
+        </button>
+        <button onClick={() => ref.current && ref.current.submitForm()}>
+          Save
+        </button>
+      </div>
     </div>
   )
 }
