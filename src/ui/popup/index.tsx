@@ -84,7 +84,14 @@ const InnerPopup = () => {
   }
 
   return (
-    <div style={{ display: 'flex', gap: 4, flexDirection: 'column' }}>
+    <div
+      style={{
+        display: 'flex',
+        gap: 4,
+        flexDirection: 'column',
+        maxWidth: '320px',
+      }}
+    >
       {!connectorState.track && config.debug && (
         <div>active tab: {globalState.activeConnectorTabId}</div>
       )}
