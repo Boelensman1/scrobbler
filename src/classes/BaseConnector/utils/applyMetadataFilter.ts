@@ -3,10 +3,15 @@ import { Entries } from 'type-fest'
 import * as MetadataFilter from 'metadata-filter'
 import type { PartialSongInfo } from 'interfaces'
 
-const mv = ['mv', 'm/v', '(mv)', '(m/v)']
+const mvOptions = [' mv', ' m/v', '(mv)', '(m/v)'].map(
+  (opt) => new RegExp(opt, 'i'),
+)
 const removeMv = (text: string): string => {
-  if (mv.includes(text.toLowerCase())) {
-    return ''
+  for (const mvOption of mvOptions) {
+    const temp = text.replace(mvOption, '')
+    if (text !== temp) {
+      return temp
+    }
   }
   return text
 }

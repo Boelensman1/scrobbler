@@ -26,6 +26,75 @@ import canForceScrobble from './utils/canForceScrobble'
 import getAdditionalDataFromInfoProviders from './utils/getAdditionalDataFromInfoProviders'
 import applyMetadataFilter from './utils/applyMetadataFilter'
 
+// removes duplicates in strings, so for example:
+// track: aaaaa bbbb, artist: aaaaa -> track bbbb, artist aaaaa
+const removeDuplicateStringsPostprocessor: PostProcessor = (
+  songInfos: PartialSongInfo[],
+): PartialSongInfo[] => {
+  // we don't check if the artist or w/e we're replacing is actually in the string, as during the combine songinfo's phase any duplicates will be removed anyway
+  const additonal: PartialSongInfo[] = []
+  songInfos.forEach((songInfo) => {
+    if (songInfo.artist) {
+      if (songInfo.track) {
+        // check that "enough" info remains
+        if (songInfo.track.length > songInfo.artist.length + 3)
+          additonal.push({
+            ...songInfo,
+            track: songInfo.track.replace(songInfo.artist + ' ', '').trim(),
+          })
+      }
+      if (songInfo.album) {
+        // check that "enough" info remains
+        if (songInfo.album.length > songInfo.artist.length + 3)
+          additonal.push({
+            ...songInfo,
+            album: songInfo.album.replace(songInfo.artist + ' ', '').trim(),
+          })
+      }
+    }
+
+    if (songInfo.track) {
+      if (songInfo.artist) {
+        // check that "enough" info remains
+        if (songInfo.artist.length > songInfo.track.length + 3)
+          additonal.push({
+            ...songInfo,
+            track: songInfo.track.replace(songInfo.artist + ' ', '').trim(),
+          })
+      }
+      if (songInfo.album) {
+        // check that "enough" info remains
+        if (songInfo.album.length > songInfo.track.length + 3)
+          additonal.push({
+            ...songInfo,
+            album: songInfo.album.replace(songInfo.track + ' ', '').trim(),
+          })
+      }
+    }
+
+    if (songInfo.album) {
+      if (songInfo.artist) {
+        // check that "enough" info remains
+        if (songInfo.artist.length > songInfo.album.length + 3)
+          additonal.push({
+            ...songInfo,
+            artist: songInfo.artist.replace(songInfo.album + ' ', '').trim(),
+          })
+      }
+      if (songInfo.track) {
+        // check that "enough" info remains
+        if (songInfo.track.length > songInfo.album.length + 3)
+          additonal.push({
+            ...songInfo,
+            track: songInfo.track.replace(songInfo.album + ' ', '').trim(),
+          })
+      }
+    }
+  })
+
+  return [...songInfos, ...additonal]
+}
+
 abstract class BaseConnector implements Connector {
   scrobbler: LastFm
   config: ConfigContainer
@@ -251,6 +320,24 @@ abstract class BaseConnector implements Connector {
       }, partialSongInfos)
       .map(applyMetadataFilter)
 
+    // apply regexes
+    partialSongInfos = (
+      await Promise.all(partialSongInfos.map(bgActions.applyRegexesToSongInfo))
+    ).map(applyMetadataFilter)
+
+    // final post processor that removes duplicates
+    partialSongInfos =
+      removeDuplicateStringsPostprocessor(partialSongInfos).map(
+        applyMetadataFilter,
+      )
+
+    partialSongInfos = this.postProcessors
+      .reduce<PartialSongInfo[]>((acc: PartialSongInfo[], postProcessor) => {
+        acc = postProcessor(acc)
+        return acc
+      }, partialSongInfos)
+      .map(applyMetadataFilter)
+
     return partialSongInfos
   }
 
@@ -300,6 +387,7 @@ abstract class BaseConnector implements Connector {
       (this.config.get('scrobblerQualityDynamic') ? popularity / 200 : 1)
 
     const songInfos = combineSongInfos(partialSongInfos)
+    console.log('!!! ???', songInfos)
 
     let track
     if (songInfoFromSavedEdits) {
@@ -314,6 +402,7 @@ abstract class BaseConnector implements Connector {
           this.scrobbler.getTrack(songInfo),
         ),
       )
+
       const searchResults = tracks.filter((t) => !!t) as Track[]
       // get the track with the highest 'match quality'
       // match quality for last.fm is defined as # of listeners

@@ -3,7 +3,7 @@ import type { PartialSongInfo, PostProcessor } from 'interfaces'
 /*
   PRIMROSE 프림로즈 -> PRIMROSE
 */
-// regex replaces matches not latin characters at the start or end of a string
+// regex replaces matches non latin characters at the start or end of a string
 const regex = /^[^\w ()]+|[^\w ()]+$/g
 
 const addOnlyLatinArtist: PostProcessor = (
