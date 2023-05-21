@@ -1,5 +1,11 @@
 import type { BG_ACTION_KEYS } from 'internals'
-import type { Config, SavedEdit, TrackSelector } from 'interfaces'
+import type {
+  AddSavedRegexValues,
+  Config,
+  PartialSongInfo,
+  SavedEdit,
+  TrackSelector,
+} from 'interfaces'
 
 export interface RequestAuthenticationActionObject {
   type: typeof BG_ACTION_KEYS.REQUEST_AUTHENTICATION
@@ -49,6 +55,20 @@ export interface GetEdittedTracksActionObject {
   type: typeof BG_ACTION_KEYS.GET_EDITTED_TRACKS
 }
 
+export interface GetSavedRegexes {
+  type: typeof BG_ACTION_KEYS.GET_SAVED_REGEXES
+}
+
+export interface AddSavedRegex {
+  type: typeof BG_ACTION_KEYS.ADD_SAVED_REGEX
+  data: AddSavedRegexValues
+}
+
+export interface ApplyRegexesToSongInfo {
+  type: typeof BG_ACTION_KEYS.APPLY_REGEXES_TO_SONGINFO
+  data: PartialSongInfo
+}
+
 export type BgActionObject =
   | RequestAuthenticationActionObject
   | GetStateActionObject
@@ -61,3 +81,6 @@ export type BgActionObject =
   | SaveTrackEditBGActionObject
   | GetTrackFromEdittedTracksActionObject
   | GetEdittedTracksActionObject
+  | GetSavedRegexes
+  | AddSavedRegex
+  | ApplyRegexesToSongInfo

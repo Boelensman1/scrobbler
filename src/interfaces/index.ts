@@ -19,6 +19,11 @@ export { GetTrackResult } from '../scrobblers/lastFm'
 export { default as ConnectorState } from './ConnectorState'
 export { default as SavedEdit, TrackSelector } from './SavedEdit'
 export { default as EdittedTracks } from './EdittedTracks'
+export {
+  default as SavedRegexes,
+  SavedRegex,
+  AddSavedRegexValues,
+} from './SavedRegexes'
 
 export * from './BgActionObject'
 export * from './CtActionObject'

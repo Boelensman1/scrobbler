@@ -18,6 +18,11 @@ import type {
   GetEdittedTracksActionObject,
   SongInfo,
   EdittedTracks,
+  GetSavedRegexes,
+  AddSavedRegex,
+  ApplyRegexesToSongInfo,
+  AddSavedRegexValues,
+  PartialSongInfo,
 } from 'interfaces'
 
 export const BG_ACTION_KEYS = {
@@ -35,6 +40,10 @@ export const BG_ACTION_KEYS = {
   SAVE_TRACK_EDIT: 'SAVE_TRACK_EDIT_BG' as const,
   GET_TRACK_FROM_EDITTED_TRACKS: 'GET_TRACK_FROM_EDITTED_TRACKS' as const,
   GET_EDITTED_TRACKS: 'GET_EDITTED_TRACKS' as const,
+
+  GET_SAVED_REGEXES: 'GET_SAVED_REGEXES' as const,
+  ADD_SAVED_REGEX: 'ADD_SAVED_REGEX' as const,
+  APPLY_REGEXES_TO_SONGINFO: 'APPLY_REGEXES_TO_SONGINFO' as const,
 }
 
 const send = <T extends BgActionObject, U = void>(arg: T): Promise<U> =>
@@ -90,6 +99,22 @@ const actions = {
   getEdittedTracks: (): Promise<EdittedTracks> =>
     send<GetEdittedTracksActionObject, EdittedTracks>({
       type: BG_ACTION_KEYS.GET_EDITTED_TRACKS,
+    }),
+  getSavedRegexes: (): Promise<AddSavedRegexValues[]> =>
+    send<GetSavedRegexes, AddSavedRegexValues[]>({
+      type: BG_ACTION_KEYS.GET_SAVED_REGEXES,
+    }),
+  addSavedRegex: (regex: AddSavedRegexValues) =>
+    send<AddSavedRegex>({
+      type: BG_ACTION_KEYS.ADD_SAVED_REGEX,
+      data: regex,
+    }),
+  applyRegexesToSongInfo: (
+    songInfo: PartialSongInfo,
+  ): Promise<PartialSongInfo> =>
+    send<ApplyRegexesToSongInfo, PartialSongInfo>({
+      type: BG_ACTION_KEYS.APPLY_REGEXES_TO_SONGINFO,
+      data: songInfo,
     }),
 }
 

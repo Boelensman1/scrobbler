@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 import { createRoot } from 'react-dom/client'
 import { useFormik } from 'formik'
 
@@ -8,11 +8,16 @@ import type { Config } from '../interfaces'
 import useConfig from './useConfig'
 import useScrobblerState from './useScrobblerState'
 import useEdittedTracks from './useEdittedTracks'
+import useSavedRegexes from './useSavedRegexes'
+
+import SavedRegexDisplay from './SavedRegexDisplay'
 
 const Content = () => {
+  const [addingRegex, setAddingRegex] = useState(false)
   const { config, saveConfig, resetConfig } = useConfig()
   const { connectorState, globalState } = useScrobblerState()
   const { edittedTracks } = useEdittedTracks()
+  const { savedRegexes } = useSavedRegexes()
 
   const formik = useFormik({
     initialValues: {
@@ -93,6 +98,21 @@ const Content = () => {
           </button>
         </div>
       </div>
+
+      <div>
+        {savedRegexes &&
+          savedRegexes.map((regex, i) => (
+            <SavedRegexDisplay key={i} index={i} {...regex} />
+          ))}
+
+        {addingRegex && (
+          <SavedRegexDisplay added={() => setAddingRegex(false)} />
+        )}
+        {!addingRegex && (
+          <button onClick={() => setAddingRegex(true)}>Add</button>
+        )}
+      </div>
+
       {config?.debug && (
         <div
           style={{
@@ -122,6 +142,12 @@ const Content = () => {
             <strong>edittedTracks</strong>
             <pre style={{ margin: 0 }}>
               {JSON.stringify(edittedTracks, null, 2)}
+            </pre>
+          </div>
+          <div>
+            <strong>savedRegexes</strong>
+            <pre style={{ margin: 0 }}>
+              {JSON.stringify(savedRegexes, null, 2)}
             </pre>
           </div>
         </div>

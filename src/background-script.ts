@@ -2,6 +2,7 @@ import browser from 'webextension-polyfill'
 import {
   ConfigContainer,
   EdittedTracksManager,
+  RegexesManager,
   BG_ACTION_KEYS,
   StateManager,
   ctActions,
@@ -14,6 +15,7 @@ import scrobblers from './scrobblerList'
 const config = new ConfigContainer()
 const stateManager = new StateManager()
 const edittedTracksManager = new EdittedTracksManager()
+const regexesManager = new RegexesManager()
 
 // setFullyLoaded is called after init (in main)
 let setFullyLoaded: (val: true) => void
@@ -103,6 +105,25 @@ async function handleMessage(
         return {}
       }
     }
+
+    case BG_ACTION_KEYS.GET_SAVED_REGEXES: {
+      // in try-catch as saved regexes might not be loaded yet
+      try {
+        return regexesManager.getSavedRegexes()
+      } catch (err) {
+        console.error(err)
+        return []
+      }
+    }
+
+    case BG_ACTION_KEYS.ADD_SAVED_REGEX: {
+      regexesManager.addRegex(action.data)
+      return
+    }
+
+    case BG_ACTION_KEYS.APPLY_REGEXES_TO_SONGINFO: {
+      return regexesManager.applyRegexesToSongInfo(action.data)
+    }
   }
 }
 function handleMessageContainer(
@@ -144,6 +165,7 @@ browser.tabs.onUpdated.addListener(async (id, changeInfo, windowprops) => {
 const main = async () => {
   await config.loadConfig()
   await edittedTracksManager.loadEdittedTracks()
+  await regexesManager.loadSavedRegexes()
 
   const connector = config.get('scrobbler')
   switch (connector) {
