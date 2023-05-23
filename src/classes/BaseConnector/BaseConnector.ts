@@ -336,21 +336,21 @@ abstract class BaseConnector implements Connector {
     return partialSongInfos
   }
 
-  async newTrack(force = false): Promise<Track | null> {
+  async newTrack(forceReload = false): Promise<Track | null> {
     await this.waitForReady()
 
     const potentialNewTrackId = await this.getCurrentTrackId()
-    if (!force) {
-      // check if we actually changed tracks
-      if (this.connectorTrackId === potentialNewTrackId) {
-        // we did not change tracks
+    // check if we actually changed tracks
+    if (this.connectorTrackId === potentialNewTrackId) {
+      // we did not change tracks, check if we should still force re-loading the track
+      if (!forceReload) {
         return this.track
       }
+    } else {
+      await bgActions.setLoadingNewTrack()
+      this.resetTrack()
+      this.connectorTrackId = potentialNewTrackId
     }
-    await bgActions.setLoadingNewTrack()
-
-    this.resetTrack()
-    this.connectorTrackId = potentialNewTrackId
 
     // check if we have this song saved as editted
     let songInfoFromSavedEdits: SongInfo | false = false
