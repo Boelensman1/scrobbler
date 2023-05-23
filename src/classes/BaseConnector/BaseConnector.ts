@@ -32,13 +32,13 @@ const removeDuplicateStringsPostprocessor: PostProcessor = (
   songInfos: PartialSongInfo[],
 ): PartialSongInfo[] => {
   // we don't check if the artist or w/e we're replacing is actually in the string, as during the combine songinfo's phase any duplicates will be removed anyway
-  const additonal: PartialSongInfo[] = []
+  const additional: PartialSongInfo[] = []
   songInfos.forEach((songInfo) => {
     if (songInfo.artist) {
       if (songInfo.track) {
         // check that "enough" info remains
         if (songInfo.track.length > songInfo.artist.length + 3)
-          additonal.push({
+          additional.push({
             ...songInfo,
             track: songInfo.track.replace(songInfo.artist + ' ', '').trim(),
           })
@@ -46,7 +46,7 @@ const removeDuplicateStringsPostprocessor: PostProcessor = (
       if (songInfo.album) {
         // check that "enough" info remains
         if (songInfo.album.length > songInfo.artist.length + 3)
-          additonal.push({
+          additional.push({
             ...songInfo,
             album: songInfo.album.replace(songInfo.artist + ' ', '').trim(),
           })
@@ -57,7 +57,7 @@ const removeDuplicateStringsPostprocessor: PostProcessor = (
       if (songInfo.artist) {
         // check that "enough" info remains
         if (songInfo.artist.length > songInfo.track.length + 3)
-          additonal.push({
+          additional.push({
             ...songInfo,
             track: songInfo.track.replace(songInfo.artist + ' ', '').trim(),
           })
@@ -65,7 +65,7 @@ const removeDuplicateStringsPostprocessor: PostProcessor = (
       if (songInfo.album) {
         // check that "enough" info remains
         if (songInfo.album.length > songInfo.track.length + 3)
-          additonal.push({
+          additional.push({
             ...songInfo,
             album: songInfo.album.replace(songInfo.track + ' ', '').trim(),
           })
@@ -76,7 +76,7 @@ const removeDuplicateStringsPostprocessor: PostProcessor = (
       if (songInfo.artist) {
         // check that "enough" info remains
         if (songInfo.artist.length > songInfo.album.length + 3)
-          additonal.push({
+          additional.push({
             ...songInfo,
             artist: songInfo.artist.replace(songInfo.album + ' ', '').trim(),
           })
@@ -84,7 +84,7 @@ const removeDuplicateStringsPostprocessor: PostProcessor = (
       if (songInfo.track) {
         // check that "enough" info remains
         if (songInfo.track.length > songInfo.album.length + 3)
-          additonal.push({
+          additional.push({
             ...songInfo,
             track: songInfo.track.replace(songInfo.album + ' ', '').trim(),
           })
@@ -92,7 +92,7 @@ const removeDuplicateStringsPostprocessor: PostProcessor = (
     }
   })
 
-  return [...songInfos, ...additonal]
+  return [...songInfos, ...additional]
 }
 
 abstract class BaseConnector implements Connector {
