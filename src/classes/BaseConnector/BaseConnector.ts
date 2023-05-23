@@ -387,7 +387,6 @@ abstract class BaseConnector implements Connector {
       (this.config.get('scrobblerQualityDynamic') ? popularity / 200 : 1)
 
     const songInfos = combineSongInfos(partialSongInfos)
-    console.log('!!! ???', songInfos)
 
     let track
     if (songInfoFromSavedEdits) {
