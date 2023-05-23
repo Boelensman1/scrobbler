@@ -136,7 +136,7 @@ abstract class BaseConnector implements Connector {
     const elementToWatch = await this.setupWatches()
     if (elementToWatch) {
       const observer = new MutationObserver(
-        _.debounce(this.newTrack.bind(this), 500, { maxWait: 1500 }),
+        _.debounce(this.newTrack.bind(this, false), 500, { maxWait: 1500 }),
       )
       const observerConfig = {
         childList: true,
@@ -244,14 +244,7 @@ abstract class BaseConnector implements Connector {
           artist: action.data.editValues.artist.trim(),
         })
 
-        if (track) {
-          await getAdditionalDataFromInfoProviders(track)
-
-          this.track = track
-        }
-        if (this.scrobbleState !== scrobbleStates.MANUALLY_DISABLED) {
-          this.scrobbleState = await this.getScrobbleState()
-        }
+        this.track = track
 
         // save!
         if (this.connectorTrackId) {
@@ -270,6 +263,8 @@ abstract class BaseConnector implements Connector {
                 },
           })
         }
+
+        await this.newTrack(true)
 
         return
       }
@@ -341,15 +336,16 @@ abstract class BaseConnector implements Connector {
     return partialSongInfos
   }
 
-  async newTrack(): Promise<Track | null> {
+  async newTrack(force = false): Promise<Track | null> {
     await this.waitForReady()
 
-    // check if we actually changed tracks
     const potentialNewTrackId = await this.getCurrentTrackId()
-
-    // we did not change tracks
-    if (this.connectorTrackId === potentialNewTrackId) {
-      return this.track
+    if (!force) {
+      // check if we actually changed tracks
+      if (this.connectorTrackId === potentialNewTrackId) {
+        // we did not change tracks
+        return this.track
+      }
     }
     await bgActions.setLoadingNewTrack()
 
