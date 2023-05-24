@@ -2,6 +2,7 @@ import type { PartialSongInfo } from 'interfaces'
 import sanitizeTitle from './sanitizeTitle'
 
 const defaultSeperators = [
+  ' _ ',
   ' -- ',
   '--',
   ' ~ ',
