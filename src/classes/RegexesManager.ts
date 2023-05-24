@@ -1,33 +1,38 @@
 import browser from 'webextension-polyfill'
-import type {
-  SavedRegex,
-  SavedRegexes,
-  AddSavedRegexValues,
-  PartialSongInfo,
-} from 'interfaces'
+import type { SavedRegex, AddSavedRegexValues, SongInfo } from 'interfaces'
 
 const stringifyRegexes = (savedRegex: SavedRegex) => ({
   ...savedRegex,
-  match: savedRegex.match.source,
-  search: savedRegex.search.source,
+  matchArtist: savedRegex.matchArtist.source,
+  matchTrack: savedRegex.matchTrack.source,
+  searchArtist: savedRegex.searchArtist.source,
+  searchTrack: savedRegex.searchTrack.source,
 })
 
 const parseSavedRegexes = (savedRegex: AddSavedRegexValues): SavedRegex => ({
   ...savedRegex,
-  match: RegExp(savedRegex.match),
-  search: RegExp(savedRegex.search),
+  matchArtist: RegExp(savedRegex.matchArtist),
+  matchTrack: RegExp(savedRegex.matchTrack),
+  searchArtist: RegExp(savedRegex.searchArtist),
+  searchTrack: RegExp(savedRegex.searchTrack),
 })
 
 class RegexesManager {
-  savedRegexes: SavedRegexes | null = null
+  savedRegexes: SavedRegex[] | null = null
 
   async loadSavedRegexes() {
-    let { savedRegexes } = await browser.storage.sync.get()
+    const { savedRegexes } = await browser.storage.sync.get()
     if (!savedRegexes) {
-      savedRegexes = []
+      this.savedRegexes = []
       this.syncSavedRegexes()
+    } else {
+      this.savedRegexes = savedRegexes.map(parseSavedRegexes)
     }
-    this.savedRegexes = savedRegexes.map(parseSavedRegexes)
+  }
+
+  async resetSavedRegexes() {
+    this.savedRegexes = []
+    this.syncSavedRegexes()
   }
 
   async syncSavedRegexes() {
@@ -46,6 +51,19 @@ class RegexesManager {
     }
 
     this.savedRegexes.push(parseSavedRegexes(regex))
+    this.syncSavedRegexes()
+  }
+
+  updateRegex(index: number, regex: AddSavedRegexValues): void {
+    if (!this.savedRegexes) {
+      throw new Error('Saved Regexes are not ready yet')
+    }
+
+    if (!this.savedRegexes[index]) {
+      throw new Error(`Saved regex ${index} not found`)
+    }
+
+    this.savedRegexes[index] = parseSavedRegexes(regex)
     this.syncSavedRegexes()
   }
 
@@ -72,19 +90,25 @@ class RegexesManager {
     })
   }
 
-  applyRegexesToSongInfo(songInfo: PartialSongInfo): PartialSongInfo {
+  applyRegexesToSongInfo(songInfo: SongInfo): SongInfo {
     if (!this.savedRegexes) {
       throw new Error('Saved Regexes are not ready yet')
     }
     const newSongInfo = { ...songInfo }
     for (const regex of this.savedRegexes) {
       // have to do like this, otherwise typescript gets confused
-      const value = newSongInfo[regex.type]
-      if (typeof value !== 'string') {
-        continue
-      }
-      if (regex.match.test(value)) {
-        newSongInfo[regex.type] = value.replace(regex.search, regex.replace)
+      if (
+        regex.matchArtist.test(songInfo.artist) &&
+        regex.matchTrack.test(songInfo.track)
+      ) {
+        newSongInfo.artist = songInfo.artist.replace(
+          regex.searchArtist,
+          regex.replaceArtist,
+        )
+        newSongInfo.track = songInfo.track.replace(
+          regex.searchTrack,
+          regex.replaceTrack,
+        )
         if (regex.stop) {
           break
         }

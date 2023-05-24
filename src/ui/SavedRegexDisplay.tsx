@@ -5,33 +5,44 @@ import { useFormik } from 'formik'
 import { bgActions } from 'internals'
 import type { AddSavedRegexValues } from 'interfaces'
 
-interface PropType extends AddSavedRegexValues {
-  index?: number
-  added?: () => void
+interface PropTypeAdding extends AddSavedRegexValues {
+  index: undefined
+  added: () => void
 }
+interface PropTypeUpdating extends AddSavedRegexValues {
+  index: number
+  added: undefined
+}
+
+type PropType = PropTypeAdding | PropTypeUpdating
 
 const SavedRegexDisplay = ({
   index,
-  type,
-  match,
-  search,
-  replace,
+  matchArtist,
+  matchTrack,
+  searchArtist,
+  replaceArtist,
+  searchTrack,
+  replaceTrack,
   stop,
   added,
 }: PropType) => {
-  const adding = !!added
   const formik = useFormik({
     initialValues: {
-      type,
-      match,
-      search,
-      replace,
+      matchArtist,
+      matchTrack,
+      searchArtist,
+      replaceArtist,
+      searchTrack,
+      replaceTrack,
       stop,
     },
     onSubmit: async (values: AddSavedRegexValues) => {
-      if (adding) {
+      if (added) {
         await bgActions.addSavedRegex(values)
         added()
+      } else {
+        await bgActions.updateSavedRegex(index, values)
       }
     },
   })
@@ -41,42 +52,51 @@ const SavedRegexDisplay = ({
       <div style={{ display: 'flex', flexDirection: 'column' }}>
         {index ?? <div>Index: {index}</div>}
 
-        <label htmlFor="type">Type</label>
-        <select
-          id="type"
-          onChange={formik.handleChange}
-          value={formik.values.type}
-          autoComplete="off"
-        >
-          <option value="track" label="track">
-            track
-          </option>
-          <option value="artist" label="artist">
-            artist
-          </option>
-        </select>
-
-        <label htmlFor="match">Match</label>
+        <label htmlFor="match">Match Artist</label>
         <input
-          id="match"
+          id="matchArtist"
           onChange={formik.handleChange}
-          value={formik.values.match}
+          value={formik.values.matchArtist}
           autoComplete="off"
         />
 
-        <label htmlFor="search">Search</label>
+        <label htmlFor="match">Match Track</label>
         <input
-          id="search"
+          id="matchTrack"
           onChange={formik.handleChange}
-          value={formik.values.search}
+          value={formik.values.matchTrack}
           autoComplete="off"
         />
 
-        <label htmlFor="replace">Replace</label>
+        <label htmlFor="search">Search Artist</label>
         <input
-          id="replace"
+          id="searchArtist"
           onChange={formik.handleChange}
-          value={formik.values.replace}
+          value={formik.values.searchArtist}
+          autoComplete="off"
+        />
+
+        <label htmlFor="replace">Replace Artist</label>
+        <input
+          id="replaceArtist"
+          onChange={formik.handleChange}
+          value={formik.values.replaceArtist}
+          autoComplete="off"
+        />
+
+        <label htmlFor="search">Search Track</label>
+        <input
+          id="searchTrack"
+          onChange={formik.handleChange}
+          value={formik.values.searchTrack}
+          autoComplete="off"
+        />
+
+        <label htmlFor="replace">Replace Track</label>
+        <input
+          id="replaceTrack"
+          onChange={formik.handleChange}
+          value={formik.values.replaceTrack}
           autoComplete="off"
         />
 
@@ -90,17 +110,19 @@ const SavedRegexDisplay = ({
             autoComplete="off"
           />
         </div>
-        {adding && <button type="submit">Add</button>}
+        <button type="submit">{added ? 'Add' : 'Update'}</button>
       </div>
     </form>
   )
 }
 
 SavedRegexDisplay.defaultProps = {
-  type: 'track',
-  match: '.*',
-  search: '',
-  replace: '',
+  matchArtist: '.*',
+  matchTrack: '.*',
+  searchArtist: '',
+  replaceArtist: '',
+  searchTrack: '',
+  replaceTrack: '',
   stop: false,
 }
 

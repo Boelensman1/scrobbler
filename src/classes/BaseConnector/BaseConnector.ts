@@ -315,23 +315,11 @@ abstract class BaseConnector implements Connector {
       }, partialSongInfos)
       .map(applyMetadataFilter)
 
-    // apply regexes
-    partialSongInfos = (
-      await Promise.all(partialSongInfos.map(bgActions.applyRegexesToSongInfo))
-    ).map(applyMetadataFilter)
-
     // final post processor that removes duplicates
     partialSongInfos =
       removeDuplicateStringsPostprocessor(partialSongInfos).map(
         applyMetadataFilter,
       )
-
-    partialSongInfos = this.postProcessors
-      .reduce<PartialSongInfo[]>((acc: PartialSongInfo[], postProcessor) => {
-        acc = postProcessor(acc)
-        return acc
-      }, partialSongInfos)
-      .map(applyMetadataFilter)
 
     return partialSongInfos
   }
@@ -382,7 +370,14 @@ abstract class BaseConnector implements Connector {
       this.config.get('minimumScrobblerQuality') *
       (this.config.get('scrobblerQualityDynamic') ? popularity / 200 : 1)
 
-    const songInfos = combineSongInfos(partialSongInfos)
+    // combine & apply regexes
+    const songInfos = (
+      await Promise.all(
+        combineSongInfos(partialSongInfos).map(
+          bgActions.applyRegexesToSongInfo,
+        ),
+      )
+    ).map(applyMetadataFilter)
 
     let track
     if (songInfoFromSavedEdits) {

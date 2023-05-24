@@ -116,8 +116,22 @@ async function handleMessage(
       }
     }
 
+    case BG_ACTION_KEYS.RESET_SAVED_REGEXES: {
+      try {
+        regexesManager.resetSavedRegexes()
+      } catch (err) {
+        console.error(err)
+      }
+      return
+    }
+
     case BG_ACTION_KEYS.ADD_SAVED_REGEX: {
-      regexesManager.addRegex(action.data)
+      regexesManager.addRegex(action.data.regex)
+      return
+    }
+
+    case BG_ACTION_KEYS.UPDATE_SAVED_REGEX: {
+      regexesManager.updateRegex(action.data.index, action.data.regex)
       return
     }
 

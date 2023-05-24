@@ -111,6 +111,11 @@ const Content = () => {
         {!addingRegex && (
           <button onClick={() => setAddingRegex(true)}>Add</button>
         )}
+        {!addingRegex && (
+          <button onClick={() => bgActions.resetSavedRegexes()}>
+            Reset regexes
+          </button>
+        )}
       </div>
 
       {config?.debug && (

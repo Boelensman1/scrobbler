@@ -2,7 +2,7 @@ import type { BG_ACTION_KEYS } from 'internals'
 import type {
   AddSavedRegexValues,
   Config,
-  PartialSongInfo,
+  SongInfo,
   SavedEdit,
   TrackSelector,
 } from 'interfaces'
@@ -59,14 +59,23 @@ export interface GetSavedRegexes {
   type: typeof BG_ACTION_KEYS.GET_SAVED_REGEXES
 }
 
+export interface ResetSavedRegexes {
+  type: typeof BG_ACTION_KEYS.RESET_SAVED_REGEXES
+}
+
 export interface AddSavedRegex {
   type: typeof BG_ACTION_KEYS.ADD_SAVED_REGEX
-  data: AddSavedRegexValues
+  data: { regex: AddSavedRegexValues }
+}
+
+export interface UpdateSavedRegex {
+  type: typeof BG_ACTION_KEYS.UPDATE_SAVED_REGEX
+  data: { index: number; regex: AddSavedRegexValues }
 }
 
 export interface ApplyRegexesToSongInfo {
   type: typeof BG_ACTION_KEYS.APPLY_REGEXES_TO_SONGINFO
-  data: PartialSongInfo
+  data: SongInfo
 }
 
 export type BgActionObject =
@@ -82,5 +91,7 @@ export type BgActionObject =
   | GetTrackFromEdittedTracksActionObject
   | GetEdittedTracksActionObject
   | GetSavedRegexes
+  | ResetSavedRegexes
   | AddSavedRegex
   | ApplyRegexesToSongInfo
+  | UpdateSavedRegex
