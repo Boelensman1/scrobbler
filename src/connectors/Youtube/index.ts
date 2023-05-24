@@ -8,6 +8,26 @@ import postProcessors from './postProcessors'
 import getTextFromSelector from './util/getTextFromSelector'
 import getYtVideoIdFromUrl from './util/getYtVideoIdFromUrl'
 
+interface YoutubeApiResult {
+  kind: string
+  etag: string
+  items: Array<{
+    kind: string
+    etag: string
+    id: string
+    statistics: {
+      viewCount: string
+      likeCount: string
+      favoriteCount: string
+      commentCount: string
+    }
+  }>
+  pageInfo: {
+    totalResults: number
+    resultsPerPage: number
+  }
+}
+
 class YoutubeConnector extends BaseConnector {
   static connectorKey = 'youtube'
 
@@ -129,20 +149,60 @@ class YoutubeConnector extends BaseConnector {
     return { playTime: currentTime, duration, playbackRate }
   }
 
-  async getPopularity() {
-    try {
-      const element = await waitForElement('.view-count')
-      if (!element.textContent) {
+  async getViewCount(): Promise<number> {
+    const youtubeApiKey = this.config.get('youtubeApiKey')
+
+    if (youtubeApiKey) {
+      const url = `https://www.googleapis.com/youtube/v3/videos?part=statistics&id=${this.getVideoId()}&key=${youtubeApiKey}`
+      const result = (await fetch(url).then((response) =>
+        response.json(),
+      )) as YoutubeApiResult
+
+      if (result.items.length !== 1) {
+        // something weird happened, block the scrobble
         return -1
       }
-      const views = element.textContent
-        .trim()
-        .split(' ')[0]
-        .replace(/[,.]/g, '')
+      return Number(result.items[0].statistics.viewCount)
+    } else {
+      try {
+        const element = await waitForElement('.view-count')
+        if (!element.textContent) {
+          return -1
+        }
+        const views = element.textContent
+          .trim()
+          .split(' ')[0]
+          .replace(/[,.]/g, '')
 
-      return Math.sqrt(Number(views))
-    } catch (e) {
+        return Number(views)
+      } catch (e) {
+        return -1
+      }
+    }
+  }
+
+  async getIsShort() {
+    const url = `https://www.youtube.com/shorts/${this.getVideoId()}`
+    const result = await fetch(url, { method: 'HEAD', redirect: 'manual' })
+    return result.status === 200
+  }
+
+  async getPopularity() {
+    const [views, isShort] = await Promise.all([
+      this.getViewCount(),
+      this.getIsShort(),
+    ])
+
+    // always return -1 for shorts, we shouldn't scrobble them
+    if (isShort) {
       return -1
+    }
+
+    // views <0 means there was an error
+    if (views > 0) {
+      return Math.sqrt(Number(views))
+    } else {
+      return views
     }
   }
 

@@ -8,6 +8,7 @@ export const defaultConfig: Config = {
   minimumScrobblerQuality: 100,
   scrobblerQualityDynamic: true,
   debug: DEBUG,
+  youtubeApiKey: '',
 }
 
 export class ConfigContainer {

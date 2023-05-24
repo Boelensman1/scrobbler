@@ -6,18 +6,19 @@ import { bgActions } from 'internals'
 import type { AddSavedRegexValues } from 'interfaces'
 
 interface PropTypeAdding extends AddSavedRegexValues {
-  index: undefined
+  index?: undefined
   added: () => void
 }
 interface PropTypeUpdating extends AddSavedRegexValues {
+  added?: undefined
   index: number
-  added: undefined
 }
 
 type PropType = PropTypeAdding | PropTypeUpdating
 
 const SavedRegexDisplay = ({
   index,
+  added,
   matchArtist,
   matchTrack,
   searchArtist,
@@ -25,7 +26,6 @@ const SavedRegexDisplay = ({
   searchTrack,
   replaceTrack,
   stop,
-  added,
 }: PropType) => {
   const formik = useFormik({
     initialValues: {

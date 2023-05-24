@@ -78,6 +78,17 @@ const Content = () => {
             </div>
 
             <div>
+              <label htmlFor="youtubeApiKey">
+                Youtube Api Key (allows scrobbling of embedded){' '}
+              </label>
+              <input
+                id="youtubeApiKey"
+                onChange={formik.handleChange}
+                value={formik.values.youtubeApiKey}
+              />
+            </div>
+
+            <div>
               <label htmlFor="debug">Debug </label>
               <input
                 id="debug"

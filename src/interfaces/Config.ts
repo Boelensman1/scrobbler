@@ -5,6 +5,8 @@ interface Config {
 
   lastfmSessionKey?: string
   debug: boolean
+
+  youtubeApiKey: string
 }
 
 export default Config
