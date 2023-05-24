@@ -15,6 +15,48 @@ interface YoutubeApiResult {
     kind: string
     etag: string
     id: string
+    snippet: {
+      publishedAt: string
+      channelId: string
+      title: string
+      description: string
+      thumbnails: {
+        default: {
+          url: string
+          width: number
+          height: number
+        }
+        medium: {
+          url: string
+          width: number
+          height: number
+        }
+        high: {
+          url: string
+          width: number
+          height: number
+        }
+        standard: {
+          url: string
+          width: number
+          height: number
+        }
+        maxres: {
+          url: string
+          width: number
+          height: number
+        }
+      }
+      channelTitle: string
+      categoryId: string
+      liveBroadcastContent: string
+      defaultLanguage: string
+      localized: {
+        title: string
+        description: string
+      }
+      defaultAudioLanguage: string
+    }
     statistics: {
       viewCount: string
       likeCount: string
@@ -149,36 +191,51 @@ class YoutubeConnector extends BaseConnector {
     return { playTime: currentTime, duration, playbackRate }
   }
 
-  async getViewCount(): Promise<number> {
+  async getViewCountAndAge(): Promise<
+    { views: number; publishedAt?: Date; error: false } | { error: true }
+  > {
     const youtubeApiKey = this.config.get('youtubeApiKey')
 
     if (youtubeApiKey) {
-      const url = `https://www.googleapis.com/youtube/v3/videos?part=statistics&id=${this.getVideoId()}&key=${youtubeApiKey}`
+      const url = `https://www.googleapis.com/youtube/v3/videos?part=statistics,snippet&id=${this.getVideoId()}&key=${youtubeApiKey}`
       const result = (await fetch(url).then((response) =>
         response.json(),
       )) as YoutubeApiResult
 
-      if (result.items.length !== 1) {
-        // something weird happened, block the scrobble
-        return -1
-      }
-      return Number(result.items[0].statistics.viewCount)
-    } else {
-      try {
-        const element = await waitForElement('.view-count')
-        if (!element.textContent) {
-          return -1
-        }
-        const views = element.textContent
-          .trim()
-          .split(' ')[0]
-          .replace(/[,.]/g, '')
-
-        return Number(views)
-      } catch (e) {
-        return -1
+      // if everything is as expected, return the result,
+      // otherwise try and get the viewcount using the html
+      if (result.items && result.items.length === 1) {
+        const views = Number(result.items[0].statistics.viewCount)
+        const publishedAt = new Date(result.items[0].snippet.publishedAt)
+        return { views, publishedAt, error: false }
       }
     }
+
+    // the fallback method
+    let views, publishedAt
+    try {
+      const element = await waitForElement('.view-count')
+      if (!element.textContent) {
+        return { error: true }
+      }
+      views = element.textContent.trim().split(' ')[0].replace(/[,.]/g, '')
+    } catch (e) {
+      return { error: true }
+    }
+    try {
+      const element = await waitForElement<HTMLMetaElement>(
+        'meta[itemprop="datePublished"]',
+      )
+      const content = element.getAttribute('content')
+      if (!content) {
+        throw new Error('datePublished element has no content attribute')
+      }
+      publishedAt = new Date(content)
+    } catch (e) {
+      console.error(e)
+    }
+
+    return { views: Number(views), publishedAt, error: false }
   }
 
   async getIsShort() {
@@ -188,22 +245,31 @@ class YoutubeConnector extends BaseConnector {
   }
 
   async getPopularity() {
-    const [views, isShort] = await Promise.all([
-      this.getViewCount(),
+    const [viewCountAndAge, isShort] = await Promise.all([
+      this.getViewCountAndAge(),
       this.getIsShort(),
     ])
+
+    if (viewCountAndAge.error) {
+      return -1
+    }
 
     // always return -1 for shorts, we shouldn't scrobble them
     if (isShort) {
       return -1
     }
 
-    // views <0 means there was an error
-    if (views > 0) {
-      return Math.sqrt(Number(views))
-    } else {
-      return views
+    const basePopularity = Math.sqrt(Number(viewCountAndAge.views))
+    if (!viewCountAndAge.publishedAt) {
+      return basePopularity
     }
+    const daysOld =
+      (new Date().getTime() - viewCountAndAge.publishedAt.getTime()) /
+      (1000 * 60 * 60 * 24)
+    const ageCompenstation = Math.max(0.075, (daysOld * daysOld) / 100)
+
+    // compensate for age of the video
+    return basePopularity * Math.min(1, ageCompenstation)
   }
 
   async areChaptersAvailable() {
