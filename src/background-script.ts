@@ -181,8 +181,8 @@ const main = async () => {
   await edittedTracksManager.loadEdittedTracks()
   await regexesManager.loadSavedRegexes()
 
-  const connector = config.get('scrobbler')
-  switch (connector) {
+  const scrobbler = config.get('scrobbler')
+  switch (scrobbler) {
     case 'lastFm': {
       const lastfmSessionKey = config.get('lastfmSessionKey')
       if (!lastfmSessionKey) {
