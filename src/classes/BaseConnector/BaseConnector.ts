@@ -95,6 +95,22 @@ const removeDuplicateStringsPostprocessor: PostProcessor = (
   return [...songInfos, ...additional]
 }
 
+const getHumanScrobbleStateString = (
+  scrobbleState: keyof typeof scrobbleStates,
+) => {
+  switch (scrobbleState) {
+    case 'WILL_SCROBBLE':
+    case 'FORCE_SCROBBLE':
+      return 'Will scrobble'
+    case 'SCROBBLED':
+      return 'Scrobbled'
+    case 'SEARCHING':
+      return 'Loading...'
+    default:
+      return "Won't scrobble"
+  }
+}
+
 abstract class BaseConnector implements Connector {
   scrobbler: LastFm
   config: ConfigContainer
@@ -130,6 +146,10 @@ abstract class BaseConnector implements Connector {
 
   async getPopularity() {
     return 1
+  }
+
+  async getInfoBoxElement(): Promise<HTMLDivElement | null> {
+    return null
   }
 
   async setup() {
@@ -413,6 +433,9 @@ abstract class BaseConnector implements Connector {
     }
 
     this.scrobbleState = await this.getScrobbleState()
+
+    await this.updateDisplayOnPage()
+
     return this.track
   }
 
@@ -487,6 +510,29 @@ abstract class BaseConnector implements Connector {
           this.scrobbler.scrobble(this.track, this.startedPlaying)
         }
       }
+    }
+  }
+
+  async updateDisplayOnPage() {
+    if (!this.track) {
+      return
+    }
+    const infoBoxEl = await this.getInfoBoxElement()
+    if (!infoBoxEl) {
+      return
+    }
+
+    if (
+      this.scrobbleState === 'WILL_SCROBBLE' ||
+      this.scrobbleState === 'SCROBBLED'
+    ) {
+      infoBoxEl.innerHTML = `<h3>${getHumanScrobbleStateString(
+        this.scrobbleState,
+      )} as ${this.track.artist} - ${this.track.name}</h3>`
+    } else {
+      infoBoxEl.innerHTML = `<h3>${getHumanScrobbleStateString(
+        this.scrobbleState,
+      )}`
     }
   }
 }

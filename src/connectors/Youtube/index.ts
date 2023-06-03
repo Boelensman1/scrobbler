@@ -78,6 +78,8 @@ class YoutubeConnector extends BaseConnector {
   getters = getters
   postProcessors = postProcessors
 
+  infoBoxElement: HTMLDivElement | null = null
+
   static youtubeWatchElement = '#content'
 
   static locationMatch(location: Location) {
@@ -290,6 +292,23 @@ class YoutubeConnector extends BaseConnector {
 
     // Return the text if no sponsorblock text.
     return text
+  }
+
+  async getInfoBoxElement(): Promise<HTMLDivElement | null> {
+    if (this.infoBoxElement) {
+      return this.infoBoxElement
+    }
+
+    try {
+      const parentEl = getElement('#primary #title')
+      const infoBoxEl = document.createElement('div')
+      parentEl.appendChild(infoBoxEl)
+      this.infoBoxElement = infoBoxEl
+      return this.infoBoxElement
+    } catch (err) {
+      console.error(err)
+    }
+    return null
   }
 }
 

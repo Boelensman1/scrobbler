@@ -28,6 +28,9 @@ export interface Connector {
   searchQueryList: SongInfo[]
 
   shouldScrobble(): Promise<boolean>
+
+  updateDisplayOnPage(): Promise<void>
+  getInfoBoxElement(): Promise<HTMLDivElement | null>
 }
 
 interface ConnectorStatic {
