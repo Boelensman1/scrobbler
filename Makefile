@@ -3,7 +3,7 @@ SRC_FILES=$(shell find src/)
 include .env
 .EXPORT_ALL_VARIABLES:
 
-VERSION:=$(shell jq .version ./package.json)
+VERSION=$(shell jq .version ./package.json)
 
 
 node_modules: package.json package-lock.json
@@ -14,6 +14,19 @@ clean-cache:
 
 clean-dist: clean-cache
 	rm -rf ./web-ext-artifacts dist
+
+sync-version:
+	jq --arg version $(VERSION) '.version=$$version' ./src/manifests/v2/manifest.json > ./src/manifests/v2/manifest.new.json
+	prettier --write ./src/manifests/v2/manifest.new.json
+	mv ./src/manifests/v2/manifest.new.json ./src/manifests/v2/manifest.json
+
+	jq --arg version $(VERSION) '.version=$$version' ./src/manifests/v3/manifest.json > ./src/manifests/v3/manifest.new.json
+	prettier --write ./src/manifests/v3/manifest.new.json
+	mv ./src/manifests/v3/manifest.new.json ./src/manifests/v3/manifest.json
+
+bump-version:
+	npm version patch --git-tag-version false
+	$(MAKE) sync-version
 
 lint:
 	npx prettier . --check
