@@ -80,18 +80,18 @@ const InnerPopup = () => {
 
   const tabId = globalState.activeConnectorTabId
   if (!connectorState || tabId === null) {
-    return <div>loading... Check scrobblers.</div>
+    return (
+      <>
+        <div>loading... Check scrobblers.</div>
+        <button onClick={() => browser.runtime.openOptionsPage()}>
+          Options
+        </button>
+      </>
+    )
   }
 
   return (
-    <div
-      style={{
-        display: 'flex',
-        gap: 4,
-        flexDirection: 'column',
-        maxWidth: '320px',
-      }}
-    >
+    <>
       {!connectorState.track && config.debug && (
         <div>active tab: {globalState.activeConnectorTabId}</div>
       )}
@@ -139,13 +139,20 @@ const InnerPopup = () => {
       </div>
       {config.debug && <pre>{globalState.debugString}</pre>}
       <button onClick={() => browser.runtime.openOptionsPage()}>Options</button>
-    </div>
+    </>
   )
 }
 
 const Content = () => {
   return (
-    <div>
+    <div
+      style={{
+        display: 'flex',
+        gap: 4,
+        flexDirection: 'column',
+        maxWidth: '320px',
+      }}
+    >
       <InnerPopup />
     </div>
   )
