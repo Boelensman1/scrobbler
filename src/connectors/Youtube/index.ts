@@ -299,16 +299,26 @@ class YoutubeConnector extends BaseConnector {
       return this.infoBoxElement
     }
 
-    try {
-      const parentEl = getElement('#primary #title')
-      const infoBoxEl = document.createElement('div')
-      parentEl.appendChild(infoBoxEl)
-      this.infoBoxElement = infoBoxEl
-      return this.infoBoxElement
-    } catch (err) {
-      console.error(err)
+    // check if infoBoxEl was already created
+    let infoBoxEl = document.querySelector<HTMLDivElement>(
+      '#scrobbler-infobox-el',
+    )
+
+    if (!infoBoxEl) {
+      try {
+        // if we can't find it, create it
+        const parentEl = getElement('#primary #title')
+        infoBoxEl = document.createElement('div')
+        infoBoxEl.setAttribute('id', 'scrobbler-infobox-el')
+        parentEl.appendChild(infoBoxEl)
+      } catch (err) {
+        console.error(err)
+        return null
+      }
     }
-    return null
+
+    this.infoBoxElement = infoBoxEl
+    return this.infoBoxElement
   }
 }
 

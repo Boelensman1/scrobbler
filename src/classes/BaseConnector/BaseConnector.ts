@@ -486,6 +486,7 @@ abstract class BaseConnector implements Connector {
 
     // if we're the active tab, see if we can scrobble
     if (!(await bgActions.getIsActiveTab())) {
+      await this.updateDisplayOnPage()
       return
     }
 
@@ -520,18 +521,23 @@ abstract class BaseConnector implements Connector {
       return
     }
 
-    if (!this.track) {
-      infoBoxEl.innerHTML = '<h3>Loading...</h3>'
-      return
-    }
-
     if (
       this.scrobbleState === 'WILL_SCROBBLE' ||
       this.scrobbleState === 'SCROBBLED'
     ) {
+      if (!this.track) {
+        throw new Error('Track not found while scrobbled')
+      }
+      // show notice if this tab is not the active one
+      const activeNotice =
+        this.scrobbleState === 'WILL_SCROBBLE' &&
+        !(await bgActions.getIsActiveTab())
+          ? 'if tab becomes active'
+          : ''
+
       infoBoxEl.innerHTML = `<h3>${getHumanScrobbleStateString(
         this.scrobbleState,
-      )} as ${this.track.artist} - ${this.track.name}</h3>`
+      )} as ${this.track.artist} - ${this.track.name} ${activeNotice}</h3>`
     } else {
       infoBoxEl.innerHTML = `<h3>${getHumanScrobbleStateString(
         this.scrobbleState,
