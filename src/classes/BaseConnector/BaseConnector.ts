@@ -297,6 +297,7 @@ abstract class BaseConnector implements Connector {
     this.playTimeAtLastStateChange = 0
     this.track = null
     this.scrobbleState = scrobbleStates.SEARCHING
+    this.updateDisplayOnPage()
   }
 
   async waitForReady(waitTime = 0): Promise<void> {
@@ -434,8 +435,6 @@ abstract class BaseConnector implements Connector {
 
     this.scrobbleState = await this.getScrobbleState()
 
-    await this.updateDisplayOnPage()
-
     return this.track
   }
 
@@ -511,14 +510,18 @@ abstract class BaseConnector implements Connector {
         }
       }
     }
+
+    await this.updateDisplayOnPage()
   }
 
   async updateDisplayOnPage() {
-    if (!this.track) {
-      return
-    }
     const infoBoxEl = await this.getInfoBoxElement()
     if (!infoBoxEl) {
+      return
+    }
+
+    if (!this.track) {
+      infoBoxEl.innerHTML = '<h3>Loading...</h3>'
       return
     }
 
