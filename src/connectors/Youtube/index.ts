@@ -78,8 +78,6 @@ class YoutubeConnector extends BaseConnector {
   getters = getters
   postProcessors = postProcessors
 
-  infoBoxElement: HTMLDivElement | null = null
-
   static youtubeWatchElement = '#content'
 
   static locationMatch(location: Location) {
@@ -295,30 +293,30 @@ class YoutubeConnector extends BaseConnector {
   }
 
   async getInfoBoxElement(): Promise<HTMLDivElement | null> {
-    if (this.infoBoxElement) {
-      return this.infoBoxElement
+    const parentEl = document.querySelector('#primary #title')
+    if (!parentEl) {
+      return null
     }
 
     // check if infoBoxEl was already created
-    let infoBoxEl = document.querySelector<HTMLDivElement>(
+    let infoBoxElement = document.querySelector<HTMLDivElement>(
       '#scrobbler-infobox-el',
     )
 
-    if (!infoBoxEl) {
-      try {
-        // if we can't find it, create it
-        const parentEl = getElement('#primary #title')
-        infoBoxEl = document.createElement('div')
-        infoBoxEl.setAttribute('id', 'scrobbler-infobox-el')
-        parentEl.appendChild(infoBoxEl)
-      } catch (err) {
-        console.error(err)
-        return null
+    // check if element is still in the correct place
+    if (infoBoxElement) {
+      if (infoBoxElement.parentElement !== parentEl) {
+        infoBoxElement.remove()
+      } else {
+        return infoBoxElement
       }
     }
 
-    this.infoBoxElement = infoBoxEl
-    return this.infoBoxElement
+    // if it was not in the correct place or didn't exist, create it
+    infoBoxElement = document.createElement('div')
+    infoBoxElement.setAttribute('id', 'scrobbler-infobox-el')
+    parentEl.appendChild(infoBoxElement)
+    return infoBoxElement
   }
 }
 
