@@ -260,7 +260,10 @@ class YoutubeConnector extends BaseConnector {
     }
 
     const basePopularity = Math.sqrt(Number(viewCountAndAge.views))
-    if (!viewCountAndAge.publishedAt) {
+    if (
+      !viewCountAndAge.publishedAt ||
+      !this.config.get('scrobblerCompensateForVideoAge')
+    ) {
       return basePopularity
     }
     const daysOld =

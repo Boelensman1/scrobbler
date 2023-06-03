@@ -66,6 +66,19 @@ const Content = () => {
             </div>
 
             <div>
+              <label htmlFor="scrobblerCompensateForVideoAge">
+                Scrobbler compensate for video age (newer videos need less
+                quality){' '}
+              </label>
+              <input
+                id="scrobblerCompensateForVideoAge"
+                type="checkbox"
+                onChange={formik.handleChange}
+                checked={formik.values.scrobblerCompensateForVideoAge}
+              />
+            </div>
+
+            <div>
               <label htmlFor="scrobblerQualityDynamic">
                 Dynamic scrobbler quality{' '}
               </label>

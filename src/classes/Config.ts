@@ -9,6 +9,7 @@ export const defaultConfig: Config = {
   scrobblerQualityDynamic: true,
   debug: DEBUG,
   youtubeApiKey: '',
+  scrobblerCompensateForVideoAge: false,
 }
 
 export class ConfigContainer {
