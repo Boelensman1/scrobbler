@@ -293,7 +293,9 @@ class YoutubeConnector extends BaseConnector {
   }
 
   async getInfoBoxElement(): Promise<HTMLDivElement | null> {
-    const parentEl = document.querySelector('#primary #title')
+    const parentEl = document.querySelector(
+      '#primary #title.ytd-watch-metadata',
+    )
     if (!parentEl) {
       return null
     }
