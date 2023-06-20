@@ -34,8 +34,6 @@ const getPartsInBrackets = (input: string): string[] => {
   return getParts(parsed).filter((p) => p.length > 1)
 }
 
-const inBracketsRegex = /\s*\(.+\)/
-
 /*
   우기 (YUQI) -> YUQI
   (여자)아이들((G)I-DLE) -> ['여자', '(G)I-DLE']
@@ -43,12 +41,12 @@ const inBracketsRegex = /\s*\(.+\)/
 const partsInBrackets: PostProcessor = (
   songInfos: PartialSongInfo[],
 ): PartialSongInfo[] => {
-  const additonal: PartialSongInfo[] = []
+  const additional: PartialSongInfo[] = []
   songInfos.forEach((songInfo) => {
     if (songInfo.artist) {
       const songInfoArtist = songInfo.artist
       getPartsInBrackets(songInfo.artist).forEach((inBrackets) => {
-        additonal.push({
+        additional.push({
           ...songInfo,
           artist: inBrackets.trim(),
         })
@@ -58,7 +56,7 @@ const partsInBrackets: PostProcessor = (
           .replace('(' + inBrackets + ')', '')
           .trim()
         if (withBracketPartRemoved.length > 3) {
-          additonal.push({
+          additional.push({
             ...songInfo,
             artist: withBracketPartRemoved,
           })
@@ -66,27 +64,29 @@ const partsInBrackets: PostProcessor = (
       })
     }
 
-    // for track, only remove the part in brackets
     if (songInfo.track) {
-      const trackWithoutPartInBrackets = songInfo.track.replace(
-        inBracketsRegex,
-        '',
-      )
-      if (
-        songInfo.track.length !== trackWithoutPartInBrackets.length &&
-        trackWithoutPartInBrackets.length > 2
-      ) {
-        if (songInfo.track.match(inBracketsRegex)) {
-          additonal.push({
+      const songInfoTrack = songInfo.track
+      getPartsInBrackets(songInfo.track).forEach((inBrackets) => {
+        additional.push({
+          ...songInfo,
+          track: inBrackets.trim(),
+        })
+
+        // also add a version where the in brackets part is removed
+        const withBracketPartRemoved = songInfoTrack
+          .replace('(' + inBrackets + ')', '')
+          .trim()
+        if (withBracketPartRemoved.length > 3) {
+          additional.push({
             ...songInfo,
-            track: trackWithoutPartInBrackets,
+            track: withBracketPartRemoved,
           })
         }
-      }
+      })
     }
   })
 
-  return [...songInfos, ...additonal]
+  return [...songInfos, ...additional]
 }
 
 export default partsInBrackets
