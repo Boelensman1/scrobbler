@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Youtube Scrobbler",
-  "version": "0.0.18",
+  "version": "0.0.19",
   "permissions": ["tabs", "storage"],
   "content_scripts": [
     {
