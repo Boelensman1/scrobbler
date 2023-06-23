@@ -4,6 +4,7 @@ export {
   Getter,
   PostProcessor,
   ConnectorTrackId,
+  ConnectorKey,
 } from './Connector'
 export { default as PartialSongInfo } from './PartialSongInfo'
 export { default as SongInfo } from './SongInfo'
@@ -17,9 +18,11 @@ export {
 } from './InformationProvider'
 export { GetTrackResult } from '../scrobblers/lastFm'
 export { default as ConnectorState } from './ConnectorState'
-export { default as SavedEdit, TrackSelector } from './SavedEdit'
+export { default as SavedEdit } from './SavedEdit'
 export { default as EdittedTracks } from './EdittedTracks'
 export { default as SavedRegex, AddSavedRegexValues } from './SavedRegex'
+export { default as TrackSelector } from './TrackSelector'
+export { default as ForceRecognitionTracks } from './ForceRecognitionTracks'
 
 export * from './BgActionObject'
 export * from './CtActionObject'

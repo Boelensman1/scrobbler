@@ -9,6 +9,7 @@ type ConnectorState = Pick<
   | 'scrobbleAt'
   | 'trackDuration'
   | 'searchQueryList'
+  | 'shouldForceRecogniseCurrentTrack'
 >
 
 export default ConnectorState

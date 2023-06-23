@@ -1,8 +1,8 @@
-import type { SavedEdit } from 'interfaces'
+import type { SavedEdit, ConnectorKey, ConnectorTrackId } from 'interfaces'
 
 interface EdittedTracks {
-  [connectorKey: string]: {
-    [connectorTrackId: string]: SavedEdit
+  [connectorKey: ConnectorKey]: {
+    [connectorTrackId: ConnectorTrackId]: SavedEdit
   }
 }
 

@@ -3,6 +3,7 @@ import {
   ConfigContainer,
   EdittedTracksManager,
   RegexesManager,
+  ForceRecognitionTracksManager,
   BG_ACTION_KEYS,
   StateManager,
   ctActions,
@@ -16,6 +17,7 @@ const config = new ConfigContainer()
 const stateManager = new StateManager()
 const edittedTracksManager = new EdittedTracksManager()
 const regexesManager = new RegexesManager()
+const forceRecognitionTracksManager = new ForceRecognitionTracksManager()
 
 // setFullyLoaded is called after init (in main)
 let setFullyLoaded: (val: true) => void
@@ -138,6 +140,22 @@ async function handleMessage(
     case BG_ACTION_KEYS.APPLY_REGEXES_TO_SONGINFO: {
       return regexesManager.applyRegexesToSongInfo(action.data)
     }
+
+    case BG_ACTION_KEYS.SAVE_FORCE_RECOGNISE_TRACK: {
+      const { shouldForceRecognise, ...selector } = action.data
+      if (shouldForceRecognise) {
+        forceRecognitionTracksManager.addForcedRecognitionTrack(selector)
+      } else {
+        forceRecognitionTracksManager.removeForcedRecognitionTrack(selector)
+      }
+      return
+    }
+
+    case BG_ACTION_KEYS.GET_IF_FORCE_RECOGNISE_TRACK: {
+      return forceRecognitionTracksManager.getIfTrackIsForcedRecognition(
+        action.data,
+      )
+    }
   }
 }
 function handleMessageContainer(
@@ -180,6 +198,7 @@ const main = async () => {
   await config.loadConfig()
   await edittedTracksManager.loadEdittedTracks()
   await regexesManager.loadSavedRegexes()
+  await forceRecognitionTracksManager.loadForceRecognitionTracks()
 
   const scrobbler = config.get('scrobbler')
   switch (scrobbler) {

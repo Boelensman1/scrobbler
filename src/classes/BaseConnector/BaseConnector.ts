@@ -129,6 +129,7 @@ abstract class BaseConnector implements Connector {
   scrobbleAt = 4 * 60
   trackDuration?: number = Number.MAX_SAFE_INTEGER
   searchQueryList: SongInfo[] = []
+  shouldForceRecogniseCurrentTrack = false
 
   abstract getters: Getter[]
   abstract postProcessors: PostProcessor[]
@@ -176,8 +177,19 @@ abstract class BaseConnector implements Connector {
     return true
   }
 
+  createTrackFromBestResult(): Track {
+    // manually add the track to force recognition
+    const [bestOption] = this.searchQueryList
+    return new Track({
+      name: bestOption.track,
+      artist: bestOption.artist,
+      scrobblerMatchQuality: -2,
+      scrobblerLinks: {},
+    })
+  }
+
   async getScrobbleState(): Promise<keyof typeof scrobbleStates> {
-    if (!(await this.shouldScrobble())) {
+    if (!(await this.shouldScrobble()) || !this.connectorTrackId) {
       return scrobbleStates.BLOCKED_BY_CONNECTOR
     }
 
@@ -199,7 +211,10 @@ abstract class BaseConnector implements Connector {
       return scrobbleStates.TRACK_TOO_SHORT
     }
 
-    if (this.track.scrobblerMatchQuality < this.minimumScrobblerQuality) {
+    if (
+      this.track.scrobblerMatchQuality < this.minimumScrobblerQuality &&
+      !this.shouldForceRecogniseCurrentTrack
+    ) {
       return scrobbleStates.BELOW_MIN_SCROBBLER_QUALITY
     }
 
@@ -222,6 +237,8 @@ abstract class BaseConnector implements Connector {
           scrobbleAt: this.scrobbleAt,
           trackDuration: this.trackDuration,
           searchQueryList: this.searchQueryList,
+          shouldForceRecogniseCurrentTrack:
+            this.shouldForceRecogniseCurrentTrack,
         }
       }
 
@@ -237,19 +254,11 @@ abstract class BaseConnector implements Connector {
       }
 
       case CT_ACTION_KEYS.FORCE_SCROBBLE_CURRENT: {
-        if (canForceScrobble(this.scrobbleState)) {
-          this.scrobbleState = scrobbleStates.FORCE_SCROBBLE
-        } else {
-          const [bestOption] = this.searchQueryList
-          // manually add the track to force scrobble
-          this.track = new Track({
-            name: bestOption.track,
-            artist: bestOption.artist,
-            scrobblerMatchQuality: -2,
-            scrobblerLinks: {},
-          })
-          this.scrobbleState = scrobbleStates.FORCE_SCROBBLE
+        if (!this.track) {
+          // force track recognition
+          this.track = this.createTrackFromBestResult()
         }
+        this.scrobbleState = scrobbleStates.FORCE_SCROBBLE
         return
       }
 
@@ -288,6 +297,28 @@ abstract class BaseConnector implements Connector {
 
         return
       }
+
+      case CT_ACTION_KEYS.SET_FORCE_RECOGNISE_CURRENT: {
+        // save!
+        if (this.connectorTrackId) {
+          const { connectorKey } = this.constructor as ConnectorStatic
+
+          await bgActions.saveForceRecogniseTrack({
+            connectorKey: connectorKey,
+            connectorTrackId: this.connectorTrackId,
+            shouldForceRecognise: action.data,
+          })
+          this.shouldForceRecogniseCurrentTrack = action.data
+
+          if (this.shouldForceRecogniseCurrentTrack && !this.track) {
+            this.track = this.createTrackFromBestResult()
+          }
+
+          // calculate new scrobbleState
+          this.scrobbleState = await this.getScrobbleState()
+        }
+        return
+      }
     }
   }
 
@@ -297,6 +328,7 @@ abstract class BaseConnector implements Connector {
     this.playTimeAtLastStateChange = 0
     this.track = null
     this.scrobbleState = scrobbleStates.SEARCHING
+    this.shouldForceRecogniseCurrentTrack = false
     this.updateDisplayOnPage()
   }
 
@@ -368,6 +400,12 @@ abstract class BaseConnector implements Connector {
         connectorKey: (this.constructor as ConnectorStatic).connectorKey,
         connectorTrackId: this.connectorTrackId,
       })
+
+      this.shouldForceRecogniseCurrentTrack =
+        await bgActions.getIfForceRecogniseTrack({
+          connectorKey: (this.constructor as ConnectorStatic).connectorKey,
+          connectorTrackId: this.connectorTrackId,
+        })
     }
 
     // no check for songInfoFromSavedEdits as even if we have this song as a
@@ -431,6 +469,10 @@ abstract class BaseConnector implements Connector {
     if (track) {
       await getAdditionalDataFromInfoProviders(track)
       this.track = track
+    } else {
+      if (this.shouldForceRecogniseCurrentTrack) {
+        this.track = this.createTrackFromBestResult()
+      }
     }
 
     this.scrobbleState = await this.getScrobbleState()
@@ -535,9 +577,15 @@ abstract class BaseConnector implements Connector {
           ? 'if tab becomes active'
           : ''
 
+      const forcedRecognitionNotice = this.shouldForceRecogniseCurrentTrack
+        ? '(forced recognition)'
+        : ''
+
       infoBoxEl.innerHTML = `<h3>${getHumanScrobbleStateString(
         this.scrobbleState,
-      )} as ${this.track.artist} - ${this.track.name} ${activeNotice}</h3>`
+      )} as ${this.track.artist} - ${
+        this.track.name
+      } ${activeNotice} ${forcedRecognitionNotice}</h3>`
     } else {
       infoBoxEl.innerHTML = `<h3>${getHumanScrobbleStateString(
         this.scrobbleState,

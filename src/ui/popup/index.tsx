@@ -129,12 +129,25 @@ const InnerPopup = () => {
       <div>
         <button
           onClick={() => ctActions.toggleDisableToggleCurrent(tabId)}
-          style={{ marginRight: 4 }}
+          style={{ marginRight: 2 }}
         >
-          Don&apos;t scrobble current
+          Disable
         </button>
         <button onClick={() => ctActions.forceScrobbleCurrent(tabId)}>
-          Force scrobble current
+          Scrobble now
+        </button>
+        <button
+          style={{ marginRight: 2 }}
+          onClick={() =>
+            ctActions.setForceRecogniseCurrent(
+              tabId,
+              !connectorState.shouldForceRecogniseCurrentTrack,
+            )
+          }
+        >
+          {connectorState.shouldForceRecogniseCurrentTrack
+            ? 'Force recognition'
+            : 'Unforce recognition'}
         </button>
       </div>
       {config.debug && <pre>{globalState.debugString}</pre>}

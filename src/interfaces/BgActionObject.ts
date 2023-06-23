@@ -5,6 +5,8 @@ import type {
   SongInfo,
   SavedEdit,
   TrackSelector,
+  ConnectorKey,
+  ConnectorTrackId,
 } from 'interfaces'
 
 export interface RequestAuthenticationActionObject {
@@ -78,6 +80,20 @@ export interface ApplyRegexesToSongInfo {
   data: SongInfo
 }
 
+export interface SaveForceRecogniseTrack {
+  type: typeof BG_ACTION_KEYS.SAVE_FORCE_RECOGNISE_TRACK
+  data: {
+    connectorKey: ConnectorKey
+    connectorTrackId: ConnectorTrackId
+    shouldForceRecognise: boolean
+  }
+}
+
+export interface GetIfForceRecogniseTrack {
+  type: typeof BG_ACTION_KEYS.GET_IF_FORCE_RECOGNISE_TRACK
+  data: TrackSelector
+}
+
 export type BgActionObject =
   | RequestAuthenticationActionObject
   | GetStateActionObject
@@ -95,3 +111,5 @@ export type BgActionObject =
   | AddSavedRegex
   | ApplyRegexesToSongInfo
   | UpdateSavedRegex
+  | SaveForceRecogniseTrack
+  | GetIfForceRecogniseTrack

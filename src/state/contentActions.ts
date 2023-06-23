@@ -2,12 +2,13 @@ import browser from 'webextension-polyfill'
 import type {
   ConnectorState,
   CtActionObject,
-  GetConnectorStateActionObject,
-  GetStillPlayingActionObject,
-  ToggleDisableToggleCurrentActionObject,
-  ForceToggleCurrentActionObject,
+  GetConnectorStateCTActionObject,
+  GetStillPlayingCTActionObject,
+  ToggleDisableToggleCurrentCTActionObject,
+  ForceToggleCurrentCTActionObject,
   SaveTrackEditCTActionObject,
   SongInfo,
+  SetForceRecogniseCurrentCTActionObject,
 } from 'interfaces'
 
 export const CT_ACTION_KEYS = {
@@ -18,6 +19,8 @@ export const CT_ACTION_KEYS = {
   FORCE_SCROBBLE_CURRENT: 'FORCE_SCROBBLE_CURRENT' as const,
 
   SAVE_TRACK_EDIT: 'SAVE_TRACK_EDIT_CT' as const,
+
+  SET_FORCE_RECOGNISE_CURRENT: 'SET_FORCE_RECOGNISE_CURRENT' as const,
 }
 
 const send = async <T extends CtActionObject, U = null>(
@@ -38,25 +41,30 @@ const send = async <T extends CtActionObject, U = null>(
 
 const actions = {
   getStillPlaying: (tabId: number) =>
-    send<GetStillPlayingActionObject, boolean>(tabId, {
+    send<GetStillPlayingCTActionObject, boolean>(tabId, {
       type: CT_ACTION_KEYS.GET_STILL_PLAYING,
     }),
   getConnectorState: (tabId: number) =>
-    send<GetConnectorStateActionObject, ConnectorState>(tabId, {
+    send<GetConnectorStateCTActionObject, ConnectorState>(tabId, {
       type: CT_ACTION_KEYS.GET_CONNECTOR_STATE,
     }),
   toggleDisableToggleCurrent: (tabId: number) =>
-    send<ToggleDisableToggleCurrentActionObject>(tabId, {
+    send<ToggleDisableToggleCurrentCTActionObject>(tabId, {
       type: CT_ACTION_KEYS.TOGGLE_DISABLE_SCROBBLE_CURRENT,
     }),
   forceScrobbleCurrent: (tabId: number) =>
-    send<ForceToggleCurrentActionObject>(tabId, {
+    send<ForceToggleCurrentCTActionObject>(tabId, {
       type: CT_ACTION_KEYS.FORCE_SCROBBLE_CURRENT,
     }),
   saveTrackEdit: (tabId: number, editValues: SongInfo) =>
     send<SaveTrackEditCTActionObject>(tabId, {
       type: CT_ACTION_KEYS.SAVE_TRACK_EDIT,
       data: { editValues },
+    }),
+  setForceRecogniseCurrent: (tabId: number, value: boolean) =>
+    send<SetForceRecogniseCurrentCTActionObject>(tabId, {
+      type: CT_ACTION_KEYS.SET_FORCE_RECOGNISE_CURRENT,
+      data: value,
     }),
 }
 

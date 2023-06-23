@@ -24,6 +24,10 @@ import type {
   AddSavedRegexValues,
   ResetSavedRegexes,
   UpdateSavedRegex,
+  SaveForceRecogniseTrack,
+  ConnectorKey,
+  ConnectorTrackId,
+  GetIfForceRecogniseTrack,
 } from 'interfaces'
 
 export const BG_ACTION_KEYS = {
@@ -47,6 +51,9 @@ export const BG_ACTION_KEYS = {
   ADD_SAVED_REGEX: 'ADD_SAVED_REGEX' as const,
   UPDATE_SAVED_REGEX: 'UPDATE_SAVED_REGEX' as const,
   APPLY_REGEXES_TO_SONGINFO: 'APPLY_REGEXES_TO_SONGINFO' as const,
+
+  SAVE_FORCE_RECOGNISE_TRACK: 'SAVE_FORCE_RECOGNISE_TRACK' as const,
+  GET_IF_FORCE_RECOGNISE_TRACK: 'GET_IF_FORCE_RECOGNISE_TRACK' as const,
 }
 
 const send = <T extends BgActionObject, U = void>(arg: T): Promise<U> =>
@@ -125,6 +132,20 @@ const actions = {
     send<ApplyRegexesToSongInfo, SongInfo>({
       type: BG_ACTION_KEYS.APPLY_REGEXES_TO_SONGINFO,
       data: songInfo,
+    }),
+  saveForceRecogniseTrack: (data: {
+    connectorKey: ConnectorKey
+    connectorTrackId: ConnectorTrackId
+    shouldForceRecognise: boolean
+  }): Promise<void> =>
+    send<SaveForceRecogniseTrack>({
+      type: BG_ACTION_KEYS.SAVE_FORCE_RECOGNISE_TRACK,
+      data,
+    }),
+  getIfForceRecogniseTrack: (data: TrackSelector): Promise<boolean> =>
+    send<GetIfForceRecogniseTrack, boolean>({
+      type: BG_ACTION_KEYS.GET_IF_FORCE_RECOGNISE_TRACK,
+      data,
     }),
 }
 

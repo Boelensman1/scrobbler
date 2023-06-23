@@ -1,19 +1,19 @@
 import type { SongInfo } from 'interfaces'
 import type { CT_ACTION_KEYS } from 'internals'
 
-export interface GetStillPlayingActionObject {
+export interface GetStillPlayingCTActionObject {
   type: typeof CT_ACTION_KEYS.GET_STILL_PLAYING
 }
 
-export interface GetConnectorStateActionObject {
+export interface GetConnectorStateCTActionObject {
   type: typeof CT_ACTION_KEYS.GET_CONNECTOR_STATE
 }
 
-export interface ToggleDisableToggleCurrentActionObject {
+export interface ToggleDisableToggleCurrentCTActionObject {
   type: typeof CT_ACTION_KEYS.TOGGLE_DISABLE_SCROBBLE_CURRENT
 }
 
-export interface ForceToggleCurrentActionObject {
+export interface ForceToggleCurrentCTActionObject {
   type: typeof CT_ACTION_KEYS.FORCE_SCROBBLE_CURRENT
 }
 
@@ -22,9 +22,15 @@ export interface SaveTrackEditCTActionObject {
   data: { editValues: SongInfo }
 }
 
+export interface SetForceRecogniseCurrentCTActionObject {
+  type: typeof CT_ACTION_KEYS.SET_FORCE_RECOGNISE_CURRENT
+  data: boolean
+}
+
 export type CtActionObject =
-  | GetStillPlayingActionObject
-  | GetConnectorStateActionObject
-  | ToggleDisableToggleCurrentActionObject
-  | ForceToggleCurrentActionObject
+  | GetStillPlayingCTActionObject
+  | GetConnectorStateCTActionObject
+  | ToggleDisableToggleCurrentCTActionObject
+  | ForceToggleCurrentCTActionObject
   | SaveTrackEditCTActionObject
+  | SetForceRecogniseCurrentCTActionObject
