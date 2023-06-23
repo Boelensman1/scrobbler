@@ -146,8 +146,8 @@ const InnerPopup = () => {
           }
         >
           {connectorState.shouldForceRecogniseCurrentTrack
-            ? 'Force recognition'
-            : 'Unforce recognition'}
+            ? 'Unforce recognition'
+            : 'Force recognition'}
         </button>
       </div>
       {config.debug && <pre>{globalState.debugString}</pre>}
