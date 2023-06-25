@@ -95,7 +95,8 @@ class BrowserStorage {
   }
 
   async init() {
-    const fromStorage = await browser.storage.sync.get()
+    const browserStorage = browser.storage.sync || browser.storage.local
+    const fromStorage = await browserStorage.get()
     this.storage = hydrate(fromStorage as StorageInBrowser)
   }
 
@@ -104,8 +105,9 @@ class BrowserStorage {
       throw new Error('Storage is not initialised yet')
     }
 
+    const browserStorage = browser.storage.sync || browser.storage.local
     this.storage[key] = value
-    await browser.storage.sync.set(deHydrate(this.storage))
+    await browserStorage.set(deHydrate(this.storage))
   }
 
   get<T extends keyof Storage>(key: T): Storage[T] {
