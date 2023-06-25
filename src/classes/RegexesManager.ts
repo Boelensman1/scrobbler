@@ -6,12 +6,22 @@ import type {
 } from 'interfaces'
 import { BrowserStorage } from 'internals'
 
+const stringifyRegex = (regex: RegExp): string => {
+  const { source } = regex
+
+  // this is the default 'empty' regex
+  if (source === '(?:)') {
+    return ''
+  }
+  return source
+}
+
 const stringifyRegexes = (savedRegex: SavedRegex) => ({
   ...savedRegex,
-  matchArtist: savedRegex.matchArtist.source,
-  matchTrack: savedRegex.matchTrack.source,
-  searchArtist: savedRegex.searchArtist.source,
-  searchTrack: savedRegex.searchTrack.source,
+  matchArtist: stringifyRegex(savedRegex.matchArtist),
+  matchTrack: stringifyRegex(savedRegex.matchTrack),
+  searchArtist: stringifyRegex(savedRegex.searchArtist),
+  searchTrack: stringifyRegex(savedRegex.searchTrack),
 })
 
 const parseSavedRegexes = (savedRegex: StringifiedSavedRegex): SavedRegex => ({
