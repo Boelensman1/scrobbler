@@ -1,5 +1,5 @@
-import browser from 'webextension-polyfill'
 import type { Config } from 'interfaces'
+import { BrowserStorage } from 'internals'
 
 const DEBUG = Number(process.env.DEBUG) === 1 || false
 
@@ -13,25 +13,18 @@ export const defaultConfig: Config = {
 }
 
 export class ConfigContainer {
-  config: Config | null = null
+  browserStorage: BrowserStorage
+  config: Config
 
-  async loadConfig() {
-    let { config } = await browser.storage.sync.get()
+  constructor(browserStorage: BrowserStorage) {
+    this.browserStorage = browserStorage
 
-    if (!config) {
-      config = defaultConfig
-      await browser.storage.sync.set({ config })
-    }
-    this.config = config as Config
+    this.config = this.browserStorage.get('config')
   }
 
   async set<T extends keyof Config>(key: T, value: Config[T]) {
-    if (!this.config) {
-      throw new Error('Tried to set config but it has not finished loading yet')
-    }
-
     this.config[key] = value
-    await browser.storage.sync.set({ config: this.config })
+    await this.browserStorage.set('config', this.config)
   }
 
   get<T extends keyof Config>(key: T): Config[T] {
@@ -56,7 +49,7 @@ export class ConfigContainer {
     }
 
     this.config = defaultConfig
-    await browser.storage.sync.set({ config: this.config })
+    await this.browserStorage.set('config', this.config)
   }
 }
 

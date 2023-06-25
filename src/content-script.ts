@@ -1,15 +1,9 @@
 import type { ConnectorStatic } from 'interfaces'
-import {
-  ConfigContainer,
-  YoutubeConnector,
-  YoutubeEmbedConnector,
-} from 'internals'
+import { bgActions, YoutubeConnector, YoutubeEmbedConnector } from 'internals'
 
 import scrobblers from './scrobblerList'
 
 const connectors: ConnectorStatic[] = [YoutubeConnector, YoutubeEmbedConnector]
-
-const config = new ConfigContainer()
 
 const main = async () => {
   const MatchingConnector = connectors.find((conn) =>
@@ -20,14 +14,16 @@ const main = async () => {
     return
   }
 
-  await config.loadConfig()
+  const config = await bgActions.getConfig()
 
-  const scrobbler = config.get('scrobbler')
+  const scrobbler = config.scrobbler
   switch (scrobbler) {
     case 'lastFm': {
-      const lastfmSessionKey = config.get('lastfmSessionKey')
+      const lastfmSessionKey = config.lastfmSessionKey
       if (!lastfmSessionKey) {
-        config.set('scrobbler', null)
+        await bgActions.saveConfig({
+          scrobbler: null,
+        })
       } else {
         scrobblers.lastFm.setSessionKey(lastfmSessionKey)
       }

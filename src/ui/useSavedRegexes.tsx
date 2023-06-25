@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react'
-import type { AddSavedRegexValues } from 'interfaces'
+import type { StringifiedSavedRegex } from 'interfaces'
 import { bgActions } from 'internals'
 
 const useSavedRegexes = ({
   updateInterval,
 }: { updateInterval?: number } = {}) => {
-  const [savedRegexes, setSavedRegexes] = useState<AddSavedRegexValues[]>([])
+  const [savedRegexes, setSavedRegexes] = useState<StringifiedSavedRegex[]>([])
 
   useEffect(() => {
     const updateSavedRegexes = async () => {

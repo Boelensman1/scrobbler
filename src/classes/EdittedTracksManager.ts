@@ -1,32 +1,26 @@
-import browser from 'webextension-polyfill'
 import type {
   SavedEdit,
   TrackSelector,
   SongInfo,
   EdittedTracks,
 } from 'interfaces'
+import { BrowserStorage } from 'internals'
 
 class EdittedTracksManager {
-  edittedTracks: EdittedTracks | null = null
+  browserStorage: BrowserStorage
+  edittedTracks: EdittedTracks
 
-  async loadEdittedTracks() {
-    let { edittedTracks } = await browser.storage.sync.get()
-    if (!edittedTracks) {
-      edittedTracks = {}
-      this.syncEdittedTracks()
-    }
-    this.edittedTracks = edittedTracks
+  constructor(browserStorage: BrowserStorage) {
+    this.browserStorage = browserStorage
+
+    this.edittedTracks = browserStorage.get('edittedTracks')
   }
 
   async syncEdittedTracks() {
-    await browser.storage.sync.set({ edittedTracks: this.edittedTracks })
+    await this.browserStorage.set('edittedTracks', this.edittedTracks)
   }
 
   addEdittedTrack(edittedTrack: SavedEdit): void {
-    if (!this.edittedTracks) {
-      throw new Error('Editted tracks are not ready yet')
-    }
-
     const { connectorKey, connectorTrackId } = edittedTrack
     if (!this.edittedTracks[connectorKey]) {
       this.edittedTracks[connectorKey] = {}
@@ -37,10 +31,6 @@ class EdittedTracksManager {
   }
 
   removeEdittedTrack({ connectorKey, connectorTrackId }: TrackSelector): void {
-    if (!this.edittedTracks) {
-      throw new Error('Editted tracks are not ready yet')
-    }
-
     if (this.edittedTracks[connectorKey]) {
       delete this.edittedTracks[connectorKey][connectorTrackId]
       this.syncEdittedTracks()
@@ -51,10 +41,6 @@ class EdittedTracksManager {
     connectorKey,
     connectorTrackId,
   }: TrackSelector): SongInfo | false {
-    if (!this.edittedTracks) {
-      throw new Error('Editted tracks are not ready yet')
-    }
-
     if (!this.edittedTracks[connectorKey]) {
       return false
     }
@@ -63,9 +49,6 @@ class EdittedTracksManager {
   }
 
   getEdittedTracks(): EdittedTracks {
-    if (!this.edittedTracks) {
-      throw new Error('Editted tracks are not ready yet')
-    }
     return this.edittedTracks
   }
 }

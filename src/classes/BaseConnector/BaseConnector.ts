@@ -2,6 +2,7 @@ import browser from 'webextension-polyfill'
 import _ from 'lodash'
 
 import type {
+  Config,
   Connector,
   Getter,
   PostProcessor,
@@ -13,7 +14,6 @@ import type {
   ConnectorStatic,
 } from 'interfaces'
 import {
-  ConfigContainer,
   LastFm,
   bgActions,
   CT_ACTION_KEYS,
@@ -113,7 +113,7 @@ const getHumanScrobbleStateString = (
 
 abstract class BaseConnector implements Connector {
   scrobbler: LastFm
-  config: ConfigContainer
+  config: Config
 
   lastStateChange?: Date
   playTimeAtLastStateChange = 0
@@ -134,7 +134,7 @@ abstract class BaseConnector implements Connector {
   abstract getters: Getter[]
   abstract postProcessors: PostProcessor[]
 
-  constructor(scrobbler: LastFm, config: ConfigContainer) {
+  constructor(scrobbler: LastFm, config: Config) {
     this.scrobbler = scrobbler
     this.config = config
   }
@@ -426,8 +426,8 @@ abstract class BaseConnector implements Connector {
     )
 
     this.minimumScrobblerQuality =
-      this.config.get('minimumScrobblerQuality') *
-      (this.config.get('scrobblerQualityDynamic') ? popularity / 200 : 1)
+      this.config.minimumScrobblerQuality *
+      (this.config.scrobblerQualityDynamic ? popularity / 200 : 1)
 
     // combine & apply regexes
     const songInfos = (

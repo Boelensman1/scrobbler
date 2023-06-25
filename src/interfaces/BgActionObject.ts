@@ -1,6 +1,6 @@
 import type { BG_ACTION_KEYS } from 'internals'
 import type {
-  AddSavedRegexValues,
+  StringifiedSavedRegex,
   Config,
   SongInfo,
   SavedEdit,
@@ -67,12 +67,12 @@ export interface ResetSavedRegexes {
 
 export interface AddSavedRegex {
   type: typeof BG_ACTION_KEYS.ADD_SAVED_REGEX
-  data: { regex: AddSavedRegexValues }
+  data: { regex: StringifiedSavedRegex }
 }
 
 export interface UpdateSavedRegex {
   type: typeof BG_ACTION_KEYS.UPDATE_SAVED_REGEX
-  data: { index: number; regex: AddSavedRegexValues }
+  data: { index: number; regex: StringifiedSavedRegex }
 }
 
 export interface ApplyRegexesToSongInfo {

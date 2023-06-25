@@ -194,7 +194,7 @@ class YoutubeConnector extends BaseConnector {
   async getViewCountAndAge(): Promise<
     { views: number; publishedAt?: Date; error: false } | { error: true }
   > {
-    const youtubeApiKey = this.config.get('youtubeApiKey')
+    const youtubeApiKey = this.config.youtubeApiKey
 
     if (youtubeApiKey) {
       const url = `https://www.googleapis.com/youtube/v3/videos?part=statistics,snippet&id=${this.getVideoId()}&key=${youtubeApiKey}`
@@ -262,7 +262,7 @@ class YoutubeConnector extends BaseConnector {
     const basePopularity = Math.sqrt(Number(viewCountAndAge.views))
     if (
       !viewCountAndAge.publishedAt ||
-      !this.config.get('scrobblerCompensateForVideoAge')
+      !this.config.scrobblerCompensateForVideoAge
     ) {
       return basePopularity
     }

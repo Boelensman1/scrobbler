@@ -1,5 +1,10 @@
-import browser from 'webextension-polyfill'
-import type { SavedRegex, AddSavedRegexValues, SongInfo } from 'interfaces'
+import type {
+  SavedRegex,
+  StringifiedSavedRegex,
+  SongInfo,
+  JSONAble,
+} from 'interfaces'
+import { BrowserStorage } from 'internals'
 
 const stringifyRegexes = (savedRegex: SavedRegex) => ({
   ...savedRegex,
@@ -9,7 +14,7 @@ const stringifyRegexes = (savedRegex: SavedRegex) => ({
   searchTrack: savedRegex.searchTrack.source,
 })
 
-const parseSavedRegexes = (savedRegex: AddSavedRegexValues): SavedRegex => ({
+const parseSavedRegexes = (savedRegex: StringifiedSavedRegex): SavedRegex => ({
   ...savedRegex,
   matchArtist: RegExp(savedRegex.matchArtist),
   matchTrack: RegExp(savedRegex.matchTrack),
@@ -17,17 +22,20 @@ const parseSavedRegexes = (savedRegex: AddSavedRegexValues): SavedRegex => ({
   searchTrack: RegExp(savedRegex.searchTrack),
 })
 
-class RegexesManager {
-  savedRegexes: SavedRegex[] | null = null
+export const hydrate = (savedRegexes: JSONAble) =>
+  (savedRegexes as unknown as StringifiedSavedRegex[]).map(parseSavedRegexes)
 
-  async loadSavedRegexes() {
-    const { savedRegexes } = await browser.storage.sync.get()
-    if (!savedRegexes) {
-      this.savedRegexes = []
-      this.syncSavedRegexes()
-    } else {
-      this.savedRegexes = savedRegexes.map(parseSavedRegexes)
-    }
+export const deHydrate = (savedRegexes: SavedRegex[]) =>
+  savedRegexes.map(stringifyRegexes)
+
+class RegexesManager {
+  browserStorage: BrowserStorage
+  savedRegexes: SavedRegex[]
+
+  constructor(browserStorage: BrowserStorage) {
+    this.browserStorage = browserStorage
+
+    this.savedRegexes = browserStorage.get('savedRegexes')
   }
 
   async resetSavedRegexes() {
@@ -36,29 +44,15 @@ class RegexesManager {
   }
 
   async syncSavedRegexes() {
-    if (!this.savedRegexes) {
-      throw new Error('Saved Regexes are not ready yet')
-    }
-
-    await browser.storage.sync.set({
-      savedRegexes: this.savedRegexes.map(stringifyRegexes),
-    })
+    await this.browserStorage.set('savedRegexes', this.savedRegexes)
   }
 
-  addRegex(regex: AddSavedRegexValues): void {
-    if (!this.savedRegexes) {
-      throw new Error('Saved Regexes are not ready yet')
-    }
-
+  addRegex(regex: StringifiedSavedRegex): void {
     this.savedRegexes.push(parseSavedRegexes(regex))
     this.syncSavedRegexes()
   }
 
-  updateRegex(index: number, regex: AddSavedRegexValues): void {
-    if (!this.savedRegexes) {
-      throw new Error('Saved Regexes are not ready yet')
-    }
-
+  updateRegex(index: number, regex: StringifiedSavedRegex): void {
     if (!this.savedRegexes[index]) {
       throw new Error(`Saved regex ${index} not found`)
     }
@@ -68,10 +62,6 @@ class RegexesManager {
   }
 
   removeRegex(index: number): void {
-    if (!this.savedRegexes) {
-      throw new Error('Saved Regexes are not ready yet')
-    }
-
     if (this.savedRegexes[index]) {
       this.savedRegexes.splice(index, 1)
       this.syncSavedRegexes()
@@ -80,9 +70,6 @@ class RegexesManager {
 
   reOrderRegexes(ordering: number[]): void {
     this.savedRegexes = ordering.map((oldIndex) => {
-      if (!this.savedRegexes) {
-        throw new Error('Saved Regexes are not ready yet')
-      }
       if (!this.savedRegexes[oldIndex]) {
         throw new Error('Index out of range, cannot re-order')
       }
@@ -117,7 +104,7 @@ class RegexesManager {
     return newSongInfo
   }
 
-  getSavedRegexes(): AddSavedRegexValues[] {
+  getSavedRegexes(): StringifiedSavedRegex[] {
     if (!this.savedRegexes) {
       throw new Error('Saved Regexes are not ready yet')
     }

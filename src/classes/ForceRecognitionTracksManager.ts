@@ -1,74 +1,68 @@
-import browser from 'webextension-polyfill'
 import type {
   TrackSelector,
   ForceRecognitionTracks,
   ConnectorTrackId,
   ConnectorKey,
+  JSONAble,
 } from 'interfaces'
+import { BrowserStorage } from 'internals'
 
 interface ForcedRecognitionTracksInStorage {
   [connectorKey: ConnectorKey]: ConnectorTrackId[]
 }
 
+export const hydrate = (forcedRecognitionTracks: JSONAble) =>
+  Object.entries(
+    forcedRecognitionTracks as unknown as ForcedRecognitionTracksInStorage,
+  ).reduce<ForceRecognitionTracks>(
+    (
+      acc,
+      [connectorKey, connectorTrackIds]: [ConnectorKey, ConnectorTrackId[]],
+    ) => {
+      acc[connectorKey] = new Set<ConnectorTrackId>(connectorTrackIds)
+      return acc
+    },
+    {},
+  )
+
+export const deHydrate = (forcedRecognitionTracks: ForceRecognitionTracks) =>
+  Object.entries(
+    forcedRecognitionTracks,
+  ).reduce<ForcedRecognitionTracksInStorage>(
+    (
+      acc,
+      [connectorKey, connectorTrackIds]: [
+        ConnectorKey,
+        ForceRecognitionTracks[ConnectorKey],
+      ],
+    ) => {
+      acc[connectorKey] = Array.from(connectorTrackIds)
+      return acc
+    },
+    {},
+  )
+
 class ForceRecognitionTracksManager {
-  forcedRecognitionTracks: ForceRecognitionTracks | null = null
+  browserStorage: BrowserStorage
+  forcedRecognitionTracks: ForceRecognitionTracks
 
-  async loadForceRecognitionTracks() {
-    const storageData = await browser.storage.sync.get()
+  constructor(browserStorage: BrowserStorage) {
+    this.browserStorage = browserStorage
 
-    let forcedRecognitionTracks =
-      storageData.forcedRecognitionTracks as ForcedRecognitionTracksInStorage | null
-
-    if (!forcedRecognitionTracks) {
-      forcedRecognitionTracks = {}
-      this.syncForceRecognitionTracks()
-    }
-    this.forcedRecognitionTracks = Object.entries(
-      forcedRecognitionTracks,
-    ).reduce<ForceRecognitionTracks>(
-      (
-        acc,
-        [connectorKey, connectorTrackIds]: [ConnectorKey, ConnectorTrackId[]],
-      ) => {
-        acc[connectorKey] = new Set<ConnectorTrackId>(connectorTrackIds)
-        return acc
-      },
-      {},
-    )
+    this.forcedRecognitionTracks = browserStorage.get('forcedRecognitionTracks')
   }
 
   async syncForceRecognitionTracks() {
-    if (!this.forcedRecognitionTracks) {
-      return
-    }
-
-    await browser.storage.sync.set({
-      forcedRecognitionTracks: Object.entries(
-        this.forcedRecognitionTracks,
-      ).reduce<ForcedRecognitionTracksInStorage>(
-        (
-          acc,
-          [connectorKey, connectorTrackIds]: [
-            ConnectorKey,
-            ForceRecognitionTracks[ConnectorKey],
-          ],
-        ) => {
-          acc[connectorKey] = Array.from(connectorTrackIds)
-          return acc
-        },
-        {},
-      ),
-    })
+    await this.browserStorage.set(
+      'forcedRecognitionTracks',
+      this.forcedRecognitionTracks,
+    )
   }
 
   addForcedRecognitionTrack({
     connectorKey,
     connectorTrackId,
   }: TrackSelector): void {
-    if (!this.forcedRecognitionTracks) {
-      throw new Error('forcedRecognition tracks are not ready yet')
-    }
-
     if (!this.forcedRecognitionTracks[connectorKey]) {
       this.forcedRecognitionTracks[connectorKey] = new Set<ConnectorTrackId>()
     }
@@ -80,10 +74,6 @@ class ForceRecognitionTracksManager {
     connectorKey,
     connectorTrackId,
   }: TrackSelector): void {
-    if (!this.forcedRecognitionTracks) {
-      throw new Error('forcedRecognition tracks are not ready yet')
-    }
-
     if (this.forcedRecognitionTracks[connectorKey]) {
       this.forcedRecognitionTracks[connectorKey].delete(connectorTrackId)
       this.syncForceRecognitionTracks()
@@ -94,10 +84,6 @@ class ForceRecognitionTracksManager {
     connectorKey,
     connectorTrackId,
   }: TrackSelector): boolean {
-    if (!this.forcedRecognitionTracks) {
-      throw new Error('forcedRecognition tracks are not ready yet')
-    }
-
     if (!this.forcedRecognitionTracks[connectorKey]) {
       return false
     }
@@ -105,9 +91,6 @@ class ForceRecognitionTracksManager {
   }
 
   getForcedRecognitionTracks(): ForceRecognitionTracks {
-    if (!this.forcedRecognitionTracks) {
-      throw new Error('forcedRecognition tracks are not ready yet')
-    }
     return this.forcedRecognitionTracks
   }
 }

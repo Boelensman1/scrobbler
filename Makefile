@@ -31,6 +31,7 @@ bump-version:
 lint:
 	npx prettier . --check
 	npx eslint .
+	tsc -p . --noEmit
 ifneq ($(VERSION),$(shell jq .version ./src/manifests/v2/manifest.json))
 		$(error Versions in package.json and manifest v2 are not equal)
 endif

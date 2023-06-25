@@ -21,7 +21,7 @@ import type {
   GetSavedRegexes,
   AddSavedRegex,
   ApplyRegexesToSongInfo,
-  AddSavedRegexValues,
+  StringifiedSavedRegex,
   ResetSavedRegexes,
   UpdateSavedRegex,
   SaveForceRecogniseTrack,
@@ -110,20 +110,20 @@ const actions = {
     send<GetEdittedTracksActionObject, EdittedTracks>({
       type: BG_ACTION_KEYS.GET_EDITTED_TRACKS,
     }),
-  getSavedRegexes: (): Promise<AddSavedRegexValues[]> =>
-    send<GetSavedRegexes, AddSavedRegexValues[]>({
+  getSavedRegexes: (): Promise<StringifiedSavedRegex[]> =>
+    send<GetSavedRegexes, StringifiedSavedRegex[]>({
       type: BG_ACTION_KEYS.GET_SAVED_REGEXES,
     }),
   resetSavedRegexes: (): Promise<void> =>
     send<ResetSavedRegexes>({
       type: BG_ACTION_KEYS.RESET_SAVED_REGEXES,
     }),
-  addSavedRegex: (regex: AddSavedRegexValues) =>
+  addSavedRegex: (regex: StringifiedSavedRegex) =>
     send<AddSavedRegex>({
       type: BG_ACTION_KEYS.ADD_SAVED_REGEX,
       data: { regex },
     }),
-  updateSavedRegex: (index: number, regex: AddSavedRegexValues) =>
+  updateSavedRegex: (index: number, regex: StringifiedSavedRegex) =>
     send<UpdateSavedRegex>({
       type: BG_ACTION_KEYS.UPDATE_SAVED_REGEX,
       data: { index, regex },

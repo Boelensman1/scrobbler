@@ -1,5 +1,5 @@
-import type { SongInfo } from 'interfaces'
-import type { LastFm, ConfigContainer } from 'internals'
+import type { Config, SongInfo } from 'interfaces'
+import type { LastFm } from 'internals'
 import type PartialSongInfo from './PartialSongInfo'
 import type TimeInfo from './TimeInfo'
 
@@ -11,7 +11,7 @@ export type ConnectorTrackId = string
 
 export interface Connector {
   scrobbler: LastFm
-  config: ConfigContainer
+  config: Config
   connectorTrackId: ConnectorTrackId | null
   shouldForceRecogniseCurrentTrack: boolean
 
@@ -39,7 +39,7 @@ interface ConnectorStatic {
   connectorKey: ConnectorKey
   locationMatch(location: Location): boolean
 
-  new (scrobbler: LastFm, config: ConfigContainer): Connector
+  new (scrobbler: LastFm, config: Config): Connector
 }
 
 export default ConnectorStatic

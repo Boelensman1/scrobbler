@@ -3,13 +3,13 @@ import React from 'react'
 import { useFormik } from 'formik'
 
 import { bgActions } from 'internals'
-import type { AddSavedRegexValues } from 'interfaces'
+import type { StringifiedSavedRegex } from 'interfaces'
 
-interface PropTypeAdding extends AddSavedRegexValues {
+interface PropTypeAdding extends StringifiedSavedRegex {
   index?: undefined
   added: () => void
 }
-interface PropTypeUpdating extends AddSavedRegexValues {
+interface PropTypeUpdating extends StringifiedSavedRegex {
   added?: undefined
   index: number
 }
@@ -37,7 +37,7 @@ const SavedRegexDisplay = ({
       replaceTrack,
       stop,
     },
-    onSubmit: async (values: AddSavedRegexValues) => {
+    onSubmit: async (values: StringifiedSavedRegex) => {
       if (added) {
         await bgActions.addSavedRegex(values)
         added()

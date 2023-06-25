@@ -7,17 +7,21 @@ import {
   BG_ACTION_KEYS,
   StateManager,
   ctActions,
+  BrowserStorage,
 } from 'internals'
 
 import type { Config, BgActionObject } from 'interfaces'
 
 import scrobblers from './scrobblerList'
 
-const config = new ConfigContainer()
+const browserStorage = new BrowserStorage()
+
+let edittedTracksManager: EdittedTracksManager
+let regexesManager: RegexesManager
+let forceRecognitionTracksManager: ForceRecognitionTracksManager
+let config: ConfigContainer
+
 const stateManager = new StateManager()
-const edittedTracksManager = new EdittedTracksManager()
-const regexesManager = new RegexesManager()
-const forceRecognitionTracksManager = new ForceRecognitionTracksManager()
 
 // setFullyLoaded is called after init (in main)
 let setFullyLoaded: (val: true) => void
@@ -195,10 +199,14 @@ browser.tabs.onUpdated.addListener(async (id, changeInfo, windowprops) => {
 })
 
 const main = async () => {
-  await config.loadConfig()
-  await edittedTracksManager.loadEdittedTracks()
-  await regexesManager.loadSavedRegexes()
-  await forceRecognitionTracksManager.loadForceRecognitionTracks()
+  await browserStorage.init()
+
+  edittedTracksManager = new EdittedTracksManager(browserStorage)
+  regexesManager = new RegexesManager(browserStorage)
+  forceRecognitionTracksManager = new ForceRecognitionTracksManager(
+    browserStorage,
+  )
+  config = new ConfigContainer(browserStorage)
 
   const scrobbler = config.get('scrobbler')
   switch (scrobbler) {

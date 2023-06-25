@@ -8,7 +8,7 @@ export interface SavedRegex {
   stop: boolean
 }
 
-export interface AddSavedRegexValues
+export interface StringifiedSavedRegex
   extends Omit<
     SavedRegex,
     'matchArtist' | 'matchTrack' | 'searchArtist' | 'searchTrack'
