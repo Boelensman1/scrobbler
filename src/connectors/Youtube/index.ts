@@ -204,11 +204,12 @@ class YoutubeConnector extends BaseConnector {
 
       // if everything is as expected, return the result,
       // otherwise try and get the viewcount using the html
-      if (
-        result.items &&
-        result.items.length === 1 &&
-        result.items[0].statistics.viewCount
-      ) {
+      if (result.items && result.items.length === 1) {
+        if (result.items[0].statistics.viewCount === undefined) {
+          // views are hidden, no need to try the fallback method
+          return { error: true }
+        }
+
         const views = Number(result.items[0].statistics.viewCount)
         const publishedAt = new Date(result.items[0].snippet.publishedAt)
         return { views, publishedAt, error: false }
