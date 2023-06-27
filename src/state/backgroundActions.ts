@@ -18,16 +18,18 @@ import type {
   GetEdittedTracksActionObject,
   SongInfo,
   EdittedTracks,
-  GetSavedRegexes,
-  AddSavedRegex,
-  ApplyRegexesToSongInfo,
+  GetSavedRegexesActionObject,
+  AddSavedRegexActionObject,
+  ApplyRegexesToSongInfoActionObject,
   StringifiedSavedRegex,
-  ResetSavedRegexes,
-  UpdateSavedRegex,
-  SaveForceRecogniseTrack,
+  ResetSavedRegexesActionObject,
+  UpdateSavedRegexActionObject,
+  SaveForceRecogniseTrackActionObject,
   ConnectorKey,
   ConnectorTrackId,
-  GetIfForceRecogniseTrack,
+  GetIfForceRecogniseTrackActionObject,
+  SendLogActionObject,
+  LogEntryPayload,
 } from 'interfaces'
 
 export const BG_ACTION_KEYS = {
@@ -54,6 +56,8 @@ export const BG_ACTION_KEYS = {
 
   SAVE_FORCE_RECOGNISE_TRACK: 'SAVE_FORCE_RECOGNISE_TRACK' as const,
   GET_IF_FORCE_RECOGNISE_TRACK: 'GET_IF_FORCE_RECOGNISE_TRACK' as const,
+
+  SEND_LOG: 'SEND_LOG' as const,
 }
 
 const send = <T extends BgActionObject, U = void>(arg: T): Promise<U> =>
@@ -111,25 +115,25 @@ const actions = {
       type: BG_ACTION_KEYS.GET_EDITTED_TRACKS,
     }),
   getSavedRegexes: (): Promise<StringifiedSavedRegex[]> =>
-    send<GetSavedRegexes, StringifiedSavedRegex[]>({
+    send<GetSavedRegexesActionObject, StringifiedSavedRegex[]>({
       type: BG_ACTION_KEYS.GET_SAVED_REGEXES,
     }),
   resetSavedRegexes: (): Promise<void> =>
-    send<ResetSavedRegexes>({
+    send<ResetSavedRegexesActionObject>({
       type: BG_ACTION_KEYS.RESET_SAVED_REGEXES,
     }),
   addSavedRegex: (regex: StringifiedSavedRegex) =>
-    send<AddSavedRegex>({
+    send<AddSavedRegexActionObject>({
       type: BG_ACTION_KEYS.ADD_SAVED_REGEX,
       data: { regex },
     }),
   updateSavedRegex: (index: number, regex: StringifiedSavedRegex) =>
-    send<UpdateSavedRegex>({
+    send<UpdateSavedRegexActionObject>({
       type: BG_ACTION_KEYS.UPDATE_SAVED_REGEX,
       data: { index, regex },
     }),
   applyRegexesToSongInfo: (songInfo: SongInfo): Promise<SongInfo> =>
-    send<ApplyRegexesToSongInfo, SongInfo>({
+    send<ApplyRegexesToSongInfoActionObject, SongInfo>({
       type: BG_ACTION_KEYS.APPLY_REGEXES_TO_SONGINFO,
       data: songInfo,
     }),
@@ -138,14 +142,19 @@ const actions = {
     connectorTrackId: ConnectorTrackId
     shouldForceRecognise: boolean
   }): Promise<void> =>
-    send<SaveForceRecogniseTrack>({
+    send<SaveForceRecogniseTrackActionObject>({
       type: BG_ACTION_KEYS.SAVE_FORCE_RECOGNISE_TRACK,
       data,
     }),
   getIfForceRecogniseTrack: (data: TrackSelector): Promise<boolean> =>
-    send<GetIfForceRecogniseTrack, boolean>({
+    send<GetIfForceRecogniseTrackActionObject, boolean>({
       type: BG_ACTION_KEYS.GET_IF_FORCE_RECOGNISE_TRACK,
       data,
+    }),
+  sendLog: (payload: LogEntryPayload) =>
+    send<SendLogActionObject>({
+      type: BG_ACTION_KEYS.SEND_LOG,
+      data: payload,
     }),
 }
 

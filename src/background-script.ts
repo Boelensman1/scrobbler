@@ -8,11 +8,14 @@ import {
   StateManager,
   ctActions,
   BrowserStorage,
+  Logger,
 } from 'internals'
 
 import type { Config, BgActionObject } from 'interfaces'
 
 import scrobblers from './scrobblerList'
+
+const logger = new Logger('background-script')
 
 const browserStorage = new BrowserStorage()
 
@@ -31,6 +34,7 @@ async function handleMessage(
   action: BgActionObject,
   sender: browser.Runtime.MessageSender,
 ) {
+  logger.trace('Incoming message', { action, sender })
   await fullyLoaded
   const state = await stateManager.getState()
 
@@ -159,6 +163,10 @@ async function handleMessage(
       return forceRecognitionTracksManager.getIfTrackIsForcedRecognition(
         action.data,
       )
+    }
+
+    case BG_ACTION_KEYS.SEND_LOG: {
+      return logger.outputEntryToConsole(action.data)
     }
   }
 }

@@ -19,12 +19,15 @@ import {
   CT_ACTION_KEYS,
   scrobbleStates,
   Track,
+  Logger,
 } from 'internals'
 
 import combineSongInfos from './utils/combineSongInfos'
 import canForceScrobble from './utils/canForceScrobble'
 import getAdditionalDataFromInfoProviders from './utils/getAdditionalDataFromInfoProviders'
 import applyMetadataFilter from './utils/applyMetadataFilter'
+
+const logger = new Logger('BaseConnector')
 
 // removes duplicates in strings, so for example:
 // track: aaaaa bbbb, artist: aaaaa -> track bbbb, artist aaaaa
@@ -154,6 +157,12 @@ abstract class BaseConnector implements Connector {
   }
 
   async setup() {
+    logger.info(
+      `Setting up ${
+        (this.constructor as ConnectorStatic).connectorKey
+      } connector`,
+    )
+
     const elementToWatch = await this.setupWatches()
     if (elementToWatch) {
       const observer = new MutationObserver(
@@ -222,6 +231,8 @@ abstract class BaseConnector implements Connector {
   }
 
   async handleMessage(action: CtActionObject) {
+    logger.trace('Incoming message', { action })
+
     switch (action.type) {
       case CT_ACTION_KEYS.GET_STILL_PLAYING: {
         const isPlaying = await this.isPlaying()
@@ -330,6 +341,8 @@ abstract class BaseConnector implements Connector {
     this.scrobbleState = scrobbleStates.SEARCHING
     this.shouldForceRecogniseCurrentTrack = false
     this.updateDisplayOnPage()
+
+    logger.info('Track reset')
   }
 
   async waitForReady(waitTime = 0): Promise<void> {
@@ -350,6 +363,7 @@ abstract class BaseConnector implements Connector {
   }
 
   async getSongInfoOptionsFromConnector(): Promise<PartialSongInfo[]> {
+    logger.info('Getting song info from connector')
     let partialSongInfos = (
       await Promise.all(
         this.getters.map(async (getter) => {
@@ -392,6 +406,7 @@ abstract class BaseConnector implements Connector {
       this.resetTrack()
       this.connectorTrackId = potentialNewTrackId
     }
+    logger.info(`New track detected (${potentialNewTrackId})`)
 
     // check if we have this song saved as editted
     let songInfoFromSavedEdits: SongInfo | false = false
@@ -481,6 +496,7 @@ abstract class BaseConnector implements Connector {
   }
 
   async onStateChanged(type: 'time' | 'play' | 'pause' | 'seeking' | 'seeked') {
+    logger.trace(`State changed event, type=${type}`)
     const now = new Date()
     if (!this.lastStateChange) {
       this.lastStateChange = now
@@ -562,6 +578,7 @@ abstract class BaseConnector implements Connector {
     if (!infoBoxEl) {
       return
     }
+    logger.trace('Updating infobox')
 
     if (
       this.scrobbleState === 'WILL_SCROBBLE' ||

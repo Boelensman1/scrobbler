@@ -7,6 +7,7 @@ import type {
   TrackSelector,
   ConnectorKey,
   ConnectorTrackId,
+  LogEntryPayload,
 } from 'interfaces'
 
 export interface RequestAuthenticationActionObject {
@@ -57,30 +58,30 @@ export interface GetEdittedTracksActionObject {
   type: typeof BG_ACTION_KEYS.GET_EDITTED_TRACKS
 }
 
-export interface GetSavedRegexes {
+export interface GetSavedRegexesActionObject {
   type: typeof BG_ACTION_KEYS.GET_SAVED_REGEXES
 }
 
-export interface ResetSavedRegexes {
+export interface ResetSavedRegexesActionObject {
   type: typeof BG_ACTION_KEYS.RESET_SAVED_REGEXES
 }
 
-export interface AddSavedRegex {
+export interface AddSavedRegexActionObject {
   type: typeof BG_ACTION_KEYS.ADD_SAVED_REGEX
   data: { regex: StringifiedSavedRegex }
 }
 
-export interface UpdateSavedRegex {
+export interface UpdateSavedRegexActionObject {
   type: typeof BG_ACTION_KEYS.UPDATE_SAVED_REGEX
   data: { index: number; regex: StringifiedSavedRegex }
 }
 
-export interface ApplyRegexesToSongInfo {
+export interface ApplyRegexesToSongInfoActionObject {
   type: typeof BG_ACTION_KEYS.APPLY_REGEXES_TO_SONGINFO
   data: SongInfo
 }
 
-export interface SaveForceRecogniseTrack {
+export interface SaveForceRecogniseTrackActionObject {
   type: typeof BG_ACTION_KEYS.SAVE_FORCE_RECOGNISE_TRACK
   data: {
     connectorKey: ConnectorKey
@@ -89,9 +90,14 @@ export interface SaveForceRecogniseTrack {
   }
 }
 
-export interface GetIfForceRecogniseTrack {
+export interface GetIfForceRecogniseTrackActionObject {
   type: typeof BG_ACTION_KEYS.GET_IF_FORCE_RECOGNISE_TRACK
   data: TrackSelector
+}
+
+export interface SendLogActionObject {
+  type: typeof BG_ACTION_KEYS.SEND_LOG
+  data: LogEntryPayload
 }
 
 export type BgActionObject =
@@ -106,10 +112,11 @@ export type BgActionObject =
   | SaveTrackEditBGActionObject
   | GetTrackFromEdittedTracksActionObject
   | GetEdittedTracksActionObject
-  | GetSavedRegexes
-  | ResetSavedRegexes
-  | AddSavedRegex
-  | ApplyRegexesToSongInfo
-  | UpdateSavedRegex
-  | SaveForceRecogniseTrack
-  | GetIfForceRecogniseTrack
+  | GetSavedRegexesActionObject
+  | ResetSavedRegexesActionObject
+  | AddSavedRegexActionObject
+  | ApplyRegexesToSongInfoActionObject
+  | UpdateSavedRegexActionObject
+  | SaveForceRecogniseTrackActionObject
+  | GetIfForceRecogniseTrackActionObject
+  | SendLogActionObject

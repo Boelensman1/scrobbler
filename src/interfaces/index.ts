@@ -24,6 +24,7 @@ export { default as SavedRegex, StringifiedSavedRegex } from './SavedRegex'
 export { default as TrackSelector } from './TrackSelector'
 export { default as ForceRecognitionTracks } from './ForceRecognitionTracks'
 export { default as JSONAble } from './JSONAble'
+export { default as LogEntryPayload } from './LogEntryPayload'
 
 export * from './BgActionObject'
 export * from './CtActionObject'
