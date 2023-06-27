@@ -1,4 +1,5 @@
 import browser from 'webextension-polyfill'
+
 import {
   ConfigContainer,
   EdittedTracksManager,
@@ -11,7 +12,7 @@ import {
   Logger,
 } from 'internals'
 
-import type { Config, BgActionObject } from 'interfaces'
+import type { Config, BgActionObject, State } from 'interfaces'
 
 import scrobblers from './scrobblerList'
 
@@ -29,6 +30,24 @@ const stateManager = new StateManager()
 // setFullyLoaded is called after init (in main)
 let setFullyLoaded: (val: true) => void
 const fullyLoaded = new Promise((resolve) => (setFullyLoaded = resolve))
+
+async function updateActiveConnectorTabIdQueue(state: State) {
+  // this will lead to race conditions, but as it will just be cleaned
+  // up in the next iteration we don't really care
+  const queueIsStillPlaying = await Promise.all(
+    state.activeConnectorTabIdQueue.map((tabId) =>
+      ctActions.getStillPlaying(tabId),
+    ),
+  )
+  state.activeConnectorTabIdQueue = state.activeConnectorTabIdQueue.filter(
+    (_val, index) => queueIsStillPlaying[index],
+  )
+  logger.info(
+    `New "waiting to become active" queue ${JSON.stringify(
+      state.activeConnectorTabIdQueue,
+    )}`,
+  )
+}
 
 async function handleMessage(
   action: BgActionObject,
@@ -69,7 +88,7 @@ async function handleMessage(
       if (!sender.tab || typeof sender.tab.id === 'undefined') {
         return
       }
-      return state.activeConnectorTabId === sender.tab.id
+      return state.activeConnectorTabIdQueue[0] === sender.tab.id
     }
 
     case BG_ACTION_KEYS.REQUEST_BECOME_ACTIVE_TAB: {
@@ -77,22 +96,30 @@ async function handleMessage(
         return
       }
 
-      if (state.activeConnectorTabId === sender.tab.id) {
-        return
+      // slice to create a new array
+      const newQueue = state.activeConnectorTabIdQueue.slice()
+
+      if (state.activeConnectorTabIdQueue.includes(sender.tab.id)) {
+        if (action.data.force) {
+          // remove the old one
+          const index = newQueue.indexOf(sender.tab.id)
+          newQueue.splice(index, 1)
+          // the new one will be added below
+        } else {
+          await updateActiveConnectorTabIdQueue(state)
+          return
+        }
       }
 
-      // no activeConnectorTab set
-      if (state.activeConnectorTabId === null || action.data.force) {
-        state.activeConnectorTabId = sender.tab.id
-        return
+      if (action.data.force) {
+        // add to the front
+        newQueue.unshift(sender.tab.id)
+      } else {
+        newQueue.push(sender.tab.id)
       }
 
-      const isStillPlaying = await ctActions.getStillPlaying(
-        state.activeConnectorTabId,
-      )
-      if (!isStillPlaying) {
-        state.activeConnectorTabId = sender.tab.id
-      }
+      state.activeConnectorTabIdQueue = newQueue
+      await updateActiveConnectorTabIdQueue(state)
 
       return
     }
@@ -228,6 +255,11 @@ const main = async () => {
     }
   }
   setFullyLoaded(true)
+
+  setInterval(async () => {
+    const state = await stateManager.getState()
+    updateActiveConnectorTabIdQueue(state)
+  }, 5000)
 }
 main()
 

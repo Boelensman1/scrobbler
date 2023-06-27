@@ -1,6 +1,6 @@
 interface State {
   debugString: string
-  activeConnectorTabId: number | null
+  activeConnectorTabIdQueue: number[]
 }
 
 export default State

@@ -11,9 +11,9 @@ const useScrobblerState = ({
   useEffect(() => {
     const updateState = async () => {
       const newState = await bgActions.getState()
-      if (newState.activeConnectorTabId) {
+      if (newState.activeConnectorTabIdQueue.length > 0) {
         const newConnectorState = await ctActions.getConnectorState(
-          newState.activeConnectorTabId,
+          newState.activeConnectorTabIdQueue[0],
         )
         if (newConnectorState) {
           setConnectorState(newConnectorState)

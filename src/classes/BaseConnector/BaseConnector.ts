@@ -542,12 +542,12 @@ abstract class BaseConnector implements Connector {
 
     this.lastStateChange = now
 
-    // if we're the active tab, see if we can scrobble
     if (!(await bgActions.getIsActiveTab())) {
       await this.updateDisplayOnPage()
       return
     }
 
+    // if we're the active tab, see if we can scrobble
     if (
       this.track &&
       (this.scrobbleState === scrobbleStates.WILL_SCROBBLE ||

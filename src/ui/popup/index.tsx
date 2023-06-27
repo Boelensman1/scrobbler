@@ -20,7 +20,7 @@ const Track = ({
   startEdit,
   debug,
 }: {
-  activeConnectorTabId: State['activeConnectorTabId']
+  activeConnectorTabId: State['activeConnectorTabIdQueue'][0]
   track: ConnectorState['track']
   searchQueryList: ConnectorState['searchQueryList']
   startEdit: () => void
@@ -78,7 +78,7 @@ const InnerPopup = () => {
   const { connectorState, globalState } = useScrobblerState()
   const [edittingSearch, setEditingSearch] = useState<boolean>(false)
 
-  const tabId = globalState.activeConnectorTabId
+  const tabId = globalState.activeConnectorTabIdQueue[0]
   if (!connectorState || tabId === null) {
     return (
       <>
@@ -92,9 +92,7 @@ const InnerPopup = () => {
 
   return (
     <>
-      {!connectorState.track && config.debug && (
-        <div>active tab: {globalState.activeConnectorTabId}</div>
-      )}
+      {!connectorState.track && config.debug && <div>active tab: {tabId}</div>}
       {edittingSearch ? (
         <EditSearch
           activeConnectorTabId={tabId}
@@ -104,7 +102,7 @@ const InnerPopup = () => {
         />
       ) : (
         <Track
-          activeConnectorTabId={globalState.activeConnectorTabId}
+          activeConnectorTabId={tabId}
           searchQueryList={connectorState.searchQueryList}
           track={connectorState.track}
           startEdit={() => {
