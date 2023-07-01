@@ -495,6 +495,16 @@ abstract class BaseConnector implements Connector {
     return this.track
   }
 
+  async handleReplay() {
+    logger.info('Replay detected!')
+    // partial reset, used when a replay is detected
+    this.playTime = 0
+    if (this.scrobbleState !== scrobbleStates.MANUALLY_DISABLED) {
+      this.scrobbleState = scrobbleStates.TRACK_NOT_RECOGNISED
+    }
+    this.scrobbleState = await this.getScrobbleState()
+  }
+
   async onStateChanged(type: 'time' | 'play' | 'pause' | 'seeking' | 'seeked') {
     logger.trace(`State changed event, type=${type}`)
     const now = new Date()
@@ -519,25 +529,33 @@ abstract class BaseConnector implements Connector {
     const { playTime: currentTime, duration } = await this.getTimeInfo()
 
     if (type === 'seeking' || type === 'seeked') {
+      if (
+        this.scrobbleState === 'SCROBBLED' &&
+        duration &&
+        this.playTimeAtLastStateChange - currentTime > duration * 0.51
+      ) {
+        // we skipped back more than halfway after having scrobble,
+        // this counts as a replay
+        await this.handleReplay()
+      }
+
       this.playTimeAtLastStateChange = currentTime
       return
     }
 
-    // Math.min here, just in case things go wrong and we start jumping in time
-    // which could result in scrobbles in very quick succession via the
-    // replay detection
-    this.playTime += Math.min(5, currentTime - this.playTimeAtLastStateChange)
+    // Math.max as we don't want to decrease playTime when replaying/seeking back
+    this.playTime += Math.max(
+      0,
+      // Math.min here, just in case things go wrong and we start jumping in time
+      // which could result in scrobbles in very quick succession via the
+      // replay detection
+      Math.min(5, currentTime - this.playTimeAtLastStateChange),
+    )
     this.playTimeAtLastStateChange = currentTime
 
     // detect replays
     if (duration && this.playTime > duration) {
-      // partial reset
-      this.playTime = 0
-      this.playTimeAtLastStateChange = 0
-      if (this.scrobbleState !== scrobbleStates.MANUALLY_DISABLED) {
-        this.scrobbleState = scrobbleStates.TRACK_NOT_RECOGNISED
-      }
-      this.scrobbleState = await this.getScrobbleState()
+      await this.handleReplay()
     }
 
     this.lastStateChange = now
