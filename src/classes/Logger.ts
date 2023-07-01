@@ -14,7 +14,7 @@ const OUTPUT_LEVEL = LEVEL_DEBUG
 const ADD_TIMEINFO = false
 
 class Logger {
-  identifier: string
+  private identifier: string
   backgroundLocation: string
 
   constructor(identifier: string) {
@@ -24,6 +24,10 @@ class Logger {
     // @ts-expect-error the typings of .background seem to be wrong
     const backgroundLoc = browser.runtime.getManifest().background.scripts[0]
     this.backgroundLocation = backgroundLoc
+  }
+
+  setIdentifier(identifier: string) {
+    this.identifier = identifier
   }
 
   inBackgroundScript(): boolean {

@@ -9,6 +9,8 @@ import type {
   SaveTrackEditCTActionObject,
   SongInfo,
   SetForceRecogniseCurrentCTActionObject,
+  EventNotificationCTActionObject,
+  CTEvent,
 } from 'interfaces'
 
 export const CT_ACTION_KEYS = {
@@ -21,13 +23,17 @@ export const CT_ACTION_KEYS = {
   SAVE_TRACK_EDIT: 'SAVE_TRACK_EDIT_CT' as const,
 
   SET_FORCE_RECOGNISE_CURRENT: 'SET_FORCE_RECOGNISE_CURRENT' as const,
+
+  EVENT_NOTIFICATION: 'EVENT_NOTIFICATION' as const,
 }
 
+type TabIdOpt = number | undefined
+
 const send = async <T extends CtActionObject, U = null>(
-  tabId: number,
+  tabId: TabIdOpt,
   arg: T,
 ): Promise<U | null> => {
-  if (tabId) {
+  if (typeof tabId === 'number') {
     try {
       // seperate, otherwise we can't catch the exception
       const result = await browser.tabs.sendMessage(tabId, arg)
@@ -40,31 +46,36 @@ const send = async <T extends CtActionObject, U = null>(
 }
 
 const actions = {
-  getStillPlaying: (tabId: number) =>
+  getStillPlaying: (tabId: TabIdOpt) =>
     send<GetStillPlayingCTActionObject, boolean>(tabId, {
       type: CT_ACTION_KEYS.GET_STILL_PLAYING,
     }),
-  getConnectorState: (tabId: number) =>
+  getConnectorState: (tabId: TabIdOpt) =>
     send<GetConnectorStateCTActionObject, ConnectorState>(tabId, {
       type: CT_ACTION_KEYS.GET_CONNECTOR_STATE,
     }),
-  toggleDisableToggleCurrent: (tabId: number) =>
+  toggleDisableToggleCurrent: (tabId: TabIdOpt) =>
     send<ToggleDisableToggleCurrentCTActionObject>(tabId, {
       type: CT_ACTION_KEYS.TOGGLE_DISABLE_SCROBBLE_CURRENT,
     }),
-  forceScrobbleCurrent: (tabId: number) =>
+  forceScrobbleCurrent: (tabId: TabIdOpt) =>
     send<ForceToggleCurrentCTActionObject>(tabId, {
       type: CT_ACTION_KEYS.FORCE_SCROBBLE_CURRENT,
     }),
-  saveTrackEdit: (tabId: number, editValues: SongInfo) =>
+  saveTrackEdit: (tabId: TabIdOpt, editValues: SongInfo) =>
     send<SaveTrackEditCTActionObject>(tabId, {
       type: CT_ACTION_KEYS.SAVE_TRACK_EDIT,
       data: { editValues },
     }),
-  setForceRecogniseCurrent: (tabId: number, value: boolean) =>
+  setForceRecogniseCurrent: (tabId: TabIdOpt, value: boolean) =>
     send<SetForceRecogniseCurrentCTActionObject>(tabId, {
       type: CT_ACTION_KEYS.SET_FORCE_RECOGNISE_CURRENT,
       data: value,
+    }),
+  eventNotification: (tabId: TabIdOpt, event: CTEvent) =>
+    send<EventNotificationCTActionObject>(tabId, {
+      type: CT_ACTION_KEYS.EVENT_NOTIFICATION,
+      data: { event },
     }),
 }
 

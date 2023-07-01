@@ -337,6 +337,14 @@ abstract class BaseConnector implements Connector {
         }
         return
       }
+
+      case CT_ACTION_KEYS.EVENT_NOTIFICATION: {
+        switch (action.data.event) {
+          case 'configUpdated':
+            this.config = await bgActions.getConfig()
+            return
+        }
+      }
     }
   }
 

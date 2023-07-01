@@ -13,6 +13,7 @@ import {
   hydrateForceRecognitionTracks,
   hydrateSavedRegexes,
 } from 'classes'
+import { notifyConnectors } from 'internals'
 
 interface Storage {
   edittedTracks: EdittedTracks
@@ -98,8 +99,13 @@ class BrowserStorage {
 
   async init() {
     const browserStorage = browser.storage.sync || browser.storage.local
+    if (!browserStorage) {
+      throw new Error('Could not access browserStorage')
+    }
     const fromStorage = await browserStorage.get()
     this.storage = hydrate(fromStorage as StorageInBrowser)
+
+    notifyConnectors('configUpdated')
   }
 
   async set<T extends keyof Storage>(key: T, value: Storage[T]) {
@@ -110,6 +116,8 @@ class BrowserStorage {
     const browserStorage = browser.storage.sync || browser.storage.local
     this.storage[key] = value
     await browserStorage.set(deHydrate(this.storage))
+
+    notifyConnectors('configUpdated')
   }
 
   get<T extends keyof Storage>(key: T): Storage[T] {

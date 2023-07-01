@@ -1,6 +1,8 @@
 import type { SongInfo } from 'interfaces'
 import type { CT_ACTION_KEYS } from 'internals'
 
+export type CTEvent = 'configUpdated'
+
 export interface GetStillPlayingCTActionObject {
   type: typeof CT_ACTION_KEYS.GET_STILL_PLAYING
 }
@@ -27,6 +29,11 @@ export interface SetForceRecogniseCurrentCTActionObject {
   data: boolean
 }
 
+export interface EventNotificationCTActionObject {
+  type: typeof CT_ACTION_KEYS.EVENT_NOTIFICATION
+  data: { event: CTEvent }
+}
+
 export type CtActionObject =
   | GetStillPlayingCTActionObject
   | GetConnectorStateCTActionObject
@@ -34,3 +41,4 @@ export type CtActionObject =
   | ForceToggleCurrentCTActionObject
   | SaveTrackEditCTActionObject
   | SetForceRecogniseCurrentCTActionObject
+  | EventNotificationCTActionObject
