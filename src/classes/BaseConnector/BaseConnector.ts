@@ -27,7 +27,7 @@ import canForceScrobble from './utils/canForceScrobble'
 import getAdditionalDataFromInfoProviders from './utils/getAdditionalDataFromInfoProviders'
 import applyMetadataFilter from './utils/applyMetadataFilter'
 
-const logger = new Logger('BaseConnector')
+const logger = new Logger('BaseConnector (empty)')
 
 // removes duplicates in strings, so for example:
 // track: aaaaa bbbb, artist: aaaaa -> track bbbb, artist aaaaa
@@ -140,6 +140,9 @@ abstract class BaseConnector implements Connector {
   constructor(scrobbler: LastFm, config: Config) {
     this.scrobbler = scrobbler
     this.config = config
+
+    const { connectorKey } = this.constructor as ConnectorStatic
+    logger.setIdentifier(`BaseConnector (${connectorKey})`)
   }
 
   abstract setupWatches(): Promise<HTMLElement>
@@ -231,7 +234,13 @@ abstract class BaseConnector implements Connector {
   }
 
   async handleMessage(action: CtActionObject) {
-    logger.trace('Incoming message', { action })
+    if (action.type !== 'GET_CONNECTOR_STATE') {
+      logger.debug(`Incoming message ${action.type}`, { action })
+    } else {
+      logger.trace(`Incoming message ${action.type}`, { action })
+    }
+
+    const { connectorKey } = this.constructor as ConnectorStatic
 
     switch (action.type) {
       case CT_ACTION_KEYS.GET_STILL_PLAYING: {
@@ -289,7 +298,7 @@ abstract class BaseConnector implements Connector {
         // save!
         if (this.connectorTrackId) {
           bgActions.saveTrackEdit({
-            connectorKey: (this.constructor as ConnectorStatic).connectorKey,
+            connectorKey,
             connectorTrackId: this.connectorTrackId,
             edittedSongInfo: track
               ? {
@@ -312,10 +321,8 @@ abstract class BaseConnector implements Connector {
       case CT_ACTION_KEYS.SET_FORCE_RECOGNISE_CURRENT: {
         // save!
         if (this.connectorTrackId) {
-          const { connectorKey } = this.constructor as ConnectorStatic
-
           await bgActions.saveForceRecogniseTrack({
-            connectorKey: connectorKey,
+            connectorKey,
             connectorTrackId: this.connectorTrackId,
             shouldForceRecognise: action.data,
           })
@@ -408,17 +415,22 @@ abstract class BaseConnector implements Connector {
     }
     logger.info(`New track detected (${potentialNewTrackId})`)
 
+    const { connectorKey } = this.constructor as ConnectorStatic
+    logger.setIdentifier(
+      `BaseConnector (${connectorKey} - ${potentialNewTrackId})`,
+    )
+
     // check if we have this song saved as editted
     let songInfoFromSavedEdits: SongInfo | false = false
     if (this.connectorTrackId) {
       songInfoFromSavedEdits = await bgActions.getTrackFromEdittedTracks({
-        connectorKey: (this.constructor as ConnectorStatic).connectorKey,
+        connectorKey,
         connectorTrackId: this.connectorTrackId,
       })
 
       this.shouldForceRecogniseCurrentTrack =
         await bgActions.getIfForceRecogniseTrack({
-          connectorKey: (this.constructor as ConnectorStatic).connectorKey,
+          connectorKey,
           connectorTrackId: this.connectorTrackId,
         })
     }
@@ -598,6 +610,16 @@ abstract class BaseConnector implements Connector {
     }
     logger.trace('Updating infobox')
 
+    const playTimeInfo = this.config.debug
+      ? '(' +
+        Math.floor(this.playTime / 60)
+          .toFixed(0)
+          .padStart(2, '0') +
+        ':' +
+        (this.playTime % 60).toFixed(0).padStart(2, '0') +
+        ')'
+      : ''
+
     if (
       this.scrobbleState === 'WILL_SCROBBLE' ||
       this.scrobbleState === 'SCROBBLED'
@@ -620,11 +642,11 @@ abstract class BaseConnector implements Connector {
         this.scrobbleState,
       )} as ${this.track.artist} - ${
         this.track.name
-      } ${activeNotice} ${forcedRecognitionNotice}</h3>`
+      } ${activeNotice} ${forcedRecognitionNotice} ${playTimeInfo}</h3>`
     } else {
       infoBoxEl.innerHTML = `<h3>${getHumanScrobbleStateString(
         this.scrobbleState,
-      )}`
+      )} ${playTimeInfo}`
     }
   }
 }

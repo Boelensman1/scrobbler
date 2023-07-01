@@ -42,7 +42,7 @@ async function updateActiveConnectorTabIdQueue(state: State) {
   state.activeConnectorTabIdQueue = state.activeConnectorTabIdQueue.filter(
     (_val, index) => queueIsStillPlaying[index],
   )
-  logger.info(
+  logger.debug(
     `New "waiting to become active" queue ${JSON.stringify(
       state.activeConnectorTabIdQueue,
     )}`,
