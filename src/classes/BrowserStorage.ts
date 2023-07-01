@@ -91,7 +91,9 @@ class BrowserStorage {
 
   constructor() {
     // if something changed in another browser instance, also update it here
-    browser.storage.sync.onChanged.addListener(this.init)
+    // this will also be called if we update the storage, which is not ideal
+    // but there doesn't seem to be an easy way to disable/check for that
+    browser.storage.sync.onChanged.addListener(this.init.bind(this))
   }
 
   async init() {
