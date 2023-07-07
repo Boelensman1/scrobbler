@@ -5,10 +5,8 @@ import type { LogEntryPayload } from 'interfaces'
 const LEVEL_TRACE = 10
 const LEVEL_DEBUG = 20
 const LEVEL_INFO = 30
-/*
-const LEVEL_WARN = 40
+// const LEVEL_WARN = 40
 const LEVEL_ERROR = 50
-*/
 
 const OUTPUT_LEVEL = LEVEL_DEBUG
 const ADD_TIMEINFO = false
@@ -82,6 +80,9 @@ class Logger {
   }
   info(msg: string, data?: any) {
     this.sendLog(LEVEL_INFO, msg, data)
+  }
+  error(error: Error) {
+    this.sendLog(LEVEL_ERROR, error.message, error)
   }
 }
 

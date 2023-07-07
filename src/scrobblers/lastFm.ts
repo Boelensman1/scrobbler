@@ -1,7 +1,9 @@
 import md5 from 'md5'
 
 import type { SongInfo } from 'interfaces'
-import { Artist, Track } from 'internals'
+import { Artist, Track, Logger } from 'internals'
+
+const logger = new Logger('lastFm scrobbler')
 
 const defaultOptions = {
   url: '/2.0',
@@ -287,12 +289,12 @@ class LastFm {
     } catch (err) {
       // re-add to queue
       this.scrobbleQueue.push(entry)
-      console.error(err)
+      logger.error(err as Error)
       return
     }
 
     // no error, so process next entry
-    this.processScrobbleQueue()
+    await this.processScrobbleQueue()
   }
 }
 
