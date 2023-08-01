@@ -1,19 +1,20 @@
 import browser from 'webextension-polyfill'
-import {
+import type {
   Config,
   EdittedTracks,
   ForceRecognitionTracks,
   JSONAble,
   SavedRegex,
 } from 'interfaces'
+
 import {
   defaultConfig,
   deHydrateForceRecognitionTracks,
   deHydrateSavedRegexes,
   hydrateForceRecognitionTracks,
   hydrateSavedRegexes,
-} from 'classes'
-import { notifyConnectors } from 'internals'
+  notifyConnectors,
+} from 'internals'
 
 interface Storage {
   edittedTracks: EdittedTracks
