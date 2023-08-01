@@ -159,29 +159,31 @@ abstract class BaseConnector implements Connector {
     return null
   }
 
-  async setup() {
+  setup() {
     logger.info(
       `Setting up ${
         (this.constructor as ConnectorStatic).connectorKey
       } connector`,
     )
 
-    const elementToWatch = await this.setupWatches()
-    if (elementToWatch) {
-      const observer = new MutationObserver(
-        _.debounce(this.newTrack.bind(this, false), 500, { maxWait: 1500 }),
-      )
-      const observerConfig = {
-        childList: true,
-        subtree: true,
-        attributes: true,
-        characterData: true,
-      }
-
-      observer.observe(elementToWatch, observerConfig)
-    }
-
     browser.runtime.onMessage.addListener(this.handleMessage.bind(this))
+
+    // use .then instead of await so we can continue receiving messages
+    this.setupWatches().then((elementToWatch) => {
+      if (elementToWatch) {
+        const observer = new MutationObserver(
+          _.debounce(this.newTrack.bind(this, false), 500, { maxWait: 1500 }),
+        )
+        const observerConfig = {
+          childList: true,
+          subtree: true,
+          attributes: true,
+          characterData: true,
+        }
+
+        observer.observe(elementToWatch, observerConfig)
+      }
+    })
   }
 
   async shouldScrobble() {

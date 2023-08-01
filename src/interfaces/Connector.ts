@@ -18,7 +18,7 @@ export interface Connector {
   getters: Getter[]
   postProcessors: PostProcessor[]
 
-  setup(): Promise<void>
+  setup(): void
   isPlaying(): Promise<boolean>
   isReady(): Promise<boolean>
 
