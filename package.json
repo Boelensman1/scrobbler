@@ -34,5 +34,16 @@
     "typescript": "^5.1.6",
     "web-ext": "^7.6.2",
     "webextension-polyfill": "^0.10.0"
+  },
+  "alias": {
+    "internals": "/src/internals",
+    "interfaces": "/src/interfaces"
+  },
+  "targets": {
+    "prod": {
+      "sourceMap": {
+        "inline": false
+      }
+    }
   }
 }
