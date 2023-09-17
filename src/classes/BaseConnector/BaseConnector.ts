@@ -151,6 +151,10 @@ abstract class BaseConnector implements Connector {
   abstract getTimeInfo(): Promise<TimeInfo>
   abstract getCurrentTrackId(): Promise<ConnectorTrackId | null>
 
+  async getIsPrivate(): Promise<boolean | null> {
+    return false
+  }
+
   async getPopularity() {
     return 1
   }
@@ -205,6 +209,9 @@ abstract class BaseConnector implements Connector {
   async getScrobbleState(): Promise<keyof typeof scrobbleStates> {
     if (!(await this.shouldScrobble()) || !this.connectorTrackId) {
       return scrobbleStates.BLOCKED_BY_CONNECTOR
+    }
+    if (!this.config.scrobblePrivateContent && (await this.getIsPrivate())) {
+      return scrobbleStates.BLOCKED_BY_BEING_PRIVATE
     }
 
     if (this.scrobbleState === scrobbleStates.SCROBBLED) {

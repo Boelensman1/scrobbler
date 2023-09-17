@@ -9,6 +9,7 @@ const scrobbleStates = {
   TRACK_TOO_SHORT: 'TRACK_TOO_SHORT' as const,
   BLOCKED_BY_CONNECTOR: 'BLOCKED_BY_CONNECTOR' as const,
   MANUALLY_DISABLED: 'MANUALLY_DISABLED' as const,
+  BLOCKED_BY_BEING_PRIVATE: 'BLOCKED_BY_BEING_PRIVATE' as const,
 }
 
 export default scrobbleStates

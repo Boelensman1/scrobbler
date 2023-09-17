@@ -10,6 +10,7 @@ export const defaultConfig: Config = {
   debug: DEBUG,
   youtubeApiKey: '',
   scrobblerCompensateForVideoAge: false,
+  scrobblePrivateContent: false,
 }
 
 export class ConfigContainer {

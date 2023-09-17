@@ -26,6 +26,7 @@ export interface Connector {
   getCurrentTrackId(): Promise<ConnectorTrackId | null>
 
   getPopularity(): Promise<number>
+  getIsPrivate(): Promise<boolean | null>
 
   searchQueryList: SongInfo[]
 

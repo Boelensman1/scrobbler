@@ -63,10 +63,27 @@ interface YoutubeApiResult {
       favoriteCount: string
       commentCount: string
     }
+    status: {
+      uploadStatus: string
+      privacyStatus: 'private' | 'public' | 'unlisted'
+      license: string
+      embeddable: boolean
+      publicStatsViewable: boolean
+      madeForKids: boolean
+    }
   }>
   pageInfo: {
     totalResults: number
     resultsPerPage: number
+  }
+}
+
+interface ExtraInfo {
+  whenFetched: Date
+  data: {
+    views?: number
+    publishedAt?: Date
+    privacyStatus?: 'private' | 'public' | 'unlisted'
   }
 }
 
@@ -77,6 +94,8 @@ class YoutubeConnector extends BaseConnector {
 
   getters = getters
   postProcessors = postProcessors
+
+  extraInfoCache: { [videoId: string]: ExtraInfo } = {}
 
   static youtubeWatchElement = '#content'
 
@@ -191,13 +210,27 @@ class YoutubeConnector extends BaseConnector {
     return { playTime: currentTime, duration, playbackRate }
   }
 
-  async getViewCountAndAge(): Promise<
-    { views: number; publishedAt?: Date; error: false } | { error: true }
-  > {
+  async getExtraInfo(): Promise<ExtraInfo['data']> {
+    const videoId = this.getVideoId()
+    if (this.extraInfoCache[videoId]) {
+      // check if we have it in cache and if its still recent
+      if (
+        Date.now() - this.extraInfoCache[videoId].whenFetched.getTime() <
+        10 * 60 * 1000 // 10 minutes
+      ) {
+        return this.extraInfoCache[videoId].data
+      }
+    }
+    this.extraInfoCache[videoId] = {
+      whenFetched: new Date(),
+      data: {},
+    }
+    const extraInfo = this.extraInfoCache[videoId].data as ExtraInfo['data']
+
     const youtubeApiKey = this.config.youtubeApiKey
 
     if (youtubeApiKey) {
-      const url = `https://www.googleapis.com/youtube/v3/videos?part=statistics,snippet&id=${this.getVideoId()}&key=${youtubeApiKey}`
+      const url = `https://www.googleapis.com/youtube/v3/videos?part=statistics,snippet,status&id=${videoId}&key=${youtubeApiKey}`
       const result = (await fetch(url).then((response) =>
         response.json(),
       )) as YoutubeApiResult
@@ -205,14 +238,16 @@ class YoutubeConnector extends BaseConnector {
       // if everything is as expected, return the result,
       // otherwise try and get the viewcount using the html
       if (result.items && result.items.length === 1) {
+        extraInfo.privacyStatus = result.items[0].status.privacyStatus
+
         if (result.items[0].statistics.viewCount === undefined) {
           // views are hidden, no need to try the fallback method
-          return { error: true }
+          return extraInfo
         }
 
-        const views = Number(result.items[0].statistics.viewCount)
-        const publishedAt = new Date(result.items[0].snippet.publishedAt)
-        return { views, publishedAt, error: false }
+        extraInfo.views = Number(result.items[0].statistics.viewCount)
+        extraInfo.publishedAt = new Date(result.items[0].snippet.publishedAt)
+        return extraInfo
       }
     }
 
@@ -221,11 +256,11 @@ class YoutubeConnector extends BaseConnector {
     try {
       const element = await waitForElement('.view-count')
       if (!element.textContent) {
-        return { error: true }
+        return {}
       }
       views = element.textContent.trim().split(' ')[0].replace(/[,.]/g, '')
     } catch (e) {
-      return { error: true }
+      return {}
     }
     try {
       const element = await waitForElement<HTMLMetaElement>(
@@ -240,7 +275,7 @@ class YoutubeConnector extends BaseConnector {
       console.error(e)
     }
 
-    return { views: Number(views), publishedAt, error: false }
+    return { views: Number(views), publishedAt }
   }
 
   async getIsShort() {
@@ -249,30 +284,36 @@ class YoutubeConnector extends BaseConnector {
     return result.status === 200
   }
 
+  async getIsPrivate() {
+    const extraInfo = await this.getExtraInfo()
+    if (!extraInfo.privacyStatus) {
+      return null
+    }
+    return extraInfo.privacyStatus !== 'public'
+  }
+
   async getPopularity() {
-    const [viewCountAndAge, isShort] = await Promise.all([
-      this.getViewCountAndAge(),
+    const [extraInfo, isShort] = await Promise.all([
+      this.getExtraInfo(),
       this.getIsShort(),
     ])
 
-    if (viewCountAndAge.error) {
-      return -1
+    if (!extraInfo.views) {
+      // no views info
+      return 0
     }
 
-    // always return -1 for shorts, we shouldn't scrobble them
     if (isShort) {
+      // a short, don't scrobble
       return -1
     }
 
-    const basePopularity = Math.sqrt(Number(viewCountAndAge.views))
-    if (
-      !viewCountAndAge.publishedAt ||
-      !this.config.scrobblerCompensateForVideoAge
-    ) {
+    const basePopularity = Math.sqrt(Number(extraInfo.views))
+    if (!extraInfo.publishedAt || !this.config.scrobblerCompensateForVideoAge) {
       return basePopularity
     }
     const daysOld =
-      (new Date().getTime() - viewCountAndAge.publishedAt.getTime()) /
+      (new Date().getTime() - extraInfo.publishedAt.getTime()) /
       (1000 * 60 * 60 * 24)
     const ageCompenstation = Math.max(0.075, (daysOld * daysOld) / 10)
 

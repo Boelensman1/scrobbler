@@ -3,6 +3,7 @@ interface Config {
   minimumScrobblerQuality: number
   scrobblerQualityDynamic: boolean
   scrobblerCompensateForVideoAge: boolean
+  scrobblePrivateContent: boolean
 
   lastfmSessionKey?: string
   debug: boolean
