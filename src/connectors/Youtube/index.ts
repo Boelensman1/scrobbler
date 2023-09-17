@@ -274,7 +274,7 @@ class YoutubeConnector extends BaseConnector {
     const daysOld =
       (new Date().getTime() - viewCountAndAge.publishedAt.getTime()) /
       (1000 * 60 * 60 * 24)
-    const ageCompenstation = Math.max(0.075, (daysOld * daysOld) / 100)
+    const ageCompenstation = Math.max(0.075, (daysOld * daysOld) / 10)
 
     // compensate for age of the video
     return basePopularity * Math.min(1, ageCompenstation)
