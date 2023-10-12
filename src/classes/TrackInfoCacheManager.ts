@@ -8,9 +8,11 @@ import type {
   TracksInStorage,
   TrackInCache,
 } from 'interfaces'
-import { BrowserStorage, Track } from 'internals'
+import { BrowserStorage, Logger, Track } from 'internals'
 
 type TrackCacheMap = { [connectorTrackId: ConnectorTrackId]: TrackInCache }
+
+const logger = new Logger('TrackInfoCacheManager')
 
 export const hydrate = (trackInfoCache: JSONAble): TrackInfoCache =>
   Object.keys(
@@ -103,6 +105,9 @@ class TrackInfoCacheManager {
       meta: { added: new Date() },
       track: trackForCache,
     }
+    logger.debug(
+      `Inserted "${trackForCache.name}" into cache for "${connectorTrackId}"`,
+    )
     await this.syncCache()
   }
 
@@ -114,7 +119,15 @@ class TrackInfoCacheManager {
     if (!this.trackInfoCache[connectorKey]) {
       return false
     }
-    return this.trackInfoCache[connectorKey][connectorTrackId]?.track || false
+    const result =
+      this.trackInfoCache[connectorKey][connectorTrackId]?.track || false
+
+    logger.debug(
+      `Trackinfocache result for "${connectorTrackId}": ${
+        result ? `${result.artist} - ${result.name}` : false
+      }`,
+    )
+    return result
   }
 
   async delete({

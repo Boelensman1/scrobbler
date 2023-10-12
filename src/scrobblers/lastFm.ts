@@ -199,6 +199,11 @@ class LastFm {
       artist: artistName,
     })
     if (result.error) {
+      logger.error(
+        new Error(
+          `Error while getting last.fm artist for "${artistName}": ${result.error}`,
+        ),
+      )
       return null
     }
 
@@ -215,6 +220,11 @@ class LastFm {
     const result = await this.doRequest('track.getInfo', songInfo)
 
     if (result.error) {
+      logger.error(
+        new Error(
+          `Error while getting songInfo for "${songInfo.track}": ${result.error}`,
+        ),
+      )
       return null
     }
 
@@ -237,6 +247,7 @@ class LastFm {
       artist: track.artist.url,
     }
 
+    logger.debug(`Finished getting songInfo for "${songInfo.track}"`)
     return new Track({
       name: track.name,
       artist: track.artist.name,
