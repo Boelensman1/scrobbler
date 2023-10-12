@@ -1,5 +1,5 @@
 import type { Config } from 'interfaces'
-import { BrowserStorage } from 'internals'
+import { BrowserStorage, notifyConnectors } from 'internals'
 
 const DEBUG = Number(process.env.DEBUG) === 1 || false
 
@@ -26,6 +26,7 @@ export class ConfigContainer {
   async set<T extends keyof Config>(key: T, value: Config[T]) {
     this.config[key] = value
     await this.browserStorage.set('config', this.config)
+    notifyConnectors('configUpdated')
   }
 
   get<T extends keyof Config>(key: T): Config[T] {
@@ -51,6 +52,7 @@ export class ConfigContainer {
 
     this.config = defaultConfig
     await this.browserStorage.set('config', this.config)
+    notifyConnectors('configUpdated')
   }
 }
 

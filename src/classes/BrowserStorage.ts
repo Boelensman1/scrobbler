@@ -5,15 +5,18 @@ import type {
   ForceRecognitionTracks,
   JSONAble,
   SavedRegex,
+  TrackInfoCache,
 } from 'interfaces'
 
 import {
   defaultConfig,
-  deHydrateForceRecognitionTracks,
-  deHydrateSavedRegexes,
   hydrateForceRecognitionTracks,
   hydrateSavedRegexes,
-  notifyConnectors,
+  hydrateTrackInfoCache,
+  deHydrateForceRecognitionTracks,
+  deHydrateSavedRegexes,
+  deHydrateTrackInfoCache,
+  // notifyConnectors,
 } from 'internals'
 
 interface Storage {
@@ -21,6 +24,7 @@ interface Storage {
   forcedRecognitionTracks: ForceRecognitionTracks
   savedRegexes: SavedRegex[]
   config: Config
+  trackInfoCache: TrackInfoCache
 }
 
 const initialStorage: Storage = {
@@ -28,15 +32,18 @@ const initialStorage: Storage = {
   forcedRecognitionTracks: {},
   savedRegexes: [],
   config: defaultConfig,
+  trackInfoCache: {},
 }
 
 const hydrateFunctions: Partial<HydrateFunctions> = {
   savedRegexes: hydrateSavedRegexes,
   forcedRecognitionTracks: hydrateForceRecognitionTracks,
+  trackInfoCache: hydrateTrackInfoCache,
 }
 const deHydrateFunctions: Partial<DeHydrateFunctions> = {
   savedRegexes: deHydrateSavedRegexes,
   forcedRecognitionTracks: deHydrateForceRecognitionTracks,
+  trackInfoCache: deHydrateTrackInfoCache,
 }
 
 type HydrateFunctions = { [K in keyof Storage]: (inp: JSONAble) => Storage[K] }
@@ -105,8 +112,6 @@ class BrowserStorage {
     }
     const fromStorage = await browserStorage.get()
     this.storage = hydrate(fromStorage as StorageInBrowser)
-
-    notifyConnectors('configUpdated')
   }
 
   async set<T extends keyof Storage>(key: T, value: Storage[T]) {
@@ -117,8 +122,6 @@ class BrowserStorage {
     const browserStorage = browser.storage.sync || browser.storage.local
     this.storage[key] = value
     await browserStorage.set(deHydrate(this.storage))
-
-    notifyConnectors('configUpdated')
   }
 
   get<T extends keyof Storage>(key: T): Storage[T] {

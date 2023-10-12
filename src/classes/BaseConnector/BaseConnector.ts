@@ -20,6 +20,8 @@ import {
   scrobbleStates,
   Track,
   Logger,
+  TrackInfoCacheManager,
+  BrowserStorage,
 } from 'internals'
 
 import combineSongInfos from './utils/combineSongInfos'
@@ -114,9 +116,22 @@ const getHumanScrobbleStateString = (
   }
 }
 
+const createTrackFromBestResult = (searchQueryList: SongInfo[]): Track => {
+  // manually add the track to force recognition
+  const [bestOption] = searchQueryList
+  return new Track({
+    name: bestOption.track,
+    artist: bestOption.artist,
+    scrobblerMatchQuality: -2,
+    scrobblerLinks: {},
+  })
+}
+
 abstract class BaseConnector implements Connector {
   scrobbler: LastFm
   config: Config
+  trackInfoCacheManager!: TrackInfoCacheManager
+  browserStorage: BrowserStorage
 
   lastStateChange?: Date
   playTimeAtLastStateChange = 0
@@ -140,6 +155,7 @@ abstract class BaseConnector implements Connector {
   constructor(scrobbler: LastFm, config: Config) {
     this.scrobbler = scrobbler
     this.config = config
+    this.browserStorage = new BrowserStorage()
 
     const { connectorKey } = this.constructor as ConnectorStatic
     logger.setIdentifier(`BaseConnector (${connectorKey})`)
@@ -163,15 +179,17 @@ abstract class BaseConnector implements Connector {
     return null
   }
 
-  setup() {
+  async setup() {
     logger.info(
       `Setting up ${
         (this.constructor as ConnectorStatic).connectorKey
       } connector`,
     )
 
-    browser.runtime.onMessage.addListener(this.handleMessage.bind(this))
+    await this.browserStorage.init()
+    this.trackInfoCacheManager = new TrackInfoCacheManager(this.browserStorage)
 
+    browser.runtime.onMessage.addListener(this.handleMessage.bind(this))
     // use .then instead of await so we can continue receiving messages
     this.setupWatches().then((elementToWatch) => {
       if (elementToWatch) {
@@ -193,17 +211,6 @@ abstract class BaseConnector implements Connector {
   async shouldScrobble() {
     // if needed, a connector should override this
     return true
-  }
-
-  createTrackFromBestResult(): Track {
-    // manually add the track to force recognition
-    const [bestOption] = this.searchQueryList
-    return new Track({
-      name: bestOption.track,
-      artist: bestOption.artist,
-      scrobblerMatchQuality: -2,
-      scrobblerLinks: {},
-    })
   }
 
   async getScrobbleState(): Promise<keyof typeof scrobbleStates> {
@@ -285,7 +292,7 @@ abstract class BaseConnector implements Connector {
       case CT_ACTION_KEYS.FORCE_SCROBBLE_CURRENT: {
         if (!this.track) {
           // force track recognition
-          this.track = this.createTrackFromBestResult()
+          this.track = createTrackFromBestResult(this.searchQueryList)
         }
         this.scrobbleState = scrobbleStates.FORCE_SCROBBLE
         return
@@ -338,7 +345,7 @@ abstract class BaseConnector implements Connector {
           this.shouldForceRecogniseCurrentTrack = action.data
 
           if (this.shouldForceRecogniseCurrentTrack && !this.track) {
-            this.track = this.createTrackFromBestResult()
+            this.track = createTrackFromBestResult(this.searchQueryList)
           }
 
           // calculate new scrobbleState
@@ -415,10 +422,85 @@ abstract class BaseConnector implements Connector {
     return partialSongInfos
   }
 
+  async getTrackFromSongInfo(
+    songInfos: SongInfo[],
+    forcedSongInfo: SongInfo | false,
+  ): Promise<{ track: Track | null; searchQueryList: SongInfo[] }> {
+    if (!this.connectorTrackId) {
+      return { track: null, searchQueryList: [] }
+    }
+
+    const { connectorKey } = this.constructor as ConnectorStatic
+    const trackSelector = {
+      connectorKey,
+      connectorTrackId: this.connectorTrackId,
+    }
+
+    let track
+    let searchQueryList
+
+    if (forcedSongInfo) {
+      // check in cache
+      track =
+        (await this.trackInfoCacheManager.get(trackSelector)) ||
+        (await this.scrobbler.getTrack(forcedSongInfo))
+
+      // save searchQuery so we can edit it
+      forcedSongInfo.matchQuality = -2 // -2 is the magic number that will be displayed as 'editted'
+      searchQueryList = [forcedSongInfo, ...songInfos]
+    } else {
+      const tracks: (Track | null)[] = await Promise.all(
+        songInfos.map(
+          async (songInfo: SongInfo) =>
+            (await this.trackInfoCacheManager.get(trackSelector)) ||
+            (await this.scrobbler.getTrack(songInfo)),
+        ),
+      )
+
+      const searchResults = tracks.filter((t) => !!t) as Track[]
+      // get the track with the highest 'match quality'
+      // match quality for last.fm is defined as # of listeners
+      track = searchResults.sort(
+        (track1: Track, track2: Track) =>
+          track2.scrobblerMatchQuality - track1.scrobblerMatchQuality,
+      )[0]
+
+      // save searchQuery so we can edit it
+      searchQueryList = tracks.map((track, i) =>
+        track ? track.toSongInfo() : songInfos[i],
+      )
+    }
+
+    if (track) {
+      // only fills in missing fields,
+      // therefore we should still run this even if the track came from cache
+      await getAdditionalDataFromInfoProviders(track)
+
+      // update cache (automaticaly won't update if this track came from cache)
+      await this.trackInfoCacheManager.addOrUpdate(trackSelector, track)
+
+      return { track, searchQueryList }
+    } else {
+      if (this.shouldForceRecogniseCurrentTrack) {
+        track = createTrackFromBestResult(searchQueryList)
+
+        // update cache (automaticaly won't update if this track came from cache)
+        await this.trackInfoCacheManager.addOrUpdate(trackSelector, track)
+
+        return { track, searchQueryList }
+      }
+    }
+    return { searchQueryList, track: null }
+  }
+
   async newTrack(forceReload = false): Promise<Track | null> {
     await this.waitForReady()
 
     const potentialNewTrackId = await this.getCurrentTrackId()
+    if (!potentialNewTrackId) {
+      return null
+    }
+
     // check if we actually changed tracks
     if (this.connectorTrackId === potentialNewTrackId) {
       // we did not change tracks, check if we should still force re-loading the track
@@ -482,42 +564,12 @@ abstract class BaseConnector implements Connector {
       )
     ).map(applyMetadataFilter)
 
-    let track
-    if (songInfoFromSavedEdits) {
-      track = await this.scrobbler.getTrack(songInfoFromSavedEdits)
-
-      // save searchQuery so we can edit it
-      songInfoFromSavedEdits.matchQuality = -2 // -2 is the magic number that will be displayed as 'editted'
-      this.searchQueryList = [songInfoFromSavedEdits, ...songInfos]
-    } else {
-      const tracks: (Track | null)[] = await Promise.all(
-        songInfos.map((songInfo: SongInfo) =>
-          this.scrobbler.getTrack(songInfo),
-        ),
-      )
-
-      const searchResults = tracks.filter((t) => !!t) as Track[]
-      // get the track with the highest 'match quality'
-      // match quality for last.fm is defined as # of listeners
-      track = searchResults.sort(
-        (track1: Track, track2: Track) =>
-          track2.scrobblerMatchQuality - track1.scrobblerMatchQuality,
-      )[0]
-
-      // save searchQuery so we can edit it
-      this.searchQueryList = tracks.map((track, i) =>
-        track ? track.toSongInfo() : songInfos[i],
-      )
-    }
-
-    if (track) {
-      await getAdditionalDataFromInfoProviders(track)
-      this.track = track
-    } else {
-      if (this.shouldForceRecogniseCurrentTrack) {
-        this.track = this.createTrackFromBestResult()
-      }
-    }
+    const songInfoResult = await this.getTrackFromSongInfo(
+      songInfos,
+      songInfoFromSavedEdits,
+    )
+    this.track = songInfoResult.track
+    this.searchQueryList = songInfoResult.searchQueryList
 
     this.scrobbleState = await this.getScrobbleState()
 

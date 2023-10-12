@@ -25,6 +25,12 @@ export { default as TrackSelector } from './TrackSelector'
 export { default as ForceRecognitionTracks } from './ForceRecognitionTracks'
 export { default as JSONAble } from './JSONAble'
 export { default as LogEntryPayload } from './LogEntryPayload'
+export {
+  default as TrackInfoCache,
+  TrackInStorage,
+  TracksInStorage,
+  TrackInCache,
+} from './TrackInfoCache'
 
 export * from './BgActionObject'
 export * from './CtActionObject'

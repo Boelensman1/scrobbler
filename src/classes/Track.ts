@@ -9,6 +9,7 @@ export class Track {
   album?: string
   albumArtUrl?: string
   musicBrainzReleaseGroupId?: string
+  fromCache = false
 
   constructor({
     name,
@@ -18,6 +19,7 @@ export class Track {
     scrobblerLinks,
     albumArtUrl,
     musicBrainzReleaseGroupId,
+    fromCache,
   }: {
     name: string
     artist: string
@@ -26,12 +28,14 @@ export class Track {
     albumArtUrl?: string
     musicBrainzReleaseGroupId?: string
     scrobblerLinks: ScrobblerLinks
+    fromCache?: boolean
   }) {
     this.name = name
     this.artist = artist
     this.album = album
     this.scrobblerMatchQuality = scrobblerMatchQuality
     this.scrobblerLinks = scrobblerLinks
+    this.fromCache = Boolean(fromCache)
 
     if (albumArtUrl) {
       this.albumArtUrl = albumArtUrl
@@ -63,6 +67,19 @@ export class Track {
       artist: this.artist,
       album: this.album,
       matchQuality: this.scrobblerMatchQuality,
+    }
+  }
+
+  getAllPropsForCache() {
+    return {
+      name: this.name,
+      artist: this.artist,
+      scrobblerMatchQuality: this.scrobblerMatchQuality,
+      scrobblerLinks: this.scrobblerLinks,
+      album: this.album,
+      albumArtUrl: this.albumArtUrl,
+      musicBrainzReleaseGroupId: this.musicBrainzReleaseGroupId,
+      fromCache: true,
     }
   }
 }

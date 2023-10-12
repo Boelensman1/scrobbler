@@ -39,6 +39,11 @@ export {
   hydrate as hydrateForceRecognitionTracks,
   deHydrate as deHydrateForceRecognitionTracks,
 } from './classes/ForceRecognitionTracksManager'
+export {
+  default as TrackInfoCacheManager,
+  hydrate as hydrateTrackInfoCache,
+  deHydrate as deHydrateTrackInfoCache,
+} from './classes/TrackInfoCacheManager'
 
 export { default as BrowserStorage } from './classes/BrowserStorage'
 
