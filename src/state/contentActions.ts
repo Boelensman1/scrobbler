@@ -11,6 +11,7 @@ import type {
   SetForceRecogniseCurrentCTActionObject,
   EventNotificationCTActionObject,
   CTEvent,
+  RefreshCurrentTrackCTActionObject,
 } from 'interfaces'
 
 export const CT_ACTION_KEYS = {
@@ -19,6 +20,7 @@ export const CT_ACTION_KEYS = {
 
   TOGGLE_DISABLE_SCROBBLE_CURRENT: 'TOGGLE_DISABLE_SCROBBLE_CURRENT' as const,
   FORCE_SCROBBLE_CURRENT: 'FORCE_SCROBBLE_CURRENT' as const,
+  REFRESH_CURRENT_TRACK: 'REFRESH_CURRENT_TRACK' as const,
 
   SAVE_TRACK_EDIT: 'SAVE_TRACK_EDIT_CT' as const,
 
@@ -61,6 +63,10 @@ const actions = {
   forceScrobbleCurrent: (tabId: TabIdOpt) =>
     send<ForceToggleCurrentCTActionObject>(tabId, {
       type: CT_ACTION_KEYS.FORCE_SCROBBLE_CURRENT,
+    }),
+  refreshCurrentTrack: (tabId: TabIdOpt) =>
+    send<RefreshCurrentTrackCTActionObject>(tabId, {
+      type: CT_ACTION_KEYS.REFRESH_CURRENT_TRACK,
     }),
   saveTrackEdit: (tabId: TabIdOpt, editValues: SongInfo) =>
     send<SaveTrackEditCTActionObject>(tabId, {

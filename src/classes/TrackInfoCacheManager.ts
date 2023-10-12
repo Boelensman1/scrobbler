@@ -57,9 +57,8 @@ class TrackInfoCacheManager {
   browserStorage: BrowserStorage
   trackInfoCache: TrackInfoCache
 
-  constructor(browserStorage?: BrowserStorage) {
-    this.browserStorage = browserStorage ?? new BrowserStorage()
-
+  constructor(browserStorage: BrowserStorage) {
+    this.browserStorage = browserStorage
     this.trackInfoCache = this.browserStorage.get('trackInfoCache')
   }
 
@@ -82,7 +81,6 @@ class TrackInfoCacheManager {
     )
 
     this.trackInfoCache = mergedCache
-    console.log('!!!', mergedCache)
     await this.browserStorage.set('trackInfoCache', mergedCache)
   }
 
@@ -117,6 +115,17 @@ class TrackInfoCacheManager {
       return false
     }
     return this.trackInfoCache[connectorKey][connectorTrackId]?.track || false
+  }
+
+  async delete({
+    connectorKey,
+    connectorTrackId,
+  }: TrackSelector): Promise<void> {
+    await this.syncCache()
+    if (this.trackInfoCache[connectorKey]) {
+      delete this.trackInfoCache[connectorKey][connectorTrackId]
+      await this.syncCache()
+    }
   }
 }
 

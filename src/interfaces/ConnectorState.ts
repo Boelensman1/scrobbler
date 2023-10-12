@@ -1,3 +1,4 @@
+import { ConnectorKey } from 'interfaces'
 import type { BaseConnector } from 'internals'
 
 type ConnectorState = Pick<
@@ -10,6 +11,6 @@ type ConnectorState = Pick<
   | 'trackDuration'
   | 'searchQueryList'
   | 'shouldForceRecogniseCurrentTrack'
->
+> & { connectorKey: ConnectorKey }
 
 export default ConnectorState

@@ -34,6 +34,10 @@ export interface EventNotificationCTActionObject {
   data: { event: CTEvent }
 }
 
+export interface RefreshCurrentTrackCTActionObject {
+  type: typeof CT_ACTION_KEYS.REFRESH_CURRENT_TRACK
+}
+
 export type CtActionObject =
   | GetStillPlayingCTActionObject
   | GetConnectorStateCTActionObject
@@ -42,3 +46,4 @@ export type CtActionObject =
   | SaveTrackEditCTActionObject
   | SetForceRecogniseCurrentCTActionObject
   | EventNotificationCTActionObject
+  | RefreshCurrentTrackCTActionObject

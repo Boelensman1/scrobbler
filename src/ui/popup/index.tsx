@@ -11,6 +11,9 @@ import EditSearch from './EditSearch'
 import useConfig from '../useConfig'
 import useScrobblerState from '../useScrobblerState'
 
+// @ts-expect-error not typescript, but handled by parcel just fine
+import refreshIcon from './refresh.png'
+
 const defaultAlbumArtUrl = 'https://via.placeholder.com/150'
 
 const Track = ({
@@ -77,6 +80,7 @@ const InnerPopup = () => {
   const { config } = useConfig()
   const { connectorState, globalState } = useScrobblerState()
   const [edittingSearch, setEditingSearch] = useState<boolean>(false)
+  const [recentlyRefrehsed, setRecentlyRefreshed] = useState<boolean>(false)
 
   const tabId = globalState.activeConnectorTabIdQueue[0]
   if (!connectorState || tabId === null) {
@@ -92,6 +96,29 @@ const InnerPopup = () => {
 
   return (
     <>
+      {connectorState.track && (
+        <div
+          className={
+            connectorState.scrobbleState === 'SEARCHING' || recentlyRefrehsed
+              ? 'spin'
+              : ''
+          }
+          style={{ position: 'absolute', top: 5, right: 5 }}
+          onClick={() => {
+            if (
+              connectorState.scrobbleState !== 'SEARCHING' &&
+              !recentlyRefrehsed
+            ) {
+              setRecentlyRefreshed(true)
+              setTimeout(() => setRecentlyRefreshed(false), 2000)
+              ctActions.refreshCurrentTrack(tabId)
+            }
+          }}
+        >
+          <img src={refreshIcon} alt="Refresh" style={{ maxHeight: 14 }} />
+        </div>
+      )}
+
       {!connectorState.track && config.debug && <div>active tab: {tabId}</div>}
       {edittingSearch ? (
         <EditSearch

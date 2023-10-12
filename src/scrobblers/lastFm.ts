@@ -211,6 +211,7 @@ class LastFm {
   }
 
   async getTrack(songInfo: SongInfo): Promise<Track | null> {
+    logger.debug(`Getting songInfo for "${songInfo.track}"`)
     const result = await this.doRequest('track.getInfo', songInfo)
 
     if (result.error) {

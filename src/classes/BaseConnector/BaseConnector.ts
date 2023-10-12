@@ -194,7 +194,9 @@ abstract class BaseConnector implements Connector {
     this.setupWatches().then((elementToWatch) => {
       if (elementToWatch) {
         const observer = new MutationObserver(
-          _.debounce(this.newTrack.bind(this, false), 500, { maxWait: 1500 }),
+          _.debounce(this.newTrack.bind(this, false, false), 500, {
+            maxWait: 1500,
+          }),
         )
         const observerConfig = {
           childList: true,
@@ -266,6 +268,7 @@ abstract class BaseConnector implements Connector {
 
       case CT_ACTION_KEYS.GET_CONNECTOR_STATE: {
         return {
+          connectorKey,
           playTime: this.playTime,
           track: this.track,
           scrobbleState: this.scrobbleState,
@@ -351,6 +354,25 @@ abstract class BaseConnector implements Connector {
           // calculate new scrobbleState
           this.scrobbleState = await this.getScrobbleState()
         }
+        return
+      }
+
+      case CT_ACTION_KEYS.REFRESH_CURRENT_TRACK: {
+        if (!this.connectorTrackId) {
+          return
+        }
+        logger.info('Refreshing track')
+
+        const trackSelector = {
+          connectorKey,
+          connectorTrackId: this.connectorTrackId,
+        }
+
+        await this.trackInfoCacheManager.delete(trackSelector)
+        this.scrobbleState = scrobbleStates.SEARCHING
+        this.updateDisplayOnPage()
+        await this.newTrack(true, false)
+
         return
       }
 
@@ -493,7 +515,10 @@ abstract class BaseConnector implements Connector {
     return { searchQueryList, track: null }
   }
 
-  async newTrack(forceReload = false): Promise<Track | null> {
+  async newTrack(
+    forceReload = false,
+    skipReset = false,
+  ): Promise<Track | null> {
     await this.waitForReady()
 
     const potentialNewTrackId = await this.getCurrentTrackId()
@@ -509,7 +534,9 @@ abstract class BaseConnector implements Connector {
       }
     } else {
       await bgActions.setLoadingNewTrack()
-      this.resetTrack()
+      if (!skipReset) {
+        this.resetTrack()
+      }
       this.connectorTrackId = potentialNewTrackId
     }
     logger.info(`New track detected (${potentialNewTrackId})`)
