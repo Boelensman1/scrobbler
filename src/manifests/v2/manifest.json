@@ -1,6 +1,6 @@
 {
   "name": "Youtube Scrobbler",
-  "version": "0.0.26",
+  "version": "0.0.27",
   "manifest_version": 2,
   "permissions": ["<all_urls>", "tabs", "storage"],
   "browser_action": {
