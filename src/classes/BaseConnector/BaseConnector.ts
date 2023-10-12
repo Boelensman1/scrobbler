@@ -314,11 +314,15 @@ abstract class BaseConnector implements Connector {
 
         this.track = track
 
+        const trackSelector = {
+          connectorKey,
+          connectorTrackId: this.connectorTrackId!,
+        }
+
         // save!
         if (this.connectorTrackId) {
           bgActions.saveTrackEdit({
-            connectorKey,
-            connectorTrackId: this.connectorTrackId,
+            ...trackSelector,
             edittedSongInfo: track
               ? {
                   track: track.name,
@@ -332,7 +336,8 @@ abstract class BaseConnector implements Connector {
           })
         }
 
-        await this.newTrack(true)
+        await this.trackInfoCacheManager.delete(trackSelector)
+        await this.newTrack(true, true)
 
         return
       }
@@ -371,7 +376,7 @@ abstract class BaseConnector implements Connector {
         await this.trackInfoCacheManager.delete(trackSelector)
         this.scrobbleState = scrobbleStates.SEARCHING
         this.updateDisplayOnPage()
-        await this.newTrack(true, false)
+        await this.newTrack(true, true)
 
         return
       }
