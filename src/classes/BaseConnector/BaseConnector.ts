@@ -374,7 +374,9 @@ abstract class BaseConnector implements Connector {
         }
 
         await this.trackInfoCacheManager.delete(trackSelector)
-        this.scrobbleState = scrobbleStates.SEARCHING
+        if (this.scrobbleState !== scrobbleStates.MANUALLY_DISABLED) {
+          this.scrobbleState = scrobbleStates.SEARCHING
+        }
         this.updateDisplayOnPage()
         await this.newTrack(true, true)
 
@@ -456,6 +458,7 @@ abstract class BaseConnector implements Connector {
     if (!this.connectorTrackId) {
       return { track: null, searchQueryList: [] }
     }
+    logger.debug(`Getting track from song info`)
 
     const { connectorKey } = this.constructor as ConnectorStatic
     const trackSelector = {
@@ -499,6 +502,10 @@ abstract class BaseConnector implements Connector {
     }
 
     if (track) {
+      logger.debug(`Found track: "${track?.name}"`)
+      logger.debug(
+        `Getting additional info from infoproviders for "${track.name}}"`,
+      )
       // only fills in missing fields,
       // therefore we should still run this even if the track came from cache
       await getAdditionalDataFromInfoProviders(track)
@@ -510,6 +517,7 @@ abstract class BaseConnector implements Connector {
     } else {
       if (this.shouldForceRecogniseCurrentTrack) {
         track = createTrackFromBestResult(searchQueryList)
+        logger.debug(`No track found, but forced "${track.name}"`)
 
         // update cache (automaticaly won't update if this track came from cache)
         await this.trackInfoCacheManager.addOrUpdate(trackSelector, track)
@@ -517,6 +525,7 @@ abstract class BaseConnector implements Connector {
         return { track, searchQueryList }
       }
     }
+    logger.debug(`No track found`)
     return { searchQueryList, track: null }
   }
 
@@ -524,10 +533,12 @@ abstract class BaseConnector implements Connector {
     forceReload = false,
     skipReset = false,
   ): Promise<Track | null> {
+    logger.debug(`Start of new track check`)
     await this.waitForReady()
 
     const potentialNewTrackId = await this.getCurrentTrackId()
     if (!potentialNewTrackId) {
+      logger.debug(`No new track found`)
       return null
     }
 
@@ -535,8 +546,10 @@ abstract class BaseConnector implements Connector {
     if (this.connectorTrackId === potentialNewTrackId) {
       // we did not change tracks, check if we should still force re-loading the track
       if (!forceReload) {
+        logger.debug(`No new track found`)
         return this.track
       }
+      logger.debug(`No new track found, but continueing due to forced`)
     } else {
       await bgActions.setLoadingNewTrack()
       if (!skipReset) {
@@ -564,6 +577,9 @@ abstract class BaseConnector implements Connector {
           connectorKey,
           connectorTrackId: this.connectorTrackId,
         })
+    }
+    if (songInfoFromSavedEdits) {
+      logger.debug(`Found song in saved edit: ${songInfoFromSavedEdits.track}`)
     }
 
     // no check for songInfoFromSavedEdits as even if we have this song as a
@@ -604,6 +620,10 @@ abstract class BaseConnector implements Connector {
     this.searchQueryList = songInfoResult.searchQueryList
 
     this.scrobbleState = await this.getScrobbleState()
+
+    logger.debug(
+      `Done all new track processing for: "${songInfoResult.track?.name}"`,
+    )
 
     return this.track
   }

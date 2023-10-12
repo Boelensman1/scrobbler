@@ -247,7 +247,9 @@ class LastFm {
       artist: track.artist.url,
     }
 
-    logger.debug(`Finished getting songInfo for "${songInfo.track}"`)
+    logger.debug(
+      `Finished getting songInfo for "${songInfo.track}", result: ${track.name}`,
+    )
     return new Track({
       name: track.name,
       artist: track.artist.name,
