@@ -616,6 +616,10 @@ abstract class BaseConnector implements Connector {
       songInfos,
       songInfoFromSavedEdits,
     )
+
+    logger.debug(
+      `getTrackFromSongInfo result: ${JSON.stringify(songInfoResult)}`,
+    )
     this.track = songInfoResult.track
     this.searchQueryList = songInfoResult.searchQueryList
 

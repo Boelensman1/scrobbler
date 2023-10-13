@@ -13,11 +13,11 @@ class EdittedTracksManager {
   constructor(browserStorage: BrowserStorage) {
     this.browserStorage = browserStorage
 
-    this.edittedTracks = browserStorage.get('edittedTracks')
+    this.edittedTracks = browserStorage.getInSync('edittedTracks')
   }
 
   async syncEdittedTracks() {
-    await this.browserStorage.set('edittedTracks', this.edittedTracks)
+    await this.browserStorage.setInSync('edittedTracks', this.edittedTracks)
   }
 
   addEdittedTrack(edittedTrack: SavedEdit): void {

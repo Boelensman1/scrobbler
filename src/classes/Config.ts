@@ -20,12 +20,12 @@ export class ConfigContainer {
   constructor(browserStorage: BrowserStorage) {
     this.browserStorage = browserStorage
 
-    this.config = this.browserStorage.get('config')
+    this.config = this.browserStorage.getInSync('config')
   }
 
   async set<T extends keyof Config>(key: T, value: Config[T]) {
     this.config[key] = value
-    await this.browserStorage.set('config', this.config)
+    await this.browserStorage.setInSync('config', this.config)
     notifyConnectors('configUpdated')
   }
 
@@ -51,7 +51,7 @@ export class ConfigContainer {
     }
 
     this.config = defaultConfig
-    await this.browserStorage.set('config', this.config)
+    await this.browserStorage.setInSync('config', this.config)
     notifyConnectors('configUpdated')
   }
 }

@@ -49,11 +49,13 @@ class ForceRecognitionTracksManager {
   constructor(browserStorage: BrowserStorage) {
     this.browserStorage = browserStorage
 
-    this.forcedRecognitionTracks = browserStorage.get('forcedRecognitionTracks')
+    this.forcedRecognitionTracks = browserStorage.getInSync(
+      'forcedRecognitionTracks',
+    )
   }
 
   async syncForceRecognitionTracks() {
-    await this.browserStorage.set(
+    await this.browserStorage.setInSync(
       'forcedRecognitionTracks',
       this.forcedRecognitionTracks,
     )

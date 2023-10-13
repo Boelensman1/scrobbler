@@ -24,8 +24,7 @@ let edittedTracksManager: EdittedTracksManager
 let regexesManager: RegexesManager
 let forceRecognitionTracksManager: ForceRecognitionTracksManager
 let config: ConfigContainer
-
-const stateManager = new StateManager()
+let stateManager: StateManager
 
 // setFullyLoaded is called after init (in main)
 let setFullyLoaded: (val: true) => void
@@ -242,6 +241,7 @@ const main = async () => {
     browserStorage,
   )
   config = new ConfigContainer(browserStorage)
+  stateManager = new StateManager(browserStorage)
 
   const scrobbler = config.get('scrobbler')
   switch (scrobbler) {

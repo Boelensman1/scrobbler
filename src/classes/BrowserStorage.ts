@@ -5,6 +5,7 @@ import type {
   ForceRecognitionTracks,
   JSONAble,
   SavedRegex,
+  State,
   TrackInfoCache,
 } from 'interfaces'
 
@@ -16,65 +17,91 @@ import {
   deHydrateForceRecognitionTracks,
   deHydrateSavedRegexes,
   deHydrateTrackInfoCache,
+  initialState,
   // notifyConnectors,
 } from 'internals'
 
-interface Storage {
+interface SyncStorage {
   edittedTracks: EdittedTracks
   forcedRecognitionTracks: ForceRecognitionTracks
   savedRegexes: SavedRegex[]
   config: Config
-  trackInfoCache: TrackInfoCache
 }
+interface LocalStorage {
+  trackInfoCache: TrackInfoCache
+  state: State
+}
+type Storage = SyncStorage & LocalStorage
 
-const initialStorage: Storage = {
+const initialSyncStorage: SyncStorage = {
   edittedTracks: {},
   forcedRecognitionTracks: {},
   savedRegexes: [],
   config: defaultConfig,
+}
+const initialLocalStorage: LocalStorage = {
   trackInfoCache: {},
+  state: initialState,
 }
 
-const hydrateFunctions: Partial<HydrateFunctions> = {
+type BaseHydrateFunctions = {
+  [K in keyof Storage]: (inp: JSONAble) => Storage[K]
+}
+type BaseDeHydrateFunctions = {
+  [K in keyof Storage]: (inp: Storage[K]) => JSONAble
+}
+const hydrateFunctions: Partial<BaseHydrateFunctions> = {
   savedRegexes: hydrateSavedRegexes,
   forcedRecognitionTracks: hydrateForceRecognitionTracks,
   trackInfoCache: hydrateTrackInfoCache,
 }
-const deHydrateFunctions: Partial<DeHydrateFunctions> = {
+const deHydrateFunctions: Partial<BaseDeHydrateFunctions> = {
   savedRegexes: deHydrateSavedRegexes,
   forcedRecognitionTracks: deHydrateForceRecognitionTracks,
   trackInfoCache: deHydrateTrackInfoCache,
 }
 
-type HydrateFunctions = { [K in keyof Storage]: (inp: JSONAble) => Storage[K] }
-type DeHydrateFunctions = {
-  [K in keyof Storage]: (inp: Storage[K]) => JSONAble
-}
-type StorageInBrowser = { [K in keyof Storage]: JSONAble }
+type SyncStorageInBrowser = { [K in keyof SyncStorage]: JSONAble }
+type LocalStorageInBrowser = { [K in keyof LocalStorage]: JSONAble }
 
-const hydrate = (input: StorageInBrowser): Storage => {
-  return (Object.keys(input) as (keyof Storage)[]).reduce(
-    <T extends keyof Storage>(acc: Storage, key: T) => {
+const hydrate = <STOR extends SyncStorage | LocalStorage>(
+  input: {
+    [K in keyof STOR]: JSONAble
+  },
+  initial: STOR,
+): STOR => {
+  type HydrateFunctions = { [K in keyof STOR]: (inp: JSONAble) => STOR[K] }
+
+  return (Object.keys(input) as (keyof STOR)[]).reduce(
+    <T extends keyof STOR>(acc: STOR, key: T) => {
       const value = input[key]
       if (!value) {
         return acc
       }
 
+      // @ts-expect-error typing became too hard
       const hydrateFunc = hydrateFunctions[key] as HydrateFunctions[T]
 
       if (hydrateFunc) {
         acc[key] = hydrateFunc(value)
       } else {
-        acc[key] = value as unknown as Storage[T]
+        acc[key] = value as unknown as STOR[T]
       }
       return acc
     },
     // if no value, use the value in initialStorage
-    initialStorage,
+    initial,
   )
 }
 
-const deHydrate = (input: Storage): StorageInBrowser => {
+const deHydrate = <STOR extends SyncStorage | LocalStorage>(
+  input: STOR,
+): { [K in keyof STOR]: JSONAble } => {
+  type StorageInBrowser = { [K in keyof STOR]: JSONAble }
+  type DeHydrateFunctions = {
+    [K in keyof STOR]: (inp: STOR[K]) => JSONAble
+  }
+
   return (Object.keys(input) as (keyof StorageInBrowser)[]).reduce(
     <T extends keyof StorageInBrowser>(acc: StorageInBrowser, key: T) => {
       const value = input[key]
@@ -82,6 +109,7 @@ const deHydrate = (input: Storage): StorageInBrowser => {
         return acc
       }
 
+      // @ts-expect-error typing became too hard
       const deHydrateFunc = deHydrateFunctions[key] as DeHydrateFunctions[T]
 
       if (deHydrateFunc) {
@@ -96,40 +124,77 @@ const deHydrate = (input: Storage): StorageInBrowser => {
 }
 
 class BrowserStorage {
-  storage?: Storage
+  syncStorage?: SyncStorage
+  localStorage?: LocalStorage
 
   constructor() {
     // if something changed in another browser instance, also update it here
     // this will also be called if we update the storage, which is not ideal
     // but there doesn't seem to be an easy way to disable/check for that
     browser.storage.sync.onChanged.addListener(this.init.bind(this))
+    browser.storage.local.onChanged.addListener(this.init.bind(this))
   }
 
   async init() {
-    const browserStorage = browser.storage.sync || browser.storage.local
-    if (!browserStorage) {
-      throw new Error('Could not access browserStorage')
+    const browserStorageSync = browser.storage.sync
+    const browserStorageLocal = browser.storage.local
+
+    if (!browserStorageSync) {
+      throw new Error('Could not access sync browserStorage')
     }
-    const fromStorage = await browserStorage.get()
-    this.storage = hydrate(fromStorage as StorageInBrowser)
+    if (!browserStorageLocal) {
+      throw new Error('Could not access local browserStorage')
+    }
+    this.syncStorage = hydrate<SyncStorage>(
+      (await browserStorageSync.get()) as SyncStorageInBrowser,
+      initialSyncStorage,
+    )
+    this.localStorage = hydrate<LocalStorage>(
+      (await browserStorageLocal.get()) as LocalStorageInBrowser,
+      initialLocalStorage,
+    )
+  }
+  async realSet<
+    STOR extends SyncStorage | LocalStorage,
+    KEY extends keyof STOR,
+  >(location: 'sync' | 'local', key: KEY, value: STOR[KEY]) {
+    const browserStorage =
+      location === 'sync' ? browser.storage.sync : browser.storage.local
+    const classStorage = (
+      location === 'sync' ? this.syncStorage : this.localStorage
+    ) as STOR
+
+    if (!classStorage) {
+      throw new Error(`Storage ${location} is not initialised yet`)
+    }
+
+    classStorage[key] = value
+    await browserStorage.set(deHydrate(classStorage))
   }
 
-  async set<T extends keyof Storage>(key: T, value: Storage[T]) {
-    if (!this.storage) {
-      throw new Error('Storage is not initialised yet')
-    }
-
-    const browserStorage = browser.storage.sync || browser.storage.local
-    this.storage[key] = value
-    await browserStorage.set(deHydrate(this.storage))
+  async setInSync<T extends keyof SyncStorage>(key: T, value: SyncStorage[T]) {
+    return this.realSet<SyncStorage, typeof key>('sync', key, value)
   }
 
-  get<T extends keyof Storage>(key: T): Storage[T] {
-    if (!this.storage) {
-      throw new Error('Storage is not initialised yet')
-    }
+  async setInLocal<T extends keyof LocalStorage>(
+    key: T,
+    value: LocalStorage[T],
+  ) {
+    return this.realSet<LocalStorage, typeof key>('local', key, value)
+  }
 
-    return this.storage[key]
+  getInSync<T extends keyof SyncStorage>(key: T): SyncStorage[T] {
+    if (!this.syncStorage) {
+      throw new Error(`Storage sync is not initialised yet`)
+    }
+    return this.syncStorage[key]
+  }
+
+  getInLocal<T extends keyof LocalStorage>(key: T): LocalStorage[T] {
+    if (!this.localStorage) {
+      throw new Error(`Storage local is not initialised yet`)
+    }
+    return this.localStorage[key]
   }
 }
 

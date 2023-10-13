@@ -2,7 +2,7 @@
   "name": "Youtube Scrobbler",
   "version": "0.0.30",
   "manifest_version": 2,
-  "permissions": ["<all_urls>", "tabs", "storage"],
+  "permissions": ["<all_urls>", "tabs", "storage", "unlimitedStorage"],
   "browser_action": {
     "default_popup": "../../ui/popup/index.html"
   },

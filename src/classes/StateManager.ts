@@ -1,14 +1,5 @@
-import browser from 'webextension-polyfill'
-import { initialState } from 'internals'
+import { BrowserStorage, initialState } from 'internals'
 import type { State } from 'interfaces'
-
-const handler = {
-  set<T extends keyof State>(state: State, prop: T, value: State[T]) {
-    const result = Reflect.set(state, prop, value)
-    browser.storage.local.set({ state })
-    return result
-  },
-}
 
 type StaleState = State
 
@@ -18,20 +9,46 @@ const hydrateState = (state: StaleState): State => {
 
 class StateManager {
   state?: State
+  browserStorage: BrowserStorage
+
+  proxyHandler = { set: this.proxyHandlerSet.bind(this) }
+
+  constructor(browserStorage: BrowserStorage) {
+    this.browserStorage = browserStorage
+  }
+
+  init() {
+    const state = this.browserStorage.getInLocal('state')
+    this.state = new Proxy(state, this.proxyHandler)
+  }
+
+  proxyHandlerSet<T extends keyof State>(
+    state: State,
+    prop: T,
+    value: State[T],
+  ) {
+    const result = Reflect.set(state, prop, value)
+    this.browserStorage.setInLocal('state', state)
+    return result
+  }
 
   resetState(): State {
     if (!this.state) {
       throw new Error('Trying to reset unset state')
     }
     Object.assign(this.state, initialState)
-    this.state = new Proxy(initialState, handler)
+    this.state = new Proxy(initialState, this.proxyHandler)
+    this.browserStorage.setInLocal('state', initialState)
 
     return this.state
   }
 
   async getState(): Promise<State> {
-    const { state } = await browser.storage.local.get()
-    const proxiedState = new Proxy(hydrateState(state || initialState), handler)
+    const state = this.browserStorage.getInLocal('state')
+    const proxiedState = new Proxy(
+      hydrateState(state || initialState),
+      this.proxyHandler,
+    )
     this.state = proxiedState
 
     return this.state

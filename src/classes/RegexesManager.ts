@@ -45,7 +45,7 @@ class RegexesManager {
   constructor(browserStorage: BrowserStorage) {
     this.browserStorage = browserStorage
 
-    this.savedRegexes = browserStorage.get('savedRegexes')
+    this.savedRegexes = browserStorage.getInSync('savedRegexes')
   }
 
   async resetSavedRegexes() {
@@ -54,7 +54,7 @@ class RegexesManager {
   }
 
   async syncSavedRegexes() {
-    await this.browserStorage.set('savedRegexes', this.savedRegexes)
+    await this.browserStorage.setInSync('savedRegexes', this.savedRegexes)
   }
 
   addRegex(regex: StringifiedSavedRegex): void {
