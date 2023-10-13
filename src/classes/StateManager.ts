@@ -1,12 +1,6 @@
 import { BrowserStorage, initialState } from 'internals'
 import type { State } from 'interfaces'
 
-type StaleState = State
-
-const hydrateState = (state: StaleState): State => {
-  return state
-}
-
 class StateManager {
   state?: State
   browserStorage: BrowserStorage
@@ -45,10 +39,7 @@ class StateManager {
 
   async getState(): Promise<State> {
     const state = this.browserStorage.getInLocal('state')
-    const proxiedState = new Proxy(
-      hydrateState(state || initialState),
-      this.proxyHandler,
-    )
+    const proxiedState = new Proxy(state || initialState, this.proxyHandler)
     this.state = proxiedState
 
     return this.state
