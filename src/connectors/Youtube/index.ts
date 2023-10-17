@@ -202,9 +202,8 @@ class YoutubeConnector extends BaseConnector {
   }
 
   async getTimeInfo(): Promise<TimeInfo> {
-    const videoElement = await waitForElement<HTMLVideoElement>(
-      '.html5-main-video',
-    )
+    const videoElement =
+      await waitForElement<HTMLVideoElement>('.html5-main-video')
     const { currentTime, duration, playbackRate } = videoElement
 
     return { playTime: currentTime, duration, playbackRate }
