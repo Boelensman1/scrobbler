@@ -61,11 +61,11 @@ class TrackInfoCacheManager {
 
   constructor(browserStorage: BrowserStorage) {
     this.browserStorage = browserStorage
-    this.trackInfoCache = this.browserStorage.getInLocal('trackInfoCache')
+    this.trackInfoCache = this.browserStorage.getInSession('trackInfoCache')
   }
 
   async syncCache() {
-    const cacheFromStorage = this.browserStorage.getInLocal('trackInfoCache')
+    const cacheFromStorage = this.browserStorage.getInSession('trackInfoCache')
     const mergedCache = Object.keys(this.trackInfoCache).reduce(
       (acc, connectorKey: ConnectorKey) => {
         if (!acc[connectorKey]) {
@@ -83,7 +83,7 @@ class TrackInfoCacheManager {
     )
 
     this.trackInfoCache = mergedCache
-    await this.browserStorage.setInLocal('trackInfoCache', mergedCache)
+    await this.browserStorage.setInSession('trackInfoCache', mergedCache)
   }
 
   async addOrUpdate(

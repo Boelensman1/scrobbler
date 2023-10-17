@@ -28,10 +28,13 @@ interface SyncStorage {
   config: Config
 }
 interface LocalStorage {
-  trackInfoCache: TrackInfoCache
   state: State
 }
-type Storage = SyncStorage & LocalStorage
+
+interface SessionStorage {
+  trackInfoCache: TrackInfoCache
+}
+type Storage = SyncStorage & LocalStorage & SessionStorage
 
 const initialSyncStorage: SyncStorage = {
   edittedTracks: {},
@@ -40,8 +43,10 @@ const initialSyncStorage: SyncStorage = {
   config: defaultConfig,
 }
 const initialLocalStorage: LocalStorage = {
-  trackInfoCache: {},
   state: initialState,
+}
+const initialSessionStorage: SessionStorage = {
+  trackInfoCache: {},
 }
 
 type BaseHydrateFunctions = {
@@ -63,8 +68,9 @@ const deHydrateFunctions: Partial<BaseDeHydrateFunctions> = {
 
 type SyncStorageInBrowser = { [K in keyof SyncStorage]: JSONAble }
 type LocalStorageInBrowser = { [K in keyof LocalStorage]: JSONAble }
+type SessionStorageInBrowser = { [K in keyof SessionStorage]: JSONAble }
 
-const hydrate = <STOR extends SyncStorage | LocalStorage>(
+const hydrate = <STOR extends SyncStorage | LocalStorage | SessionStorage>(
   input: {
     [K in keyof STOR]: JSONAble
   },
@@ -94,7 +100,7 @@ const hydrate = <STOR extends SyncStorage | LocalStorage>(
   )
 }
 
-const deHydrate = <STOR extends SyncStorage | LocalStorage>(
+const deHydrate = <STOR extends SyncStorage | LocalStorage | SessionStorage>(
   input: STOR,
 ): { [K in keyof STOR]: JSONAble } => {
   type StorageInBrowser = { [K in keyof STOR]: JSONAble }
@@ -126,6 +132,7 @@ const deHydrate = <STOR extends SyncStorage | LocalStorage>(
 class BrowserStorage {
   syncStorage?: SyncStorage
   localStorage?: LocalStorage
+  sessionStorage?: SessionStorage
 
   constructor() {
     // if something changed in another browser instance, also update it here
@@ -133,11 +140,19 @@ class BrowserStorage {
     // but there doesn't seem to be an easy way to disable/check for that
     browser.storage.sync.onChanged.addListener(this.init.bind(this))
     browser.storage.local.onChanged.addListener(this.init.bind(this))
+    browser.storage.session.onChanged.addListener(this.init.bind(this))
   }
 
   async init() {
     const browserStorageSync = browser.storage.sync
     const browserStorageLocal = browser.storage.local
+    const browserStorageSession = browser.storage.session
+
+    // expose session storage to content scripts
+    // @ts-expect-error this function exists
+    await browser.storage.session.setAccessLevel(
+      'TRUSTED_AND_UNTRUSTED_CONTEXTS',
+    )
 
     if (!browserStorageSync) {
       throw new Error('Could not access sync browserStorage')
@@ -153,11 +168,15 @@ class BrowserStorage {
       (await browserStorageLocal.get()) as LocalStorageInBrowser,
       initialLocalStorage,
     )
+    this.sessionStorage = hydrate<SessionStorage>(
+      (await browserStorageSession.get()) as SessionStorageInBrowser,
+      initialSessionStorage,
+    )
   }
   async realSet<
-    STOR extends SyncStorage | LocalStorage,
+    STOR extends SyncStorage | LocalStorage | SessionStorage,
     KEY extends keyof STOR,
-  >(location: 'sync' | 'local', key: KEY, value: STOR[KEY]) {
+  >(location: 'sync' | 'local' | 'session', key: KEY, value: STOR[KEY]) {
     const browserStorage =
       location === 'sync' ? browser.storage.sync : browser.storage.local
     const classStorage = (
@@ -183,6 +202,13 @@ class BrowserStorage {
     return this.realSet<LocalStorage, typeof key>('local', key, value)
   }
 
+  async setInSession<T extends keyof SessionStorage>(
+    key: T,
+    value: SessionStorage[T],
+  ) {
+    return this.realSet<SessionStorage, typeof key>('session', key, value)
+  }
+
   getInSync<T extends keyof SyncStorage>(key: T): SyncStorage[T] {
     if (!this.syncStorage) {
       throw new Error(`Storage sync is not initialised yet`)
@@ -195,6 +221,13 @@ class BrowserStorage {
       throw new Error(`Storage local is not initialised yet`)
     }
     return this.localStorage[key]
+  }
+
+  getInSession<T extends keyof SessionStorage>(key: T): SessionStorage[T] {
+    if (!this.sessionStorage) {
+      throw new Error(`Storage session is not initialised yet`)
+    }
+    return this.sessionStorage[key]
   }
 }
 
