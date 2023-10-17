@@ -26,7 +26,7 @@ export const hydrate = (trackInfoCache: JSONAble): TrackInfoCache =>
         [connectorTrackId, trackInCache]: [ConnectorTrackId, TrackInStorage],
       ) => {
         innerAcc[connectorTrackId] = {
-          meta: { added: new Date(trackInCache.meta.added) },
+          meta: { ...trackInCache.meta },
           track: new Track(trackInCache.track),
         }
         return innerAcc
@@ -45,7 +45,7 @@ export const deHydrate = (trackInfoCache: TrackInfoCache): JSONAble =>
         ([connectorTrackId, trackInCache]) => [
           connectorTrackId,
           {
-            meta: { added: trackInCache.meta.added.getTime() },
+            meta: { ...trackInCache.meta },
             track: trackInCache.track.getAllPropsForCache(),
           },
         ],
@@ -61,11 +61,11 @@ class TrackInfoCacheManager {
 
   constructor(browserStorage: BrowserStorage) {
     this.browserStorage = browserStorage
-    this.trackInfoCache = this.browserStorage.getInSession('trackInfoCache')
+    this.trackInfoCache = this.browserStorage.getInLocal('trackInfoCache')
   }
 
   async syncCache() {
-    const cacheFromStorage = this.browserStorage.getInSession('trackInfoCache')
+    const cacheFromStorage = this.browserStorage.getInLocal('trackInfoCache')
     const mergedCache = Object.keys(this.trackInfoCache).reduce(
       (acc, connectorKey: ConnectorKey) => {
         if (!acc[connectorKey]) {
@@ -83,7 +83,7 @@ class TrackInfoCacheManager {
     )
 
     this.trackInfoCache = mergedCache
-    await this.browserStorage.setInSession('trackInfoCache', mergedCache)
+    await this.browserStorage.setInLocal('trackInfoCache', mergedCache)
   }
 
   async addOrUpdate(
@@ -102,7 +102,7 @@ class TrackInfoCacheManager {
     }
     const trackForCache = new Track(track.getAllPropsForCache())
     this.trackInfoCache[connectorKey][connectorTrackId] = {
-      meta: { added: new Date() },
+      meta: { added: Date.now() },
       track: trackForCache,
     }
     logger.debug(
@@ -125,6 +125,25 @@ class TrackInfoCacheManager {
     logger.debug(
       `Trackinfocache result for "${connectorTrackId}": ${
         result ? `${result.artist} - ${result.name}` : false
+      }`,
+    )
+    return result
+  }
+
+  async getAge({
+    connectorKey,
+    connectorTrackId,
+  }: TrackSelector): Promise<number | false> {
+    await this.syncCache()
+    if (!this.trackInfoCache[connectorKey]) {
+      return false
+    }
+    const result =
+      this.trackInfoCache[connectorKey][connectorTrackId]?.meta.added || false
+
+    logger.debug(
+      `Trackinfocache age result for "${connectorTrackId}": ${
+        result ? new Date(result).toISOString() : false
       }`,
     )
     return result

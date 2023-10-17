@@ -8,7 +8,7 @@ export type TrackInStorage = {
 export type TracksInStorage = [ConnectorTrackId, TrackInStorage][]
 
 export interface TrackInCache {
-  meta: { added: Date }
+  meta: { added: number }
   track: Track
 }
 

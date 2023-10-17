@@ -559,24 +559,23 @@ abstract class BaseConnector implements Connector {
     }
     logger.info(`New track detected (${potentialNewTrackId})`)
 
-    const { connectorKey } = this.constructor as ConnectorStatic
+    const trackSelector = {
+      connectorKey: (this.constructor as ConnectorStatic).connectorKey,
+      connectorTrackId: this.connectorTrackId!,
+    }
+
     logger.setIdentifier(
-      `BaseConnector (${connectorKey} - ${potentialNewTrackId})`,
+      `BaseConnector (${trackSelector.connectorKey} - ${potentialNewTrackId})`,
     )
 
     // check if we have this song saved as editted
     let songInfoFromSavedEdits: SongInfo | false = false
     if (this.connectorTrackId) {
-      songInfoFromSavedEdits = await bgActions.getTrackFromEdittedTracks({
-        connectorKey,
-        connectorTrackId: this.connectorTrackId,
-      })
+      songInfoFromSavedEdits =
+        await bgActions.getTrackFromEdittedTracks(trackSelector)
 
       this.shouldForceRecogniseCurrentTrack =
-        await bgActions.getIfForceRecogniseTrack({
-          connectorKey,
-          connectorTrackId: this.connectorTrackId,
-        })
+        await bgActions.getIfForceRecogniseTrack(trackSelector)
     }
     if (songInfoFromSavedEdits) {
       logger.debug(`Found song in saved edit: ${songInfoFromSavedEdits.track}`)
@@ -635,6 +634,27 @@ abstract class BaseConnector implements Connector {
     }
 
     this.scrobbleState = await this.getScrobbleState()
+
+    if (
+      this.track &&
+      this.scrobbleState === 'BELOW_MIN_SCROBBLER_QUALITY' &&
+      this.track.fromCache
+    ) {
+      // check to see if track info was really old
+      const cacheSetAt = await this.trackInfoCacheManager.getAge(trackSelector)
+      if (
+        cacheSetAt &&
+        // difference in days
+        (Date.now() - cacheSetAt) / (1000 * 60 * 60 * 24) > 1
+      ) {
+        // delete the expired cache and try again
+        logger.debug(
+          `Expired cache for: "${songInfoResult.track?.name}", retrying`,
+        )
+        await this.trackInfoCacheManager.delete(trackSelector)
+        return this.newTrack(true, true)
+      }
+    }
 
     logger.debug(
       `Done all new track processing for: "${songInfoResult.track?.name}"`,
