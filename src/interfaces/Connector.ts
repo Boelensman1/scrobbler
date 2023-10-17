@@ -22,6 +22,7 @@ export interface Connector {
   isPlaying(): Promise<boolean>
   isReady(): Promise<boolean>
 
+  getVideoElementSelector(): Promise<string>
   getTimeInfo(): Promise<TimeInfo>
   getCurrentTrackId(): Promise<ConnectorTrackId | null>
 

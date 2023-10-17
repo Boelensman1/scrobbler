@@ -91,7 +91,12 @@ async function handleMessage(
     }
 
     case BG_ACTION_KEYS.REQUEST_BECOME_ACTIVE_TAB: {
+      const id = Math.random()
+      logger.debug(`Incoming REQUEST_BECOME_ACTIVE_TAB request ${id}`)
       if (!sender.tab || typeof sender.tab.id === 'undefined') {
+        logger.debug(
+          `Ignoring REQUEST_BECOME_ACTIVE_TAB request ${id} as sender.tab.id is not defined`,
+        )
         return
       }
 

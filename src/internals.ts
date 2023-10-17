@@ -17,6 +17,7 @@ export { default as getElement } from './util/getElement'
 // connectors
 export { default as YoutubeConnector } from './connectors/Youtube'
 export { default as YoutubeEmbedConnector } from './connectors/YoutubeEmbed'
+export { default as InsidiousConnector } from './connectors/Insidious'
 
 export { default as waitForElement } from './util/waitForElement'
 export { default as notifyConnectors } from './util/notifyConnectors'

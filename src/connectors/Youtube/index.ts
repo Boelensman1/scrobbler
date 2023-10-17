@@ -1,4 +1,3 @@
-import type { TimeInfo } from 'interfaces'
 import { getElement, waitForElement } from 'internals'
 
 import BaseConnector from '../../classes/BaseConnector/BaseConnector'
@@ -103,6 +102,10 @@ class YoutubeConnector extends BaseConnector {
     return location.host.includes('youtube') && !location.href.includes('embed')
   }
 
+  async getVideoElementSelector() {
+    return '.html5-main-video'
+  }
+
   async setupWatches(): Promise<HTMLElement> {
     const player = await waitForElement('.html5-video-player')
     const video = await waitForElement('video', player)
@@ -199,14 +202,6 @@ class YoutubeConnector extends BaseConnector {
   async shouldScrobble() {
     // block scrobbling when we can't get viewcount, for example: in shorts
     return (await this.getPopularity()) !== -1
-  }
-
-  async getTimeInfo(): Promise<TimeInfo> {
-    const videoElement =
-      await waitForElement<HTMLVideoElement>('.html5-main-video')
-    const { currentTime, duration, playbackRate } = videoElement
-
-    return { playTime: currentTime, duration, playbackRate }
   }
 
   async getExtraInfo(): Promise<ExtraInfo['data']> {

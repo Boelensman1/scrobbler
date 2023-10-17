@@ -1,9 +1,18 @@
 import type { ConnectorStatic } from 'interfaces'
-import { bgActions, YoutubeConnector, YoutubeEmbedConnector } from 'internals'
+import {
+  bgActions,
+  YoutubeConnector,
+  YoutubeEmbedConnector,
+  InsidiousConnector,
+} from 'internals'
 
 import scrobblers from './scrobblerList'
 
-const connectors: ConnectorStatic[] = [YoutubeConnector, YoutubeEmbedConnector]
+const connectors: ConnectorStatic[] = [
+  YoutubeConnector,
+  YoutubeEmbedConnector,
+  InsidiousConnector,
+]
 
 const main = async () => {
   const MatchingConnector = connectors.find((conn) =>

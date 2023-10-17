@@ -22,6 +22,7 @@ import {
   Logger,
   TrackInfoCacheManager,
   BrowserStorage,
+  waitForElement,
 } from 'internals'
 
 import combineSongInfos from './utils/combineSongInfos'
@@ -164,8 +165,17 @@ abstract class BaseConnector implements Connector {
   abstract setupWatches(): Promise<HTMLElement>
   abstract isPlaying(): Promise<boolean>
   abstract isReady(): Promise<boolean>
-  abstract getTimeInfo(): Promise<TimeInfo>
   abstract getCurrentTrackId(): Promise<ConnectorTrackId | null>
+  abstract getVideoElementSelector(): Promise<string>
+
+  async getTimeInfo(): Promise<TimeInfo> {
+    const videoElement = await waitForElement<HTMLVideoElement>(
+      await this.getVideoElementSelector(),
+    )
+    const { currentTime, duration, playbackRate } = videoElement
+
+    return { playTime: currentTime, duration, playbackRate }
+  }
 
   async getIsPrivate(): Promise<boolean | null> {
     return false
@@ -538,7 +548,7 @@ abstract class BaseConnector implements Connector {
 
     const potentialNewTrackId = await this.getCurrentTrackId()
     if (!potentialNewTrackId) {
-      logger.debug(`No new track found`)
+      logger.debug(`No new track found (empty result)`)
       return null
     }
 
@@ -546,7 +556,9 @@ abstract class BaseConnector implements Connector {
     if (this.connectorTrackId === potentialNewTrackId) {
       // we did not change tracks, check if we should still force re-loading the track
       if (!forceReload) {
-        logger.debug(`No new track found`)
+        logger.debug(
+          `No new track found: new trackId (${potentialNewTrackId}) is equal to old trackId)`,
+        )
         return this.track
       }
       logger.debug(`No new track found, but continueing due to forced`)
@@ -690,6 +702,7 @@ abstract class BaseConnector implements Connector {
       }
 
       if (type === 'play') {
+        logger.debug('Sending become active request')
         await bgActions.requestBecomeActiveTab(false)
       }
     }
