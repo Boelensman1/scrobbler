@@ -20,14 +20,14 @@ class EdittedTracksManager {
     await this.browserStorage.setInSync('edittedTracks', this.edittedTracks)
   }
 
-  addEdittedTrack(edittedTrack: SavedEdit): void {
+  async addEdittedTrack(edittedTrack: SavedEdit): Promise<void> {
     const { connectorKey, connectorTrackId } = edittedTrack
     if (!this.edittedTracks[connectorKey]) {
       this.edittedTracks[connectorKey] = {}
     }
 
     this.edittedTracks[connectorKey][connectorTrackId] = edittedTrack
-    this.syncEdittedTracks()
+    await this.syncEdittedTracks()
   }
 
   removeEdittedTrack({ connectorKey, connectorTrackId }: TrackSelector): void {

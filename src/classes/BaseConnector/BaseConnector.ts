@@ -321,7 +321,7 @@ abstract class BaseConnector implements Connector {
 
         // save!
         if (this.connectorTrackId) {
-          bgActions.saveTrackEdit({
+          await bgActions.saveTrackEdit({
             ...trackSelector,
             edittedSongInfo: track
               ? {

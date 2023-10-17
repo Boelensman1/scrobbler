@@ -124,7 +124,7 @@ async function handleMessage(
     }
 
     case BG_ACTION_KEYS.SAVE_TRACK_EDIT: {
-      edittedTracksManager.addEdittedTrack(action.data)
+      await edittedTracksManager.addEdittedTrack(action.data)
       return
     }
 
