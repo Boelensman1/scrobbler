@@ -29,11 +29,10 @@ interface SyncStorage {
 }
 interface LocalStorage {
   state: State
-}
-
-interface SessionStorage {
   trackInfoCache: TrackInfoCache
 }
+
+interface SessionStorage {}
 type Storage = SyncStorage & LocalStorage & SessionStorage
 
 const initialSyncStorage: SyncStorage = {
@@ -44,10 +43,9 @@ const initialSyncStorage: SyncStorage = {
 }
 const initialLocalStorage: LocalStorage = {
   state: initialState,
-}
-const initialSessionStorage: SessionStorage = {
   trackInfoCache: {},
 }
+const initialSessionStorage: SessionStorage = {}
 
 type BaseHydrateFunctions = {
   [K in keyof Storage]: (inp: JSONAble) => Storage[K]
@@ -140,19 +138,17 @@ class BrowserStorage {
     // but there doesn't seem to be an easy way to disable/check for that
     browser.storage.sync.onChanged.addListener(this.init.bind(this))
     browser.storage.local.onChanged.addListener(this.init.bind(this))
-    browser.storage.session.onChanged.addListener(this.init.bind(this))
+
+    // once firefox adds support for session.setAccessLevel, this if can be removed
+    if (browser.storage.session) {
+      browser.storage.session.onChanged.addListener(this.init.bind(this))
+    }
   }
 
   async init() {
     const browserStorageSync = browser.storage.sync
     const browserStorageLocal = browser.storage.local
     const browserStorageSession = browser.storage.session
-
-    // expose session storage to content scripts
-    // @ts-expect-error this function exists
-    await browser.storage.session.setAccessLevel(
-      'TRUSTED_AND_UNTRUSTED_CONTEXTS',
-    )
 
     if (!browserStorageSync) {
       throw new Error('Could not access sync browserStorage')
@@ -168,10 +164,14 @@ class BrowserStorage {
       (await browserStorageLocal.get()) as LocalStorageInBrowser,
       initialLocalStorage,
     )
-    this.sessionStorage = hydrate<SessionStorage>(
-      (await browserStorageSession.get()) as SessionStorageInBrowser,
-      initialSessionStorage,
-    )
+
+    // once firefox adds support for session.setAccessLevel, this if can be removed
+    if (browserStorageSession) {
+      this.sessionStorage = hydrate<SessionStorage>(
+        (await browserStorageSession.get()) as SessionStorageInBrowser,
+        initialSessionStorage,
+      )
+    }
   }
   async realSet<
     STOR extends SyncStorage | LocalStorage | SessionStorage,

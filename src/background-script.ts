@@ -233,6 +233,13 @@ browser.tabs.onUpdated.addListener(async (id, changeInfo, windowprops) => {
 })
 
 const main = async () => {
+  // expose session storage to content scripts
+  /* Not supported yet by firefox
+    await browser.storage.session.setAccessLevel(
+      'TRUSTED_AND_UNTRUSTED_CONTEXTS',
+    )
+  */
+
   await browserStorage.init()
 
   edittedTracksManager = new EdittedTracksManager(browserStorage)
