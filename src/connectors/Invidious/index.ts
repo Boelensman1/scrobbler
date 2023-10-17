@@ -4,7 +4,7 @@ import YoutubeConnector from '../Youtube'
 
 import getYtVideoIdFromUrl from '../Youtube/util/getYtVideoIdFromUrl'
 
-class YoutubeEmbedConnector extends YoutubeConnector {
+class InvidiousConnector extends YoutubeConnector {
   static connectorKey = 'insidious'
 
   static youtubeWatchElement = '#player'
@@ -69,4 +69,4 @@ class YoutubeEmbedConnector extends YoutubeConnector {
   }
 }
 
-export default YoutubeEmbedConnector
+export default InvidiousConnector

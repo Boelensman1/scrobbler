@@ -3,7 +3,7 @@ import {
   bgActions,
   YoutubeConnector,
   YoutubeEmbedConnector,
-  InsidiousConnector,
+  InvidiousConnector,
 } from 'internals'
 
 import scrobblers from './scrobblerList'
@@ -11,7 +11,7 @@ import scrobblers from './scrobblerList'
 const connectors: ConnectorStatic[] = [
   YoutubeConnector,
   YoutubeEmbedConnector,
-  InsidiousConnector,
+  InvidiousConnector,
 ]
 
 const main = async () => {
