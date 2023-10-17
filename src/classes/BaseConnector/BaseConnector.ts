@@ -599,10 +599,6 @@ abstract class BaseConnector implements Connector {
       timeInfo.duration ? timeInfo.duration / 2 : 9999,
     )
 
-    this.minimumScrobblerQuality =
-      this.config.minimumScrobblerQuality *
-      (this.config.scrobblerQualityDynamic ? popularity / 200 : 1)
-
     // combine & apply regexes
     const songInfos = (
       await Promise.all(
@@ -622,6 +618,21 @@ abstract class BaseConnector implements Connector {
     )
     this.track = songInfoResult.track
     this.searchQueryList = songInfoResult.searchQueryList
+
+    this.minimumScrobblerQuality =
+      this.config.minimumScrobblerQuality *
+      (this.config.scrobblerQualityDynamic ? popularity / 200 : 1)
+    if (this.track) {
+      // if track has album info, we can be more confident in the scrobblerQuality
+      let bonus = 0
+      if (this.track.album) {
+        bonus += 0.3
+      }
+      if (this.track.albumArtUrl) {
+        bonus += 0.2
+      }
+      this.minimumScrobblerQuality = this.minimumScrobblerQuality * (1 - bonus)
+    }
 
     this.scrobbleState = await this.getScrobbleState()
 
