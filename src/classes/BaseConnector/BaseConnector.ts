@@ -150,6 +150,9 @@ abstract class BaseConnector implements Connector {
   searchQueryList: SongInfo[] = []
   shouldForceRecogniseCurrentTrack = false
 
+  scrobbleInfoLocationSelector: string | null = null
+  scrobbleInfoStyle: Partial<CSSStyleDeclaration> = {}
+
   abstract getters: Getter[]
   abstract postProcessors: PostProcessor[]
 
@@ -183,10 +186,6 @@ abstract class BaseConnector implements Connector {
 
   async getPopularity() {
     return 1
-  }
-
-  async getInfoBoxElement(): Promise<HTMLDivElement | null> {
-    return null
   }
 
   async setup() {
@@ -772,6 +771,43 @@ abstract class BaseConnector implements Connector {
     await this.updateDisplayOnPage()
   }
 
+  async getInfoBoxElement(): Promise<HTMLDivElement | null> {
+    if (!this.scrobbleInfoLocationSelector) {
+      return null
+    }
+
+    const parentEl = document.querySelector(this.scrobbleInfoLocationSelector)
+    if (!parentEl) {
+      return null
+    }
+
+    // check if infoBoxEl was already created
+    let infoBoxElement = document.querySelector<HTMLDivElement>(
+      '#scrobbler-infobox-el',
+    )
+
+    // check if element is still in the correct place
+    if (infoBoxElement) {
+      if (infoBoxElement.parentElement !== parentEl) {
+        infoBoxElement.remove()
+      } else {
+        return infoBoxElement
+      }
+    }
+
+    // if it was not in the correct place or didn't exist, create it
+    infoBoxElement = document.createElement('div')
+    infoBoxElement.setAttribute('id', 'scrobbler-infobox-el')
+
+    // style the infobox
+    for (const prop in this.scrobbleInfoStyle) {
+      infoBoxElement.style[prop] = this.scrobbleInfoStyle[prop] ?? ''
+    }
+
+    parentEl.appendChild(infoBoxElement)
+    return infoBoxElement
+  }
+
   async updateDisplayOnPage() {
     const infoBoxEl = await this.getInfoBoxElement()
     if (!infoBoxEl) {
@@ -807,13 +843,13 @@ abstract class BaseConnector implements Connector {
         ? '(forced recognition)'
         : ''
 
-      infoBoxEl.innerHTML = `<h3>${getHumanScrobbleStateString(
+      infoBoxEl.innerHTML = `${getHumanScrobbleStateString(
         this.scrobbleState,
       )} as ${this.track.artist} - ${
         this.track.name
-      } ${activeNotice} ${forcedRecognitionNotice} ${playTimeInfo}</h3>`
+      } ${activeNotice} ${forcedRecognitionNotice} ${playTimeInfo}`
     } else {
-      infoBoxEl.innerHTML = `<h3>${getHumanScrobbleStateString(
+      infoBoxEl.innerHTML = `${getHumanScrobbleStateString(
         this.scrobbleState,
       )} ${playTimeInfo}`
     }

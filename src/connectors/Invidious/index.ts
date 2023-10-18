@@ -8,6 +8,12 @@ import getYtVideoIdFromUrl from '../Youtube/util/getYtVideoIdFromUrl'
 class InvidiousConnector extends YoutubeConnector {
   static connectorKey = 'invidious'
 
+  scrobbleInfoLocationSelector = '#contents .h-box:nth-child(4)'
+  scrobbleInfoStyle: Partial<CSSStyleDeclaration> = {
+    marginTop: '-1em',
+    marginBottom: '1.5em',
+  }
+
   static youtubeWatchElement = '#player'
 
   static locationMatch(

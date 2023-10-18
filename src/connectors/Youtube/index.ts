@@ -96,6 +96,12 @@ class YoutubeConnector extends BaseConnector {
 
   extraInfoCache: { [videoId: string]: ExtraInfo } = {}
 
+  scrobbleInfoLocationSelector = '#primary #title.ytd-watch-metadata'
+  scrobbleInfoStyle: Partial<CSSStyleDeclaration> = {
+    fontSize: '1.17em',
+    fontWeight: '700',
+  }
+
   static youtubeWatchElement = '#content'
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any
@@ -331,35 +337,6 @@ class YoutubeConnector extends BaseConnector {
 
     // Return the text if no sponsorblock text.
     return text
-  }
-
-  async getInfoBoxElement(): Promise<HTMLDivElement | null> {
-    const parentEl = document.querySelector(
-      '#primary #title.ytd-watch-metadata',
-    )
-    if (!parentEl) {
-      return null
-    }
-
-    // check if infoBoxEl was already created
-    let infoBoxElement = document.querySelector<HTMLDivElement>(
-      '#scrobbler-infobox-el',
-    )
-
-    // check if element is still in the correct place
-    if (infoBoxElement) {
-      if (infoBoxElement.parentElement !== parentEl) {
-        infoBoxElement.remove()
-      } else {
-        return infoBoxElement
-      }
-    }
-
-    // if it was not in the correct place or didn't exist, create it
-    infoBoxElement = document.createElement('div')
-    infoBoxElement.setAttribute('id', 'scrobbler-infobox-el')
-    parentEl.appendChild(infoBoxElement)
-    return infoBoxElement
   }
 }
 

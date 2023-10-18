@@ -18,6 +18,9 @@ export interface Connector {
   getters: Getter[]
   postProcessors: PostProcessor[]
 
+  scrobbleInfoLocationSelector: string | null
+  scrobbleInfoStyle: Partial<CSSStyleDeclaration>
+
   setup(): Promise<void>
   isPlaying(): Promise<boolean>
   isReady(): Promise<boolean>
