@@ -103,6 +103,7 @@ class YoutubeConnector extends BaseConnector {
   }
 
   static youtubeWatchElement = '#content'
+  static viewCountElement = '.view-count'
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any
   static locationMatch(location: Location, _connectorConfig: any) {
@@ -255,7 +256,9 @@ class YoutubeConnector extends BaseConnector {
     // the fallback method
     let views, publishedAt
     try {
-      const element = await waitForElement('.view-count')
+      const element = await waitForElement(
+        (this.constructor as typeof YoutubeConnector).viewCountElement,
+      )
       if (!element.textContent) {
         return {}
       }
