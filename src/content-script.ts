@@ -15,6 +15,8 @@ const connectors: ConnectorStatic[] = [
 ]
 
 const main = async () => {
+  const config = await bgActions.getConfig()
+
   const MatchingConnector = connectors.find((conn) =>
     conn.locationMatch(
       location,
@@ -25,8 +27,6 @@ const main = async () => {
   if (!MatchingConnector) {
     return
   }
-
-  const config = await bgActions.getConfig()
 
   const scrobbler = config.scrobbler
   switch (scrobbler) {
