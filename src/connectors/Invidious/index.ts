@@ -21,7 +21,6 @@ class InvidiousConnector extends YoutubeConnector {
     connectorConfig: ConnectorConfig['invidious'],
   ) {
     const hosts: string[] = connectorConfig.hosts || []
-    // temporary hotfix, should be configurable
     return hosts.some((host) => location.host.includes(host))
   }
 
