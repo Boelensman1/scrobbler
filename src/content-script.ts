@@ -16,7 +16,10 @@ const connectors: ConnectorStatic[] = [
 
 const main = async () => {
   const MatchingConnector = connectors.find((conn) =>
-    conn.locationMatch(location),
+    conn.locationMatch(
+      location,
+      config.connectorConfig[conn.connectorKey] ?? {},
+    ),
   )
 
   if (!MatchingConnector) {

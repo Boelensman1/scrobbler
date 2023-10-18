@@ -10,7 +10,7 @@ export { default as PartialSongInfo } from './PartialSongInfo'
 export { default as SongInfo } from './SongInfo'
 export { default as State } from './State'
 export { default as TimeInfo } from './TimeInfo'
-export { default as Config } from './Config'
+export { default as Config, ConnectorConfig } from './Config'
 export { default as ScrobblerLinks } from './ScrobblerLinks'
 export {
   default as InformationProvider,

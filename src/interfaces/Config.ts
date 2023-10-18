@@ -1,3 +1,5 @@
+export interface ConnectorConfig {}
+
 interface Config {
   scrobbler: null | 'lastFm'
   minimumScrobblerQuality: number
@@ -9,6 +11,10 @@ interface Config {
   debug: boolean
 
   youtubeApiKey: string
+
+  connectorConfig: {
+    invidious: { hosts: string[] }
+  }
 }
 
 export default Config

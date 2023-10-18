@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { createRoot } from 'react-dom/client'
-import { useFormik } from 'formik'
+import { Field, FieldArray, Form, Formik, useFormikContext } from 'formik'
 
 import { bgActions } from 'internals'
 
@@ -12,28 +12,65 @@ import useSavedRegexes from './useSavedRegexes'
 
 import SavedRegexDisplay from './SavedRegexDisplay'
 
-const Content = () => {
-  const [addingRegex, setAddingRegex] = useState(false)
-  const { config, saveConfig, resetConfig } = useConfig()
-  const { connectorState, globalState } = useScrobblerState()
-  const { edittedTracks } = useEdittedTracks()
-  const { savedRegexes } = useSavedRegexes()
+const InvidiousHostList = () => {
+  const { values } = useFormikContext<Config>()
+  const hosts = values.connectorConfig.invidious.hosts
+  return (
+    <div>
+      <h1>Invidious Host List</h1>
+      <FieldArray
+        name="connectorConfig.invidious.hosts"
+        render={(arrayHelpers) => (
+          <div>
+            {hosts &&
+              hosts.map &&
+              hosts.map((_host, index) => (
+                <div key={index}>
+                  <Field name={`connectorConfig.invidious.hosts.${index}`} />
 
-  const formik = useFormik({
-    initialValues: {
-      ...config,
-    },
-    onSubmit: async (values: Partial<Config>) => {
-      delete values.scrobbler
-      saveConfig(values)
-    },
-  })
+                  <button
+                    type="button"
+                    onClick={() => arrayHelpers.remove(index)}
+                  >
+                    -
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => arrayHelpers.insert(index, '')}
+                  >
+                    +
+                  </button>
+                </div>
+              ))}
+            <button type="button" onClick={() => arrayHelpers.push('')}>
+              Add a host
+            </button>
+          </div>
+        )}
+      />
+    </div>
+  )
+}
+
+const SyncFormAndConfig = ({ config }: { config: Config }) => {
+  const formik = useFormikContext<Config>()
 
   useEffect(() => {
     if (config) {
       formik.setValues(config)
     }
   }, [config])
+
+  return null
+}
+
+const Content = () => {
+  const [addingRegex, setAddingRegex] = useState(false)
+  const { config, saveConfig, resetConfig } = useConfig()
+  const { connectorState, globalState } = useScrobblerState()
+  const { edittedTracks } = useEdittedTracks()
+  const { savedRegexes } = useSavedRegexes()
 
   return (
     <>
@@ -51,71 +88,61 @@ const Content = () => {
           </button>
         </div>
 
-        <form onSubmit={formik.handleSubmit}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            <div>
-              <label htmlFor="minimumScrobblerQuality">
-                Minimum scrobbler quality{' '}
-              </label>
-              <input
-                id="minimumScrobblerQuality"
-                type="number"
-                onChange={formik.handleChange}
-                value={formik.values.minimumScrobblerQuality}
-              />
-            </div>
+        <Formik
+          initialValues={{ ...config }}
+          onSubmit={async (values: Partial<Config>) => {
+            delete values.scrobbler
+            saveConfig(values)
+          }}
+        >
+          <Form>
+            <SyncFormAndConfig config={config} />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <div>
+                <label htmlFor="minimumScrobblerQuality">
+                  Minimum scrobbler quality{' '}
+                </label>
+                <Field name={`minimumScrobblerQuality`} />
+              </div>
 
-            <div>
-              <label htmlFor="scrobblerCompensateForVideoAge">
-                Scrobbler compensate for video age (newer videos need less
-                quality){' '}
-              </label>
-              <input
-                id="scrobblerCompensateForVideoAge"
-                type="checkbox"
-                onChange={formik.handleChange}
-                checked={formik.values.scrobblerCompensateForVideoAge}
-              />
-            </div>
+              <div>
+                <label htmlFor="scrobblerCompensateForVideoAge">
+                  Scrobbler compensate for video age (newer videos need less
+                  quality){' '}
+                </label>
+                <Field name="scrobblerCompensateForVideoAge" type="checkbox" />
+              </div>
 
-            <div>
-              <label htmlFor="scrobblerQualityDynamic">
-                Dynamic scrobbler quality{' '}
-              </label>
-              <input
-                id="scrobblerQualityDynamic"
-                type="checkbox"
-                onChange={formik.handleChange}
-                checked={formik.values.scrobblerQualityDynamic}
-              />
-            </div>
+              <div>
+                <label htmlFor="scrobblerQualityDynamic">
+                  Dynamic scrobbler quality{' '}
+                </label>
+                <Field name="scrobblerQualityDynamic" type="checkbox" />
+              </div>
 
-            <div>
-              <label htmlFor="youtubeApiKey">
-                Youtube Api Key (allows scrobbling of embedded){' '}
-              </label>
-              <input
-                id="youtubeApiKey"
-                onChange={formik.handleChange}
-                value={formik.values.youtubeApiKey}
-              />
-            </div>
+              <div>
+                <label htmlFor="youtubeApiKey">
+                  Youtube Api Key (allows scrobbling of embedded){' '}
+                </label>
+                <Field name="youtubeApiKey" />
+              </div>
 
-            <div>
-              <label htmlFor="debug">Debug </label>
-              <input
-                id="debug"
-                type="checkbox"
-                onChange={formik.handleChange}
-                checked={formik.values.debug}
-              />
-            </div>
+              <div>
+                <InvidiousHostList />
+              </div>
 
-            <div>
-              <button type="submit">Save</button>
+              <div>
+                <label htmlFor="debug">Debug </label>
+                <Field name="debug" type="checkbox" />
+              </div>
+
+              <div>
+                <button type="submit">Save</button>
+              </div>
             </div>
-          </div>
-        </form>
+          </Form>
+        </Formik>
+
         <div>
           <button id="resetConfig" onClick={() => resetConfig()}>
             Reset

@@ -11,6 +11,9 @@ export const defaultConfig: Config = {
   youtubeApiKey: '',
   scrobblerCompensateForVideoAge: false,
   scrobblePrivateContent: false,
+  connectorConfig: {
+    invidious: { hosts: ['yewtu.be', 'invidious.fdn.fr', 'yewtu.be'] },
+  },
 }
 
 export class ConfigContainer {

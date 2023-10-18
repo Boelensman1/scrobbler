@@ -1,17 +1,18 @@
 import { waitForElement } from 'internals'
+import type { ConnectorConfig } from 'interfaces'
 
 import YoutubeConnector from '../Youtube'
 
 import getYtVideoIdFromUrl from '../Youtube/util/getYtVideoIdFromUrl'
 
 class InvidiousConnector extends YoutubeConnector {
-  static connectorKey = 'insidious'
+  static connectorKey = 'invidious'
 
   static youtubeWatchElement = '#player'
 
-  static locationMatch(location: Location) {
+  static locationMatch(location: Location, connectorConfig: ConnectorConfig) {
+    const hosts: string[] = connectorConfig.hosts || []
     // temporary hotfix, should be configurable
-    const hosts = ['yewtu.be', 'invidious.fdn.fr', 'yewtu.be']
     return hosts.some((host) => location.host.includes(host))
   }
 

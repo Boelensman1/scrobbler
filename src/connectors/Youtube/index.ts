@@ -1,4 +1,5 @@
 import { getElement, waitForElement } from 'internals'
+import type { ConnectorConfig } from 'interfaces'
 
 import BaseConnector from '../../classes/BaseConnector/BaseConnector'
 
@@ -98,7 +99,7 @@ class YoutubeConnector extends BaseConnector {
 
   static youtubeWatchElement = '#content'
 
-  static locationMatch(location: Location) {
+  static locationMatch(location: Location, _connectorConfig: ConnectorConfig) {
     return location.host.includes('youtube') && !location.href.includes('embed')
   }
 

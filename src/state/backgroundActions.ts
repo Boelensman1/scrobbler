@@ -72,10 +72,19 @@ const actions = {
     send<GetStateActionObject, State>({
       type: BG_ACTION_KEYS.GET_STATE,
     }),
-  getConfig: (): Promise<Config> =>
-    send<GetConfigActionObject, Config>({
+  getConfig: async (): Promise<Config> => {
+    const response = await send<GetConfigActionObject, Config>({
       type: BG_ACTION_KEYS.GET_CONFIG,
-    }),
+    })
+    // hydrate
+    // @ts-expect-error WIP, will have to fix later
+    if (response.connectorConfig.invidious.hosts.split) {
+      response.connectorConfig.invidious.hosts =
+        // @ts-expect-error WIP, will have to fix later
+        response.connectorConfig.invidious.hosts.split(',')
+    }
+    return response
+  },
   resetConfig: () =>
     send<ResetConfigActionObject>({
       type: BG_ACTION_KEYS.RESET_CONFIG,
