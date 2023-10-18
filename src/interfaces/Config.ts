@@ -1,4 +1,8 @@
-export interface ConnectorConfig {}
+export interface ConnectorConfig {
+  invidious: { hosts: string[] }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  [key: string]: any
+}
 
 interface Config {
   scrobbler: null | 'lastFm'
@@ -12,9 +16,7 @@ interface Config {
 
   youtubeApiKey: string
 
-  connectorConfig: {
-    invidious: { hosts: string[] }
-  }
+  connectorConfig: ConnectorConfig
 }
 
 export default Config
