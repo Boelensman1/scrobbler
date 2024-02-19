@@ -115,7 +115,6 @@ class TrackInfoCacheManager {
     connectorKey,
     connectorTrackId,
   }: TrackSelector): Promise<Track | false> {
-    await this.syncCache()
     if (!this.trackInfoCache[connectorKey]) {
       return false
     }
@@ -134,7 +133,6 @@ class TrackInfoCacheManager {
     connectorKey,
     connectorTrackId,
   }: TrackSelector): Promise<number | false> {
-    await this.syncCache()
     if (!this.trackInfoCache[connectorKey]) {
       return false
     }
