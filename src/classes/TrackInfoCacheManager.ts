@@ -59,9 +59,21 @@ class TrackInfoCacheManager {
   browserStorage: BrowserStorage
   trackInfoCache: TrackInfoCache
 
+  expiresAfter = 1000 * 60 * 60 * 24 * 30 // 30 days
+
   constructor(browserStorage: BrowserStorage) {
     this.browserStorage = browserStorage
     this.trackInfoCache = this.browserStorage.getInLocal('trackInfoCache')
+
+    // delete all entries older than a month
+    Object.entries(this.trackInfoCache).forEach(([connectorKey, tracks]) => {
+      Object.entries(tracks).forEach(([connectorTrackId, trackInCache]) => {
+        if (Date.now() - trackInCache.meta.added > this.expiresAfter) {
+          this.delete({ connectorKey, connectorTrackId }, true)
+        }
+      })
+    })
+    this.syncCache()
   }
 
   async syncCache() {
@@ -118,15 +130,28 @@ class TrackInfoCacheManager {
     if (!this.trackInfoCache[connectorKey]) {
       return false
     }
-    const result =
-      this.trackInfoCache[connectorKey][connectorTrackId]?.track || false
+    const result = this.trackInfoCache[connectorKey][connectorTrackId]
+    if (!result) {
+      logger.debug(`Trackinfocache result for "${connectorTrackId}": false`)
+      return false
+    }
+
+    const track = result.track
+    const age = result.meta.added
+
+    if (Date.now() - age > this.expiresAfter) {
+      // delete the expired cache and try again
+      logger.debug(`Expired cache for: "${track.name}", deleting cache result`)
+      await this.delete({ connectorKey, connectorTrackId })
+      return false
+    }
 
     logger.debug(
       `Trackinfocache result for "${connectorTrackId}": ${
-        result ? `${result.artist} - ${result.name}` : false
+        result ? `${track.artist} - ${track.name}` : false
       }`,
     )
-    return result
+    return track
   }
 
   async getAge({
@@ -147,14 +172,18 @@ class TrackInfoCacheManager {
     return result
   }
 
-  async delete({
-    connectorKey,
-    connectorTrackId,
-  }: TrackSelector): Promise<void> {
-    await this.syncCache()
+  async delete(
+    { connectorKey, connectorTrackId }: TrackSelector,
+    noSync: boolean = false,
+  ): Promise<void> {
+    if (!noSync) {
+      await this.syncCache()
+    }
     if (this.trackInfoCache[connectorKey]) {
       delete this.trackInfoCache[connectorKey][connectorTrackId]
-      await this.syncCache()
+      if (!noSync) {
+        await this.syncCache()
+      }
     }
   }
 }

@@ -1,6 +1,6 @@
 {
   "name": "scrobbler",
-  "version": "0.0.36",
+  "version": "0.0.37",
   "description": "",
   "author": "",
   "license": "MIT",
@@ -31,7 +31,7 @@
     "prettier": "^3.0.3",
     "type-fest": "^4.4.0",
     "typescript": "^5.2.2",
-    "web-ext": "^7.8.0",
+    "web-ext": "^7.11.0",
     "webextension-polyfill": "^0.10.0"
   },
   "alias": {

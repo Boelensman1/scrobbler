@@ -20,7 +20,6 @@ import {
   scrobbleStates,
   Track,
   Logger,
-  TrackInfoCacheManager,
   BrowserStorage,
   waitForElement,
 } from 'internals'
@@ -131,7 +130,6 @@ const createTrackFromBestResult = (searchQueryList: SongInfo[]): Track => {
 abstract class BaseConnector implements Connector {
   scrobbler: LastFm
   config: Config
-  trackInfoCacheManager!: TrackInfoCacheManager
   browserStorage: BrowserStorage
 
   lastStateChange?: Date
@@ -196,7 +194,6 @@ abstract class BaseConnector implements Connector {
     )
 
     await this.browserStorage.init()
-    this.trackInfoCacheManager = new TrackInfoCacheManager(this.browserStorage)
 
     browser.runtime.onMessage.addListener(this.handleMessage.bind(this))
     // use .then instead of await so we can continue receiving messages
@@ -345,7 +342,6 @@ abstract class BaseConnector implements Connector {
           })
         }
 
-        await this.trackInfoCacheManager.delete(trackSelector)
         await this.newTrack(true, true)
 
         return
@@ -377,12 +373,6 @@ abstract class BaseConnector implements Connector {
         }
         logger.info('Refreshing track')
 
-        const trackSelector = {
-          connectorKey,
-          connectorTrackId: this.connectorTrackId,
-        }
-
-        await this.trackInfoCacheManager.delete(trackSelector)
         if (this.scrobbleState !== scrobbleStates.MANUALLY_DISABLED) {
           this.scrobbleState = scrobbleStates.SEARCHING
         }
@@ -463,6 +453,7 @@ abstract class BaseConnector implements Connector {
   async getTrackFromSongInfo(
     songInfos: SongInfo[],
     forcedSongInfo: SongInfo | false,
+    forceReload: boolean,
   ): Promise<{ track: Track | null; searchQueryList: SongInfo[] }> {
     if (!this.connectorTrackId) {
       return { track: null, searchQueryList: [] }
@@ -481,7 +472,7 @@ abstract class BaseConnector implements Connector {
     if (forcedSongInfo) {
       // check in cache
       track =
-        (await this.trackInfoCacheManager.get(trackSelector)) ||
+        (await bgActions.getTrackInfoFromCache(trackSelector, forceReload)) ||
         (await this.scrobbler.getTrack(forcedSongInfo))
 
       // save searchQuery so we can edit it
@@ -491,8 +482,10 @@ abstract class BaseConnector implements Connector {
       const tracks: (Track | null)[] = await Promise.all(
         songInfos.map(
           async (songInfo: SongInfo) =>
-            (await this.trackInfoCacheManager.get(trackSelector)) ||
-            (await this.scrobbler.getTrack(songInfo)),
+            (await bgActions.getTrackInfoFromCache(
+              trackSelector,
+              forceReload,
+            )) || (await this.scrobbler.getTrack(songInfo)),
         ),
       )
 
@@ -520,7 +513,7 @@ abstract class BaseConnector implements Connector {
       await getAdditionalDataFromInfoProviders(track)
 
       // update cache (automaticaly won't update if this track came from cache)
-      await this.trackInfoCacheManager.addOrUpdate(trackSelector, track)
+      await bgActions.addOrUpdateTrackInfoInCache({ trackSelector, track })
 
       return { track, searchQueryList }
     } else {
@@ -529,7 +522,7 @@ abstract class BaseConnector implements Connector {
         logger.debug(`No track found, but forced "${track.name}"`)
 
         // update cache (automaticaly won't update if this track came from cache)
-        await this.trackInfoCacheManager.addOrUpdate(trackSelector, track)
+        await bgActions.addOrUpdateTrackInfoInCache({ trackSelector, track })
 
         return { track, searchQueryList }
       }
@@ -621,6 +614,7 @@ abstract class BaseConnector implements Connector {
     const songInfoResult = await this.getTrackFromSongInfo(
       songInfos,
       songInfoFromSavedEdits,
+      forceReload,
     )
 
     logger.debug(
@@ -645,27 +639,6 @@ abstract class BaseConnector implements Connector {
     }
 
     this.scrobbleState = await this.getScrobbleState()
-
-    if (
-      this.track &&
-      this.scrobbleState === 'BELOW_MIN_SCROBBLER_QUALITY' &&
-      this.track.fromCache
-    ) {
-      // check to see if track info was really old
-      const cacheSetAt = await this.trackInfoCacheManager.getAge(trackSelector)
-      if (
-        cacheSetAt &&
-        // difference in days
-        (Date.now() - cacheSetAt) / (1000 * 60 * 60 * 24) > 1
-      ) {
-        // delete the expired cache and try again
-        logger.debug(
-          `Expired cache for: "${songInfoResult.track?.name}", retrying`,
-        )
-        await this.trackInfoCacheManager.delete(trackSelector)
-        return this.newTrack(true, true)
-      }
-    }
 
     logger.debug(
       `Done all new track processing for: "${songInfoResult.track?.name}"`,

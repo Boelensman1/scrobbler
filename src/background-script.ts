@@ -10,6 +10,8 @@ import {
   ctActions,
   BrowserStorage,
   Logger,
+  TrackInfoCacheManager,
+  Track,
 } from 'internals'
 
 import type { Config, BgActionObject, State } from 'interfaces'
@@ -25,6 +27,7 @@ let regexesManager: RegexesManager
 let forceRecognitionTracksManager: ForceRecognitionTracksManager
 let config: ConfigContainer
 let stateManager: StateManager
+let trackInfoCacheManager: TrackInfoCacheManager
 
 // setFullyLoaded is called after init (in main)
 let setFullyLoaded: (val: true) => void
@@ -130,6 +133,7 @@ async function handleMessage(
 
     case BG_ACTION_KEYS.SAVE_TRACK_EDIT: {
       await edittedTracksManager.addEdittedTrack(action.data)
+      await trackInfoCacheManager.delete(action.data)
       return
     }
 
@@ -196,6 +200,21 @@ async function handleMessage(
       )
     }
 
+    case BG_ACTION_KEYS.GET_TRACK_INFO_FROM_CACHE: {
+      const { trackSelector, forceReload } = action.data
+      if (forceReload) {
+        await trackInfoCacheManager.delete(trackSelector)
+        return false
+      }
+      return await trackInfoCacheManager.get(trackSelector)
+    }
+
+    case BG_ACTION_KEYS.ADD_OR_UPDATE_TRACK_INFO_IN_CACHE: {
+      const { trackSelector, track } = action.data
+      await trackInfoCacheManager.addOrUpdate(trackSelector, new Track(track))
+      return
+    }
+
     case BG_ACTION_KEYS.SEND_LOG: {
       return logger.outputEntryToConsole(action.data)
     }
@@ -254,6 +273,7 @@ const main = async () => {
   )
   config = new ConfigContainer(browserStorage)
   stateManager = new StateManager(browserStorage)
+  trackInfoCacheManager = new TrackInfoCacheManager(browserStorage)
 
   const scrobbler = config.get('scrobbler')
   switch (scrobbler) {

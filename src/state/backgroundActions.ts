@@ -30,7 +30,16 @@ import type {
   GetIfForceRecogniseTrackActionObject,
   SendLogActionObject,
   LogEntryPayload,
+  GetTrackInfoFromCache,
+  AddOrUpdateTrackInfoInCache,
 } from 'interfaces'
+
+import { Track } from 'internals'
+
+type DataPropertiesOnly<T> = {
+  // eslint-disable-next-line @typescript-eslint/ban-types
+  [P in keyof T]: T[P] extends Function ? never : T[P]
+}
 
 export const BG_ACTION_KEYS = {
   REQUEST_AUTHENTICATION: 'REQUEST_AUTHENTICATION' as const,
@@ -56,6 +65,10 @@ export const BG_ACTION_KEYS = {
 
   SAVE_FORCE_RECOGNISE_TRACK: 'SAVE_FORCE_RECOGNISE_TRACK' as const,
   GET_IF_FORCE_RECOGNISE_TRACK: 'GET_IF_FORCE_RECOGNISE_TRACK' as const,
+
+  GET_TRACK_INFO_FROM_CACHE: 'GET_TRACK_INFO_FROM_CACHE' as const,
+  ADD_OR_UPDATE_TRACK_INFO_IN_CACHE:
+    'ADD_OR_UPDATE_TRACK_INFO_IN_CACHE' as const,
 
   SEND_LOG: 'SEND_LOG' as const,
 }
@@ -158,6 +171,31 @@ const actions = {
   getIfForceRecogniseTrack: (data: TrackSelector): Promise<boolean> =>
     send<GetIfForceRecogniseTrackActionObject, boolean>({
       type: BG_ACTION_KEYS.GET_IF_FORCE_RECOGNISE_TRACK,
+      data,
+    }),
+  getTrackInfoFromCache: async (
+    trackSelector: TrackSelector,
+    forceReload: boolean,
+  ): Promise<Track | false> => {
+    const result = await send<
+      GetTrackInfoFromCache,
+      DataPropertiesOnly<Track> | false
+    >({
+      type: BG_ACTION_KEYS.GET_TRACK_INFO_FROM_CACHE,
+      data: { trackSelector, forceReload },
+    })
+    if (!result) {
+      return false
+    }
+
+    return new Track(result)
+  },
+  addOrUpdateTrackInfoInCache: (data: {
+    trackSelector: TrackSelector
+    track: Track
+  }): Promise<void> =>
+    send<AddOrUpdateTrackInfoInCache>({
+      type: BG_ACTION_KEYS.ADD_OR_UPDATE_TRACK_INFO_IN_CACHE,
       data,
     }),
   sendLog: (payload: LogEntryPayload) =>

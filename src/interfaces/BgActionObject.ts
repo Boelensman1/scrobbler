@@ -1,4 +1,4 @@
-import type { BG_ACTION_KEYS } from 'internals'
+import type { BG_ACTION_KEYS, Track } from 'internals'
 import type {
   StringifiedSavedRegex,
   Config,
@@ -95,6 +95,16 @@ export interface GetIfForceRecogniseTrackActionObject {
   data: TrackSelector
 }
 
+export interface GetTrackInfoFromCache {
+  type: typeof BG_ACTION_KEYS.GET_TRACK_INFO_FROM_CACHE
+  data: { trackSelector: TrackSelector; forceReload: boolean }
+}
+
+export interface AddOrUpdateTrackInfoInCache {
+  type: typeof BG_ACTION_KEYS.ADD_OR_UPDATE_TRACK_INFO_IN_CACHE
+  data: { trackSelector: TrackSelector; track: Track }
+}
+
 export interface SendLogActionObject {
   type: typeof BG_ACTION_KEYS.SEND_LOG
   data: LogEntryPayload
@@ -119,4 +129,6 @@ export type BgActionObject =
   | UpdateSavedRegexActionObject
   | SaveForceRecogniseTrackActionObject
   | GetIfForceRecogniseTrackActionObject
+  | GetTrackInfoFromCache
+  | AddOrUpdateTrackInfoInCache
   | SendLogActionObject
