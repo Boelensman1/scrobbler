@@ -1,4 +1,4 @@
 import addOnlyLatinCharacters from './addOnlyLatinCharacters'
-import partsInBrackets from './partsInBrackets'
+import partsInBracketsOrQuotes from './partsInBracketsOrQuotes'
 
-export default [addOnlyLatinCharacters, partsInBrackets]
+export default [addOnlyLatinCharacters, partsInBracketsOrQuotes]

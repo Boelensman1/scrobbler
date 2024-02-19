@@ -11,7 +11,12 @@ const getParts = (input: ArrayTree, output: string[] = []): string[] => {
 
   // push this level of output to the result
   output.push(
-    ...partialOutput.map((o) => parse.stringify(o as ArrayTree)).flat(),
+    ...partialOutput
+      .map(
+        (o) => parse.stringify(o as ArrayTree),
+        ['{}', '[]', '()', `""`, `''`],
+      )
+      .flat(),
   )
 
   // recurse
@@ -24,7 +29,7 @@ const getParts = (input: ArrayTree, output: string[] = []): string[] => {
   return output
 }
 
-const getPartsInBrackets = (input: string): string[] => {
+const getPartsInBracketsOrQuotes = (input: string): string[] => {
   const parsed = parse(input)
   if (parsed.length === 1) {
     // no brackets or no matching brackets
@@ -38,14 +43,14 @@ const getPartsInBrackets = (input: string): string[] => {
   우기 (YUQI) -> YUQI
   (여자)아이들((G)I-DLE) -> ['여자', '(G)I-DLE']
 */
-const partsInBrackets: PostProcessor = (
+const process: PostProcessor = (
   songInfos: PartialSongInfo[],
 ): PartialSongInfo[] => {
   const additional: PartialSongInfo[] = []
   songInfos.forEach((songInfo) => {
     if (songInfo.artist) {
       const songInfoArtist = songInfo.artist
-      getPartsInBrackets(songInfo.artist).forEach((inBrackets) => {
+      getPartsInBracketsOrQuotes(songInfo.artist).forEach((inBrackets) => {
         additional.push({
           ...songInfo,
           artist: inBrackets.trim(),
@@ -66,7 +71,7 @@ const partsInBrackets: PostProcessor = (
 
     if (songInfo.track) {
       const songInfoTrack = songInfo.track
-      getPartsInBrackets(songInfo.track).forEach((inBrackets) => {
+      getPartsInBracketsOrQuotes(songInfo.track).forEach((inBrackets) => {
         additional.push({
           ...songInfo,
           track: inBrackets.trim(),
@@ -89,4 +94,4 @@ const partsInBrackets: PostProcessor = (
   return [...songInfos, ...additional]
 }
 
-export default partsInBrackets
+export default process
